@@ -1,0 +1,2025 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    
+    <meta name="color-scheme" content="light dark">
+    <meta name="theme-color" content="#F5F5F7" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+    
+    <title>Aarish Dairy • Pro</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', '-apple-system', 'sans-serif'],
+                    },
+                    colors: {
+                        darkBg: '#000000',
+                        darkCard: '#1c1c1e',
+                        iosBlue: '#007AFF',
+                        iosGreen: '#34C759',
+                        iosRed: '#FF3B30',
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+    
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <style>
+        /* Apple-like Typography & Base */
+        * { 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box; 
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        
+        body, html { 
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif; 
+            background-color: #F5F5F7; 
+            color: #1C1C1E; 
+            overflow-x: hidden; 
+            transition: background-color 0.5s ease, color 0.5s ease; 
+        }
+        .dark body { background-color: #000000; color: #FFFFFF; }
+
+        /* Ambient Background Glow */
+        .ambient-glow {
+            position: fixed; top: -10%; left: -10%; width: 60vw; height: 60vw;
+            background: radial-gradient(circle, rgba(52, 199, 89, 0.08) 0%, transparent 70%);
+            filter: blur(60px); z-index: 0; pointer-events: none;
+            transition: all 0.5s ease;
+        }
+        .ambient-glow-2 {
+            position: fixed; bottom: -10%; right: -10%; width: 70vw; height: 70vw;
+            background: radial-gradient(circle, rgba(10, 132, 255, 0.06) 0%, transparent 70%);
+            filter: blur(60px); z-index: 0; pointer-events: none;
+            transition: all 0.5s ease;
+        }
+        .dark .ambient-glow { background: radial-gradient(circle, rgba(52, 199, 89, 0.15) 0%, transparent 70%); filter: blur(80px); }
+        .dark .ambient-glow-2 { background: radial-gradient(circle, rgba(10, 132, 255, 0.12) 0%, transparent 70%); filter: blur(80px); }
+        
+        /* App Container with 3D Depth Animation */
+        .app-container { 
+            max-width: 480px; 
+            margin: 0 auto; 
+            min-height: 100vh;
+            min-height: 100dvh; 
+            background: transparent; 
+            box-shadow: 0 0 50px rgba(0, 0, 0, 0.05); 
+            overflow: hidden; 
+            display: flex; 
+            flex-direction: column; 
+            position: relative; 
+            z-index: 1;
+            transition: transform 0.4s cubic-bezier(0.32, 0.72, 0, 1), border-radius 0.4s ease, opacity 0.4s ease;
+            transform-origin: top center;
+        }
+        .dark .app-container { box-shadow: 0 0 50px rgba(255, 255, 255, 0.02); }
+        
+        /* 1. THE iOS MODAL PUSH-BACK EFFECT */
+        .app-scale-down {
+            transform: scale(0.93) translateY(10px);
+            border-radius: 28px;
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        /* Smooth Screen Transitions */
+        .screen { display: none; flex-direction: column; height: 100vh; height: 100dvh; overflow-y: auto; padding-bottom: 120px; position: relative; z-index: 2; }
+        .screen.active { display: flex; animation: slideIn 0.4s cubic-bezier(0.32, 0.72, 0, 1); }
+        @keyframes slideIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+        
+        /* 2. STAGGERED LIST ANIMATION (Zinda App Effect) */
+        .list-enter {
+            animation: slideUpFade 0.5s cubic-bezier(0.32, 0.72, 0, 1) forwards;
+            opacity: 0;
+            transform: translateY(15px);
+        }
+        @keyframes slideUpFade {
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Advanced Frosted Glass Cards + Premium Active Glow */
+        .glass-card { 
+            background: rgba(255, 255, 255, 0.65); 
+            backdrop-filter: blur(24px) saturate(180%); -webkit-backdrop-filter: blur(24px) saturate(180%);
+            border-radius: 24px; padding: 22px; 
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.04), inset 0 1px 2px rgba(255, 255, 255, 0.6); 
+            border: 1px solid rgba(255, 255, 255, 0.5); 
+            transition: all 0.3s cubic-bezier(0.32, 0.72, 0, 1) !important; 
+            flex-shrink: 0 !important;
+        }
+        .dark .glass-card { 
+            background: rgba(28, 28, 30, 0.65); 
+            border-color: rgba(255, 255, 255, 0.08); 
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 1px rgba(255, 255, 255, 0.05); 
+        }
+        .glass-card:active { 
+            transform: scale(0.96) !important; 
+            box-shadow: 0 8px 30px rgba(0, 122, 255, 0.15) !important; /* Apple Blue Glow on tap */
+        }
+        
+        /* Scrollable Bottom Tab Bar */
+        .bottom-nav { 
+            position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); 
+            width: 100%; max-width: 480px; background: rgba(255, 255, 255, 0.85); 
+            backdrop-filter: blur(30px) saturate(200%); -webkit-backdrop-filter: blur(30px) saturate(200%);
+            border-top: 0.5px solid rgba(0, 0, 0, 0.05); 
+            display: flex; overflow-x: auto; scroll-behavior: smooth;
+            padding: 12px 8px calc(12px + env(safe-area-inset-bottom)); z-index: 50; 
+        }
+        .bottom-nav::-webkit-scrollbar { display: none; }
+        .dark .bottom-nav { background: rgba(28, 28, 30, 0.85); border-top-color: rgba(255, 255, 255, 0.1); }
+        
+        /* Nav Item with Premium Text Shadow Glow */
+        .nav-item { 
+            color: #8E8E93; text-align: center; font-size: 10px; font-weight: 600; letter-spacing: 0.3px;
+            cursor: pointer; padding: 6px 12px; border-radius: 14px; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            transition: all 0.3s cubic-bezier(0.32, 0.72, 0, 1) !important; min-width: 65px;
+            flex-shrink: 0 !important;
+        }
+        .nav-item.active { 
+            color: var(--ios-blue, #007AFF) !important; 
+            transform: translateY(-3px); 
+            text-shadow: 0 0 12px rgba(0, 122, 255, 0.4); 
+        }
+        .nav-item i { font-size: 20px; margin-bottom: 5px; transition: transform 0.3s cubic-bezier(0.32, 1.5, 0.5, 1); }
+        .nav-item.active i { transform: scale(1.15); text-shadow: 0 2px 10px rgba(0,122,255,0.3); }
+        
+        /* Modals */
+        .modal-overlay { 
+            position: fixed; inset: 0; background: rgba(0, 0, 0, 0.4); 
+            backdrop-filter: blur(12px) !important; -webkit-backdrop-filter: blur(12px) !important;
+            z-index: 100; display: none; align-items: flex-end; transition: opacity 0.4s ease;
+        }
+        .modal-content { 
+            background: #FFFFFF; width: 100%; max-width: 480px; margin: 0 auto; 
+            border-radius: 36px 36px 0 0; padding: 24px 24px 48px; 
+            animation: slideUpSheet 0.4s cubic-bezier(0.32, 0.72, 0, 1); max-height: 90vh; max-height: 90dvh; overflow-y: auto; 
+            box-shadow: 0 -10px 40px rgba(0,0,0,0.1);
+        }
+        .dark .modal-content { background: #1C1C1E; color: #FFFFFF; box-shadow: 0 -10px 40px rgba(0,0,0,0.5); }
+        @keyframes slideUpSheet { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        
+        /* Tables */
+        .table-custom { width: 100%; border-collapse: collapse; margin-top: 8px; }
+        .table-custom th { color: #8E8E93; font-size: 11px; font-weight: 700; text-align: left; padding: 12px 8px; border-bottom: 1px solid rgba(0,0,0,0.05); text-transform: uppercase; letter-spacing: 0.8px; }
+        .table-custom td { padding: 16px 8px; font-size: 15px; font-weight: 600; border-bottom: 1px solid rgba(0,0,0,0.03); color: #1C1C1E; vertical-align: middle; }
+        .dark .table-custom th { border-bottom-color: rgba(255,255,255,0.05); }
+        .dark .table-custom td { border-bottom-color: rgba(255,255,255,0.05); color: #FFFFFF; }
+        
+        /* Toast */
+        #toast { 
+            position: fixed; top: calc(40px + env(safe-area-inset-top)); left: 50%; transform: translateX(-50%) translateY(-150px) scale(0.9);
+            background: rgba(0,0,0,0.85); backdrop-filter: blur(16px); color: #FFFFFF; 
+            padding: 14px 28px; border-radius: 99px; z-index: 200; font-size: 14px; font-weight: 600;
+            display: flex; align-items: center; gap: 10px; opacity: 0; transition: all 0.4s cubic-bezier(0.32, 0.72, 0, 1);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15); letter-spacing: 0.3px;
+        }
+        .dark #toast { background: rgba(255,255,255,0.95); color: #000000; }
+        #toast.show { transform: translateX(-50%) translateY(0) scale(1); opacity: 1; }
+
+        /* Loader */
+        #global-loader {
+            position: fixed; inset: 0; background: rgba(242, 242, 247, 0.85); backdrop-filter: blur(20px);
+            z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center;
+            opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+        }
+        .dark #global-loader { background: rgba(0, 0, 0, 0.85); }
+        #global-loader.show { opacity: 1; pointer-events: all; }
+        .spinner { width: 44px; height: 44px; border: 4px solid rgba(0, 122, 255, 0.15); border-top-color: #007AFF; border-radius: 50%; animation: spin 1s cubic-bezier(0.55, 0.15, 0.45, 0.85) infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .header-sticky { 
+            background: rgba(245, 245, 247, 0.75); backdrop-filter: blur(30px) saturate(180%); -webkit-backdrop-filter: blur(30px) saturate(180%);
+            position: sticky; top: 0; z-index: 10; display: flex; align-items: center; justify-content: space-between; 
+            padding: calc(16px + env(safe-area-inset-top)) 24px 16px; border-bottom: 0.5px solid rgba(0,0,0,0.03); gap: 8px;
+        }
+        .dark .header-sticky { background: rgba(0, 0, 0, 0.75); border-bottom-color: rgba(255,255,255,0.08); }
+        
+        /* ==================== ULTIMATE ANTI-BROWSER LOCK ==================== */
+        html, body {
+            overscroll-behavior: none !important;
+            -webkit-overflow-scrolling: touch !important;
+        }
+        html, body, .app-container, * {
+            -webkit-text-size-adjust: 100% !important;
+            -moz-text-size-adjust: 100% !important;
+            text-size-adjust: 100% !important;
+            touch-action: manipulation !important;
+            -webkit-tap-highlight-color: transparent !important;
+        }
+        
+        /* Touch Callout Lock: Stops UI elements from showing long-press menus */
+        .glass-card, button, .nav-item, .squircle {
+            -webkit-touch-callout: none !important;
+            user-select: none !important; 
+        }
+        /* Keeps inputs copy-paste friendly */
+        input, textarea {
+            -webkit-touch-callout: default !important;
+            user-select: auto !important;
+        }
+
+        button, input, select, textarea, .input-box, .btn-primary, .btn-ios-share {
+            -webkit-appearance: none !important;
+            -moz-appearance: none !important;
+            appearance: none !important;
+            font-size: 16px !important;           
+        }
+        button { white-space: nowrap !important; word-break: keep-all !important; }
+
+        /* Premium Inputs */
+        .input-box { 
+            width: 100%; 
+            background: rgba(118, 118, 128, 0.08); 
+            border: 1px solid rgba(0,0,0,0.02); 
+            border-radius: 16px; 
+            padding: 16px 20px !important; 
+            outline: none; 
+            font-weight: 500; 
+            transition: all 0.3s ease;
+            color: #1C1C1E;
+            font-size: 16px !important;
+            min-height: 52px !important;
+        }
+        .dark .input-box { background: rgba(118, 118, 128, 0.18); border-color: rgba(255,255,255,0.02); color: #FFFFFF; }
+        .input-box:focus { background: rgba(118, 118, 128, 0.12); box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.15); border-color: transparent; }
+
+        /* Premium iOS Buttons */
+        .btn-primary { 
+            background: #007AFF; 
+            color: #FFFFFF; 
+            padding: 16px !important; 
+            border-radius: 18px; 
+            font-weight: 600; 
+            letter-spacing: 0.3px;
+            border: none; 
+            cursor: pointer; 
+            width: 100%;
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            gap: 8px; 
+            transition: transform 0.2s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.2s ease;
+            font-size: 17px !important;
+            min-height: 54px !important;
+            flex-shrink: 0 !important;
+            box-shadow: 0 4px 14px rgba(0, 122, 255, 0.25);
+        }
+        .btn-primary:active { transform: scale(0.96); opacity: 0.85; }
+        
+        .btn-google { background: #FFFFFF; color: #000000; box-shadow: 0 4px 14px rgba(0,0,0,0.06), inset 0 1px 1px #FFF; }
+        .dark .btn-google { background: #2C2C2E; color: #FFFFFF; box-shadow: 0 4px 14px rgba(0,0,0,0.3), inset 0 1px 1px rgba(255,255,255,0.1); }
+
+        /* Tinted Premium Action Buttons */
+        .btn-ios-share {
+            background: rgba(0, 122, 255, 0.1);
+            color: #007AFF;
+            border: 1px solid rgba(0, 122, 255, 0.15);
+            font-weight: 700;
+            border-radius: 14px !important;
+            padding: 8px 16px !important;
+            min-height: 38px !important;
+            font-size: 14px !important;
+            display: flex; align-items: center; gap: 6px;
+            transition: all 0.2s ease;
+            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+        }
+        .dark .btn-ios-share { background: rgba(10, 132, 255, 0.15); color: #5E5CE6; border-color: rgba(10, 132, 255, 0.2); }
+        .btn-ios-share:active { transform: scale(0.95); background: rgba(0, 122, 255, 0.2); }
+
+        .btn-ios-add {
+            background: rgba(52, 199, 89, 0.1);
+            color: #34C759;
+            border: 1px solid rgba(52, 199, 89, 0.15);
+            font-weight: 700;
+            border-radius: 14px !important;
+            padding: 8px 16px !important;
+            min-height: 38px !important;
+            font-size: 14px !important;
+            display: flex; align-items: center; gap: 6px;
+            transition: all 0.2s ease;
+        }
+        .btn-ios-add:active { transform: scale(0.95); background: rgba(52, 199, 89, 0.2); }
+
+        .action-btn { 
+            background: rgba(255,59,48,0.1) !important; 
+            color: #FF3B30 !important; 
+            border-radius: 12px !important; 
+            border: none !important; 
+            cursor: pointer !important; 
+            transition: transform 0.2s !important; 
+            align-items: center !important; 
+            justify-content: center !important; 
+            display: inline-flex !important;
+            min-width: 36px !important;
+            min-height: 36px !important;
+            flex-shrink: 0 !important;
+        }
+        .action-btn:active { transform: scale(0.85) !important; background: rgba(255,59,48,0.2) !important; }
+
+        select, input[type="date"], input[type="number"] { font-size: 16px !important; }
+        .w-8, .w-9, .w-10, .w-12 { flex-shrink: 0 !important; }
+
+        /* 🔥 PREMIUM DIARY STYLING 🔥 */
+        .diary-paper {
+            background-color: #FFFFFF;
+            border: 1px solid rgba(0,0,0,0.03);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.04), inset 0 2px 15px rgba(0,0,0,0.01);
+            border-radius: 24px; 
+            position: relative; 
+            overflow: hidden;
+        }
+        .dark .diary-paper {
+            background-color: #151516;
+            border: 1px solid rgba(255,255,255,0.04);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.4), inset 0 2px 15px rgba(0,0,0,0.2);
+        }
+        .diary-textarea {
+            line-height: 1.8; 
+            padding: 24px;
+            font-family: 'Georgia', serif; 
+            font-size: 17px; 
+            font-style: italic; 
+            overflow-y: auto;
+            width: 100%;
+            height: 100%;
+            min-height: 250px;
+            resize: none;
+            background: transparent;
+            border: none;
+            outline: none;
+        }
+        .diary-card { border-left: 4px solid #F5A623; transition: transform 0.2s, box-shadow 0.2s; }
+        
+        /* Squircle Icon Style for Lists */
+        .squircle {
+            border-radius: 14px;
+            box-shadow: inset 0 1px 1px rgba(255,255,255,0.2);
+        }
+
+        h1, h2, h3, h4 { letter-spacing: -0.02em; }
+    </style>
+    
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Aarish Pro">
+    <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/2965/2965358.png">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2965/2965358.png">
+</head>
+
+<body>
+
+<div class="ambient-glow"></div>
+<div class="ambient-glow-2"></div>
+
+<div id="login-screen" style="position: fixed; inset: 0; background: #000; display: flex; align-items: center; justify-content: center; z-index: 9999; overflow: hidden;">
+    <div style="position:absolute; top:-20%; left:-20%; width: 70%; height: 70%; background: radial-gradient(circle, #007AFF 0%, transparent 70%); opacity: 0.3; filter: blur(80px);"></div>
+    <div class="glass-card" style="width: 90%; max-width: 360px; text-align: center; position: relative; z-index: 1; background: rgba(28,28,30,0.8); border: 1px solid rgba(255,255,255,0.1);">
+        <div class="w-20 h-20 mx-auto bg-blue-500/20 shrink-0 rounded-[20px] flex items-center justify-center mb-6 box-shadow: 0 0 20px rgba(0,122,255,0.3);"><i class="fa-solid fa-leaf text-4xl text-blue-500"></i></div>
+        <h2 style="font-size:28px; font-weight:800; color:#FFF; margin-bottom: 4px; letter-spacing: -0.5px;" class="truncate w-full min-w-0">Aarish Dairy</h2>
+        <p style="color:#8E8E93; font-size:12px; margin-bottom: 36px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px;" class="truncate w-full min-w-0">Pro Financial Hub</p>
+        <button onclick="haptic(); handleGoogleLogin()" class="btn-primary btn-google shrink-0 w-full flex items-center justify-center gap-3" style="background:#FFF; color:#000;">
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="G" style="width: 20px; height: 20px;" class="shrink-0"> <span class="truncate flex-1 min-w-0 text-left font-bold">Continue with Google</span>
+        </button>
+    </div>
+</div>
+
+<div id="main-app" class="app-container hidden">
+
+    <div id="global-loader"><div class="spinner"></div><div style="margin-top: 18px; font-size: 12px; font-weight: 700; color:#8E8E93; letter-spacing: 1.5px;" id="loader-text">SYNCING DATA...</div></div>
+    <div id="toast"><i class="fa-solid fa-circle-check" style="color: #34C759; text-shadow: 0 0 10px rgba(52,199,89,0.5);"></i><span id="toast-msg" class="ml-1">Success</span></div>
+
+    <div id="home-screen" class="screen active">
+        <div class="header-sticky">
+            <div class="min-w-0 flex-1">
+                <h1 class="text-[26px] font-extrabold tracking-tight truncate w-full">Dashboard</h1>
+                <p class="text-[10px] text-[#007AFF] font-bold tracking-widest uppercase truncate w-full mt-0.5">Aarish Dairy</p>
+            </div>
+            <div class="flex gap-2 items-center shrink-0">
+                <button id="install-app-btn" onclick="haptic(); installAppPWA()" class="hidden w-10 h-10 shrink-0 rounded-full bg-[#007AFF]/10 text-[#007AFF] flex items-center justify-center shadow-sm font-bold transition-transform active:scale-95" title="Install App"><i class="fa-solid fa-download text-[15px]"></i></button>
+                <button onclick="haptic(); downloadExcel()" class="w-10 h-10 shrink-0 rounded-full bg-green-500/10 text-green-600 flex items-center justify-center shadow-sm transition-transform active:scale-95" title="Download Excel"><i class="fa-solid fa-file-csv text-[15px]"></i></button>
+                <button onclick="haptic(); toggleTheme()" class="w-10 h-10 shrink-0 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center transition-transform active:scale-95"><i class="fa-solid fa-moon text-[15px] dark:hidden text-gray-700"></i><i class="fa-solid fa-sun text-[15px] hidden dark:block text-yellow-400 drop-shadow-[0_0_8px_rgba(250,204,21,0.5)]"></i></button>
+                <button onclick="haptic(); logout()" class="w-10 h-10 shrink-0 rounded-full bg-red-500/10 text-red-500 flex items-center justify-center transition-transform active:scale-95"><i class="fa-solid fa-arrow-right-from-bracket text-[15px]"></i></button>
+            </div>
+        </div>
+        <div class="p-5">
+            <div class="grid grid-cols-2 gap-4">
+                <div class="glass-card flex flex-col justify-center min-w-0 w-full ring-1 ring-white/40 dark:ring-white/5 transition-transform">
+                    <div class="w-11 h-11 shrink-0 squircle bg-green-500/10 flex items-center justify-center mb-3 text-green-500"><i class="fa-solid fa-hand-holding-dollar text-[19px]"></i></div>
+                    <p class="text-[10px] text-gray-500 font-bold uppercase tracking-wider truncate w-full">To Receive (+)</p>
+                    <h3 id="dash-lena" class="text-2xl font-extrabold mt-1 tracking-tight text-green-600 dark:text-green-400 truncate w-full drop-shadow-sm">₹0</h3>
+                </div>
+                <div class="glass-card flex flex-col justify-center min-w-0 w-full ring-1 ring-white/40 dark:ring-white/5 transition-transform">
+                    <div class="w-11 h-11 shrink-0 squircle bg-red-500/10 flex items-center justify-center mb-3 text-red-500"><i class="fa-solid fa-file-invoice text-[19px]"></i></div>
+                    <p class="text-[10px] text-gray-500 font-bold uppercase tracking-wider truncate w-full">To Pay (-)</p>
+                    <h3 id="dash-dena" class="text-2xl font-extrabold mt-1 tracking-tight text-red-500 dark:text-red-400 truncate w-full drop-shadow-sm">₹0</h3>
+                </div>
+                <div class="glass-card flex flex-col justify-center min-w-0 w-full ring-1 ring-white/40 dark:ring-white/5 transition-transform">
+                    <div class="w-11 h-11 shrink-0 squircle bg-orange-500/10 flex items-center justify-center mb-3 text-orange-500"><i class="fa-solid fa-receipt text-[19px]"></i></div>
+                    <p class="text-[10px] text-gray-500 font-bold uppercase tracking-wider truncate w-full">Month Expense</p>
+                    <h3 id="dash-expenses" class="text-2xl font-extrabold mt-1 tracking-tight truncate w-full">₹0</h3>
+                </div>
+                <div class="glass-card flex flex-col justify-center min-w-0 w-full ring-1 ring-white/40 dark:ring-white/5 transition-transform">
+                    <div class="w-11 h-11 shrink-0 squircle bg-blue-500/10 flex items-center justify-center mb-3 text-[#007AFF]"><i class="fa-solid fa-money-bill-trend-up text-[19px]"></i></div>
+                    <p class="text-[10px] text-gray-500 font-bold uppercase tracking-wider truncate w-full">Month Profit</p>
+                    <h3 id="dash-profit" class="text-2xl font-extrabold mt-1 tracking-tight truncate w-full">₹0</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="milk-screen" class="screen">
+        <div class="header-sticky">
+            <h1 class="text-2xl font-extrabold truncate flex-1 min-w-0">Milk Record</h1>
+            <button onclick="haptic(); openModal('add-milk-customer-modal')" class="btn-primary w-auto px-5 py-2 !min-h-[38px] text-sm !rounded-[14px]"><i class="fa-solid fa-plus"></i> New</button>
+        </div>
+        <div class="p-5">
+            <div class="relative w-full mb-6">
+                <i class="fa-solid fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                <input id="milk-search" type="text" placeholder="Search customer..." class="input-box w-full pl-11" onkeyup="filterMilkList()">
+            </div>
+            <div id="milk-list" class="space-y-3.5 w-full"></div>
+        </div>
+    </div>
+
+    <div id="milk-detail-screen" class="screen">
+        <div class="header-sticky">
+            <div class="flex items-center gap-3 w-full min-w-0">
+                <button onclick="haptic(); switchTab('milk')" class="w-10 h-10 shrink-0 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center transition-transform active:scale-95"><i class="fa-solid fa-chevron-left"></i></button>
+                <h1 id="milk-detail-title" class="text-xl font-extrabold truncate flex-1 min-w-0 w-full">Customer</h1>
+            </div>
+        </div>
+        <div class="p-5">
+            <div class="flex gap-2 mb-5 w-full">
+                <select id="filter-month-milk" class="input-box flex-1 min-w-0 py-2 px-4 text-[15px] font-semibold truncate cursor-pointer" onchange="updateMonthFilter()"></select>
+                <select id="filter-year-milk" class="input-box w-[100px] shrink-0 py-2 px-4 text-[15px] font-semibold cursor-pointer" onchange="updateMonthFilter()"></select>
+            </div>
+
+            <div class="glass-card mb-6 flex justify-between items-center bg-gradient-to-br from-[#34C759] to-[#28a745] text-white border-none shadow-[0_8px_24px_rgba(52,199,89,0.3)] ring-1 ring-white/30 w-full min-w-0 gap-3">
+                <div class="flex-1 min-w-0">
+                    <p class="text-[11px] font-bold uppercase opacity-90 tracking-wider truncate w-full drop-shadow-sm">Month Bill</p>
+                    <h3 id="milk-detail-bill" class="text-[32px] font-extrabold mt-1 tracking-tight truncate w-full drop-shadow-md">₹0</h3>
+                </div>
+                <div class="text-right shrink-0">
+                    <p class="text-[11px] font-bold uppercase opacity-90 tracking-wider truncate w-full drop-shadow-sm">Total Milk</p>
+                    <h3 id="milk-detail-kg" class="text-xl font-bold mt-1 truncate w-full drop-shadow-md">0 KG</h3>
+                </div>
+            </div>
+            
+            <div class="flex justify-between items-center mb-4 w-full min-w-0 gap-2">
+                <h3 class="font-bold text-[19px] tracking-tight truncate flex-1 min-w-0">Daily Entries</h3>
+                <div class="flex gap-2 shrink-0">
+                    <button onclick="haptic(); generateAndShareBill()" class="btn-ios-share"><i class="fa-solid fa-arrow-up-right-from-square"></i> Share</button>
+                    <button onclick="haptic(); openMilkEntryModal()" class="btn-ios-add"><i class="fa-solid fa-plus"></i> Add</button>
+                </div>
+            </div>
+            
+            <div class="glass-card p-0 overflow-x-auto w-full ring-1 ring-white/40 dark:ring-white/5">
+                <table class="table-custom min-w-full">
+                    <thead class="bg-black/5 dark:bg-white/5">
+                        <tr><th>Date</th><th>Morning</th><th>Evening</th><th>Total</th><th class="text-right"></th></tr>
+                    </thead>
+                    <tbody id="milk-detail-records"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div id="salary-screen" class="screen">
+        <div class="header-sticky">
+            <h1 class="text-2xl font-extrabold truncate flex-1 min-w-0">Salary Record</h1>
+            <button onclick="haptic(); openModal('add-salary-person-modal')" class="btn-primary w-auto px-5 py-2 !min-h-[38px] text-sm !rounded-[14px] !bg-[#10B981] !shadow-[0_4px_14px_rgba(16,185,129,0.25)]"><i class="fa-solid fa-plus"></i> New</button>
+        </div>
+        <div class="p-5">
+            <div class="relative w-full mb-6">
+                <i class="fa-solid fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                <input id="salary-search" type="text" placeholder="Search name..." class="input-box w-full pl-11" onkeyup="filterSalaryList()">
+            </div>
+            <div id="salary-list" class="space-y-3.5 w-full"></div>
+        </div>
+    </div>
+
+    <div id="salary-detail-screen" class="screen">
+        <div class="header-sticky">
+            <div class="flex items-center gap-3 w-full min-w-0">
+                <button onclick="haptic(); switchTab('salary')" class="w-10 h-10 shrink-0 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center transition-transform active:scale-95"><i class="fa-solid fa-chevron-left"></i></button>
+                <h1 id="salary-detail-title" class="text-xl font-extrabold truncate flex-1 min-w-0 w-full">Employee</h1>
+            </div>
+        </div>
+        <div class="p-5">
+            <div class="flex gap-2 mb-5 w-full">
+                <select id="filter-month-salary" class="input-box flex-1 min-w-0 py-2 px-4 text-[15px] font-semibold truncate cursor-pointer" onchange="updateMonthFilter()"></select>
+                <select id="filter-year-salary" class="input-box w-[100px] shrink-0 py-2 px-4 text-[15px] font-semibold cursor-pointer" onchange="updateMonthFilter()"></select>
+            </div>
+
+            <div class="glass-card mb-6 flex justify-between items-center bg-gradient-to-br from-[#10B981] to-[#059669] text-white border-none shadow-[0_8px_24px_rgba(16,185,129,0.3)] ring-1 ring-white/30 w-full min-w-0 gap-3">
+                <div class="flex-1 min-w-0">
+                    <p class="text-[11px] font-bold uppercase opacity-90 tracking-wider truncate w-full drop-shadow-sm">Total Salary (This Month)</p>
+                    <h3 id="salary-detail-total" class="text-[32px] font-extrabold mt-1 tracking-tight truncate w-full drop-shadow-md">₹0</h3>
+                </div>
+            </div>
+            
+            <div class="flex justify-between items-center mb-4 w-full min-w-0 gap-2">
+                <h3 class="font-bold text-[19px] tracking-tight truncate flex-1 min-w-0">Daily Entries</h3>
+                <div class="flex gap-2 shrink-0">
+                    <button onclick="haptic(); shareSalaryBill(activeSalaryPerson)" class="btn-ios-share"><i class="fa-solid fa-arrow-up-right-from-square"></i> Share</button>
+                    <button onclick="haptic(); openSalaryEntryModal(activeSalaryPerson)" class="btn-ios-add !bg-[#10B981]/10 !text-[#10B981] !border-[#10B981]/20"><i class="fa-solid fa-plus"></i> Add</button>
+                </div>
+            </div>
+            
+            <div class="glass-card p-0 overflow-x-auto w-full ring-1 ring-white/40 dark:ring-white/5">
+                <table class="table-custom min-w-full">
+                    <thead class="bg-black/5 dark:bg-white/5">
+                        <tr><th>Date</th><th>Amount</th><th class="text-right"></th></tr>
+                    </thead>
+                    <tbody id="salary-detail-records"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div id="udhar-screen" class="screen">
+        <div class="header-sticky">
+            <h1 class="text-2xl font-extrabold truncate flex-1 min-w-0">Credit Book</h1>
+            <button onclick="haptic(); openUdharModal()" class="btn-primary w-auto px-5 py-2 !min-h-[38px] text-sm !rounded-[14px] !bg-[#007AFF] !shadow-[0_4px_14px_rgba(0,122,255,0.25)]"><i class="fa-solid fa-plus"></i> Entry</button>
+        </div>
+        <div class="p-5">
+            <div class="glass-card mb-6 flex justify-between items-center bg-gradient-to-br from-[#007AFF] to-[#0056b3] text-white border-none shadow-[0_8px_24px_rgba(0,122,255,0.3)] ring-1 ring-white/30 w-full min-w-0 gap-3">
+                <div class="flex-1 min-w-0">
+                    <p class="text-[11px] font-bold uppercase opacity-90 tracking-wider truncate w-full drop-shadow-sm">To Receive (+)</p>
+                    <h3 id="udhar-total-lena" class="text-2xl font-extrabold mt-1 tracking-tight text-blue-100 truncate w-full drop-shadow-md">₹0</h3>
+                </div>
+                <div class="text-right shrink-0">
+                    <p class="text-[11px] font-bold uppercase opacity-90 tracking-wider truncate w-full drop-shadow-sm">To Pay (-)</p>
+                    <h3 id="udhar-total-dena" class="text-xl font-bold mt-1 text-blue-200 truncate w-full drop-shadow-md">₹0</h3>
+                </div>
+            </div>
+
+            <div class="relative w-full mb-6">
+                <i class="fa-solid fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                <input id="udhar-search" type="text" placeholder="Search name..." class="input-box w-full pl-11" onkeyup="filterUdharList()">
+            </div>
+            <div id="udhar-list" class="space-y-3.5 w-full"></div>
+        </div>
+    </div>
+
+    <div id="udhar-detail-screen" class="screen">
+        <div class="header-sticky">
+            <div class="flex items-center gap-3 w-full min-w-0">
+                <button onclick="haptic(); switchTab('udhar')" class="w-10 h-10 shrink-0 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center transition-transform active:scale-95"><i class="fa-solid fa-chevron-left"></i></button>
+                <h1 id="udhar-detail-title" class="text-xl font-extrabold truncate flex-1 min-w-0 w-full">Customer</h1>
+            </div>
+        </div>
+        <div class="p-5">
+            <div class="glass-card mb-6 flex justify-between items-center text-white border-none shadow-[0_8px_24px_rgba(0,0,0,0.1)] ring-1 ring-white/30 w-full min-w-0" id="udhar-detail-card">
+                <div class="flex-1 min-w-0">
+                    <p class="text-[11px] font-bold uppercase opacity-90 tracking-wider truncate w-full drop-shadow-sm" id="udhar-detail-status">Net Balance</p>
+                    <h3 id="udhar-detail-total" class="text-[32px] font-extrabold mt-1 tracking-tight truncate w-full drop-shadow-md">₹0</h3>
+                </div>
+            </div>
+
+            <div class="flex justify-between items-center mb-4 w-full min-w-0 gap-2">
+                <h3 class="font-bold text-[19px] tracking-tight truncate flex-1 min-w-0">All Entries</h3>
+                <div class="flex gap-2 shrink-0">
+                    <button onclick="haptic(); shareUdharBill()" class="btn-ios-share"><i class="fa-solid fa-arrow-up-right-from-square"></i> Share</button>
+                    <button onclick="haptic(); openUdharModal(activeUdharPerson)" class="btn-ios-share !bg-gray-500/10 !text-gray-700 dark:!text-gray-300 !border-gray-500/20"><i class="fa-solid fa-plus"></i> Add</button>
+                </div>
+            </div>
+
+            <div class="glass-card p-0 overflow-x-auto w-full ring-1 ring-white/40 dark:ring-white/5">
+                <table class="table-custom min-w-full">
+                    <thead class="bg-black/5 dark:bg-white/5">
+                        <tr><th>Date</th><th>Detail</th><th>Amount</th><th class="text-right"></th></tr>
+                    </thead>
+                    <tbody id="udhar-detail-records"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div id="expenses-screen" class="screen">
+        <div class="header-sticky">
+            <h1 class="text-2xl font-extrabold truncate flex-1 min-w-0">Expenses</h1>
+            <div class="flex gap-2 shrink-0">
+                <button onclick="haptic(); shareAllExpensesBill()" class="btn-ios-share !rounded-full !px-3 !py-2"><i class="fa-solid fa-arrow-up-right-from-square m-0"></i></button>
+                <button onclick="haptic(); openModal('add-expense-modal')" class="btn-primary w-auto px-5 py-2 !min-h-[38px] text-sm !rounded-[14px] !bg-[#FF3B30] !shadow-[0_4px_14px_rgba(255,59,48,0.25)]"><i class="fa-solid fa-plus"></i> Add</button>
+            </div>
+        </div>
+        <div class="p-5">
+            <div class="flex gap-2 mb-5 w-full">
+                <select id="filter-month-exp" class="input-box flex-1 min-w-0 py-2 px-4 text-[15px] font-semibold truncate cursor-pointer" onchange="updateMonthFilter()"></select>
+                <select id="filter-year-exp" class="input-box w-[100px] shrink-0 py-2 px-4 text-[15px] font-semibold cursor-pointer" onchange="updateMonthFilter()"></select>
+            </div>
+            
+            <div class="glass-card mb-6 bg-red-500/10 border border-red-500/20 w-full min-w-0 shadow-[0_8px_20px_rgba(255,59,48,0.05)]">
+                <p class="text-[11px] text-red-600 dark:text-red-400 font-bold uppercase tracking-wider truncate w-full">Total Month Expenses</p>
+                <h3 id="total-expense-display" class="text-3xl font-extrabold mt-1 tracking-tight text-red-600 dark:text-red-400 truncate w-full">₹0</h3>
+            </div>
+            
+            <div id="expense-list-container" class="space-y-3.5 w-full"></div>
+        </div>
+    </div>
+
+    <div id="expense-detail-screen" class="screen">
+        <div class="header-sticky">
+            <div class="flex items-center gap-3 w-full min-w-0">
+                <button onclick="haptic(); switchTab('expenses')" class="w-10 h-10 shrink-0 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center transition-transform active:scale-95"><i class="fa-solid fa-chevron-left"></i></button>
+                <h1 id="expense-detail-title" class="text-xl font-extrabold truncate flex-1 min-w-0 w-full">Expense Detail</h1>
+            </div>
+        </div>
+        <div class="p-5">
+            <div class="glass-card mb-6 flex justify-between items-center bg-gradient-to-br from-[#FF4B4B] to-[#D92A2A] text-white border-none shadow-[0_8px_24px_rgba(255,59,48,0.3)] ring-1 ring-white/30 w-full min-w-0 gap-3">
+                <div class="flex-1 min-w-0">
+                    <p class="text-[11px] font-bold uppercase opacity-90 tracking-wider truncate w-full drop-shadow-sm">Total Product Expense</p>
+                    <h3 id="expense-detail-total" class="text-[32px] font-extrabold mt-1 tracking-tight truncate w-full drop-shadow-md">₹0</h3>
+                </div>
+            </div>
+
+            <div class="flex justify-between items-center mb-4 w-full min-w-0 gap-2">
+                <h3 class="font-bold text-[19px] tracking-tight truncate flex-1 min-w-0">All Entries</h3>
+                <div class="flex gap-2 shrink-0">
+                    <button onclick="haptic(); shareExpenseCategoryBill()" class="btn-ios-share"><i class="fa-solid fa-arrow-up-right-from-square"></i> Share</button>
+                    <button onclick="haptic(); openExpenseEntryModal()" class="btn-ios-add !bg-[#FF3B30]/10 !text-[#FF3B30] !border-[#FF3B30]/20"><i class="fa-solid fa-plus"></i> Add</button>
+                </div>
+            </div>
+
+            <div class="glass-card p-0 overflow-x-auto w-full ring-1 ring-white/40 dark:ring-white/5">
+                <table class="table-custom min-w-full">
+                    <thead class="bg-black/5 dark:bg-white/5">
+                        <tr><th>Date</th><th>Amount</th><th class="text-right"></th></tr>
+                    </thead>
+                    <tbody id="expense-detail-records"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div id="diary-screen" class="screen">
+        <div class="header-sticky">
+            <h1 class="text-2xl font-extrabold truncate flex-1 min-w-0">Personal Diary</h1>
+            <button onclick="haptic(); openDiaryModal()" class="btn-primary w-auto px-5 py-2 !min-h-[38px] text-sm !rounded-[14px] !bg-[#F5A623] !shadow-[0_4px_14px_rgba(245,166,35,0.25)] !text-white">
+                <i class="fa-solid fa-pen-nib"></i> New
+            </button>
+        </div>
+        <div class="p-5">
+            <div class="relative w-full mb-6">
+                <i class="fa-solid fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                <input id="diary-search" type="text" placeholder="Search entries..." class="input-box w-full pl-11" onkeyup="filterDiaryList()">
+            </div>
+            <div id="diary-list" class="space-y-3.5 w-full"></div>
+        </div>
+    </div>
+
+    <div id="diary-detail-screen" class="screen">
+        <div class="header-sticky">
+            <div class="flex items-center gap-3 w-full min-w-0">
+                <button onclick="haptic(); switchTab('diary')" class="w-10 h-10 shrink-0 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center transition-transform active:scale-95"><i class="fa-solid fa-chevron-left"></i></button>
+                <h1 class="text-xl font-extrabold truncate flex-1 min-w-0 w-full">Diary Page</h1>
+                <div class="flex gap-2 shrink-0">
+                    <button onclick="haptic(); shareDiaryBill(activeDiaryIndex)" class="btn-ios-share !rounded-full !px-3 !py-2"><i class="fa-solid fa-arrow-up-right-from-square m-0"></i></button>
+                    <button onclick="haptic(); openDiaryModal(activeDiaryIndex)" class="btn-ios-share !bg-[#F5A623]/10 !text-[#F5A623] !border-[#F5A623]/20 !rounded-full !px-3 !py-2"><i class="fa-solid fa-pen m-0"></i></button>
+                    <button onclick="haptic(); deleteDiary(activeDiaryIndex, true)" class="btn-ios-share !bg-[#FF3B30]/10 !text-[#FF3B30] !border-[#FF3B30]/20 !rounded-full !px-3 !py-2"><i class="fa-solid fa-trash m-0"></i></button>
+                </div>
+            </div>
+        </div>
+        <div class="p-5">
+            <div class="diary-paper w-full p-8 min-h-[400px]">
+                <h2 id="diary-view-title" class="text-[30px] font-bold mb-2 text-[#F5A623] break-words leading-tight tracking-tight"></h2>
+                <p id="diary-view-date" class="text-xs text-gray-400 font-bold uppercase tracking-widest mb-8"></p>
+                <div id="diary-view-content" class="text-gray-800 dark:text-gray-200 font-serif text-[18px] leading-[1.9] whitespace-pre-wrap break-words italic"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="bottom-nav" id="bottomNav">
+        <div onclick="haptic(); switchTab('home')" class="nav-item active shrink-0" id="tab-home"><i class="fa-solid fa-house"></i>Home</div>
+        <div onclick="haptic(); switchTab('milk')" class="nav-item shrink-0" id="tab-milk"><i class="fa-solid fa-jug-detergent"></i>Milk</div>
+        <div onclick="haptic(); switchTab('udhar')" class="nav-item shrink-0" id="tab-udhar"><i class="fa-solid fa-hand-holding-dollar"></i>Credit</div>
+        <div onclick="haptic(); switchTab('expenses')" class="nav-item shrink-0" id="tab-expenses"><i class="fa-solid fa-receipt"></i>Expenses</div>
+        <div onclick="haptic(); switchTab('salary')" class="nav-item shrink-0" id="tab-salary"><i class="fa-solid fa-sack-dollar"></i>Salary</div>
+        <div onclick="haptic(); switchTab('diary')" class="nav-item shrink-0" id="tab-diary"><i class="fa-solid fa-book"></i>Diary</div>
+    </div>
+
+    <div id="add-milk-customer-modal" class="modal-overlay" onclick="if(event.target.id==='add-milk-customer-modal')closeModal('add-milk-customer-modal')">
+        <div class="modal-content" onclick="event.stopImmediatePropagation()">
+            <div class="w-12 h-1.5 bg-gray-300 dark:bg-gray-600 shrink-0 rounded-full mx-auto mb-8"></div>
+            <h2 class="text-2xl font-extrabold mb-6 truncate w-full">New Customer</h2>
+            <input id="new-milk-name" class="input-box mb-4 w-full" placeholder="Customer Name">
+            <input id="new-milk-rate" type="number" class="input-box mb-8 w-full" placeholder="Rate per KG (₹)">
+            <input type="hidden" id="new-milk-type" value="lene_wala">
+            
+            <div class="flex gap-4 w-full min-w-0">
+                <button onclick="document.getElementById('new-milk-type').value='dene_wala'; haptic(); addMilkCustomer();" class="btn-primary flex-1 min-w-0 !bg-[#34C759] !shadow-[0_4px_14px_rgba(52,199,89,0.25)]"><i class="fa-solid fa-arrow-down"></i> Seller</button>
+                <button onclick="document.getElementById('new-milk-type').value='lene_wala'; haptic(); addMilkCustomer();" class="btn-primary flex-1 min-w-0 !bg-[#FF3B30] !shadow-[0_4px_14px_rgba(255,59,48,0.25)]"><i class="fa-solid fa-arrow-up"></i> Buyer</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="add-milk-entry-modal" class="modal-overlay" onclick="if(event.target.id==='add-milk-entry-modal')closeModal('add-milk-entry-modal')">
+        <div class="modal-content" onclick="event.stopImmediatePropagation()">
+            <div class="w-12 h-1.5 bg-gray-300 dark:bg-gray-600 shrink-0 rounded-full mx-auto mb-8"></div>
+            <h2 class="text-2xl font-extrabold mb-6 truncate w-full">Daily Milk Entry</h2>
+            <input type="date" id="milk-entry-date" class="input-box mb-4 w-full">
+            <div class="grid grid-cols-2 gap-4 mb-8 w-full">
+                <input type="number" step="0.01" id="milk-morning-kg" class="input-box w-full" placeholder="Morning KG">
+                <input type="number" step="0.01" id="milk-evening-kg" class="input-box w-full" placeholder="Evening KG">
+            </div>
+            <button onclick="haptic(); saveMilkEntry()" class="btn-primary shrink-0 w-full !bg-[#34C759] !shadow-[0_4px_14px_rgba(52,199,89,0.25)]"><i class="fa-solid fa-check"></i> Save Entry</button>
+        </div>
+    </div>
+
+    <div id="add-salary-person-modal" class="modal-overlay" onclick="if(event.target.id==='add-salary-person-modal')closeModal('add-salary-person-modal')">
+        <div class="modal-content" onclick="event.stopImmediatePropagation()">
+            <div class="w-12 h-1.5 bg-gray-300 dark:bg-gray-600 shrink-0 rounded-full mx-auto mb-8"></div>
+            <h2 class="text-2xl font-extrabold mb-6 truncate w-full">New Employee</h2>
+            <input id="new-salary-name" class="input-box mb-4 w-full" placeholder="Employee Name">
+            <input id="new-salary-company" class="input-box mb-8 w-full" placeholder="Company / Details">
+            <input type="hidden" id="new-salary-type" value="lene_wala">
+            
+            <div class="flex gap-4 w-full min-w-0">
+                <button onclick="document.getElementById('new-salary-type').value='lene_wala'; haptic(); addSalaryPerson();" class="btn-primary flex-1 min-w-0 !bg-[#10B981] !shadow-[0_4px_14px_rgba(16,185,129,0.25)]"><i class="fa-solid fa-arrow-down"></i> Receives</button>
+                <button onclick="document.getElementById('new-salary-type').value='dene_wala'; haptic(); addSalaryPerson();" class="btn-primary flex-1 min-w-0 !bg-[#FF3B30] !shadow-[0_4px_14px_rgba(255,59,48,0.25)]"><i class="fa-solid fa-arrow-up"></i> Pays</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="add-salary-entry-modal" class="modal-overlay" onclick="if(event.target.id==='add-salary-entry-modal')closeModal('add-salary-entry-modal')">
+        <div class="modal-content" onclick="event.stopImmediatePropagation()">
+            <div class="w-12 h-1.5 bg-gray-300 dark:bg-gray-600 shrink-0 rounded-full mx-auto mb-8"></div>
+            <h2 class="text-2xl font-extrabold mb-6 truncate w-full">Add Salary Entry</h2>
+            <input type="date" id="salary-entry-date" class="input-box mb-4 w-full">
+            <input id="salary-entry-amount" type="number" class="input-box mb-8 w-full" placeholder="Amount (₹)">
+            <button onclick="haptic(); saveSalaryEntry()" class="btn-primary shrink-0 w-full !bg-[#10B981] !shadow-[0_4px_14px_rgba(16,185,129,0.25)]"><i class="fa-solid fa-check"></i> Save Entry</button>
+        </div>
+    </div>
+
+    <div id="add-udhar-modal" class="modal-overlay" onclick="if(event.target.id==='add-udhar-modal')closeModal('add-udhar-modal')">
+        <div class="modal-content" onclick="event.stopImmediatePropagation()">
+            <div class="w-12 h-1.5 bg-gray-300 dark:bg-gray-600 shrink-0 rounded-full mx-auto mb-8"></div>
+            <h2 class="text-2xl font-extrabold mb-6 truncate w-full">Credit / Loan Entry</h2>
+            <input type="date" id="udhar-date" class="input-box mb-4 w-full">
+            <input id="udhar-name" type="text" class="input-box mb-4 w-full" placeholder="Name (Given to / Taken from)">
+            <input id="udhar-amount" type="number" class="input-box mb-8 w-full" placeholder="Amount (₹)">
+            <div class="flex gap-4 w-full min-w-0">
+                <button onclick="haptic(); saveUdharEntry('credit')" class="btn-primary flex-1 min-w-0 !bg-[#34C759] !shadow-[0_4px_14px_rgba(52,199,89,0.25)]"><i class="fa-solid fa-arrow-up"></i> Given</button>
+                <button onclick="haptic(); saveUdharEntry('debit')" class="btn-primary flex-1 min-w-0 !bg-[#FF3B30] !shadow-[0_4px_14px_rgba(255,59,48,0.25)]"><i class="fa-solid fa-arrow-down"></i> Taken</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="add-expense-modal" class="modal-overlay" onclick="if(event.target.id==='add-expense-modal')closeModal('add-expense-modal')">
+        <div class="modal-content" onclick="event.stopImmediatePropagation()">
+            <div class="w-12 h-1.5 bg-gray-300 dark:bg-gray-600 shrink-0 rounded-full mx-auto mb-8"></div>
+            <h2 class="text-2xl font-extrabold mb-6 truncate w-full">Add Expense</h2>
+            <input type="date" id="expense-date" class="input-box mb-4 w-full">
+            <input id="expense-category" type="text" class="input-box mb-4 w-full" placeholder="Product / Category Name (e.g. Cheeni)">
+            <input id="expense-amount" type="number" class="input-box mb-8 w-full" placeholder="Amount (₹)">
+            <button onclick="haptic(); saveExpenseEntry()" class="btn-primary shrink-0 w-full !bg-[#FF3B30] !shadow-[0_4px_14px_rgba(255,59,48,0.25)]"><i class="fa-solid fa-check"></i> Save Expense</button>
+        </div>
+    </div>
+
+    <div id="diary-entry-modal" class="modal-overlay" onclick="if(event.target.id==='diary-entry-modal')closeModal('diary-entry-modal')">
+        <div class="modal-content" onclick="event.stopImmediatePropagation()">
+            <div class="w-12 h-1.5 bg-gray-300 dark:bg-gray-600 shrink-0 rounded-full mx-auto mb-6"></div>
+            <h2 class="text-2xl font-extrabold mb-6 truncate w-full" id="diary-modal-title">New Diary Page</h2>
+            <input type="date" id="diary-entry-date" class="input-box mb-4 w-full">
+            <input id="diary-entry-title" type="text" class="input-box mb-6 font-bold w-full text-lg" placeholder="Title of the day">
+            
+            <div class="diary-paper w-full h-[320px] mb-8">
+                <textarea id="diary-entry-content" class="w-full h-full bg-transparent resize-none outline-none diary-textarea text-gray-800 dark:text-gray-200" placeholder="What happened today? Write unlimited here..."></textarea>
+            </div>
+            
+            <button onclick="haptic(); saveDiaryEntry()" class="btn-primary shrink-0 w-full !bg-[#F5A623] !shadow-[0_4px_14px_rgba(245,166,35,0.25)] !text-white"><i class="fa-solid fa-check"></i> Save Page</button>
+        </div>
+    </div>
+
+</div>
+
+<div id="receipt-card" style="position: absolute; left: -9999px; top: 0; width: 380px; background: #fff; padding: 24px; border-radius: 12px; color: #000; font-family: sans-serif; z-index: -10;">
+    <div style="text-align: center; border-bottom: 2px dashed #ddd; padding-bottom: 12px; margin-bottom: 16px;">
+        <h2 style="font-size: 26px; font-weight: 800; color: #34C759; margin:0;">Aarish Dairy</h2>
+        <p style="font-size: 14px; color: #888; margin:0; text-transform: uppercase; letter-spacing: 1px;">Monthly Statement</p>
+    </div>
+    <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+        <b style="font-size: 16px;">Name:</b> <span id="rcpt-name" style="font-size: 16px; font-weight: bold;">-</span>
+    </div>
+    <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+        <b style="font-size: 16px;">Month:</b> <span id="rcpt-month" style="font-size: 16px;">-</span>
+    </div>
+    <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+        <b style="font-size: 16px;">Total Milk:</b> <span id="rcpt-qty" style="font-size: 16px; font-weight: bold;">- KG</span>
+    </div>
+    <div style="display: flex; justify-content: space-between; border-top: 2px dashed #ddd; padding-top: 16px; margin-top: 16px;">
+        <b style="font-size: 22px;">Total Amount:</b> <b id="rcpt-amt" style="font-size: 24px; color: #000;">₹0</b>
+    </div>
+    <div style="text-align: center; margin-top: 24px; font-size: 11px; color: #aaa;">
+        Generated securely via Aarish Dairy Pro
+    </div>
+</div>
+
+<div id="salary-receipt-card" style="position: absolute; left: -9999px; top: 0; width: 380px; background: #fff; padding: 24px; border-radius: 12px; color: #000; font-family: sans-serif; border: 4px solid #10B981; z-index: -10;">
+    <div style="text-align: center; border-bottom: 2px dashed #ddd; padding-bottom: 12px; margin-bottom: 16px;">
+        <div style="font-size: 30px; margin-bottom: 5px;">💰</div>
+        <h2 style="font-size: 24px; font-weight: 800; color: #10B981; margin:0;">Salary Slip</h2>
+        <p style="font-size: 14px; color: #888; margin:0; text-transform: uppercase;">Aarish Dairy Pro</p>
+    </div>
+    <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+        <b style="font-size: 16px;">Employee:</b> <span id="sal-rcpt-name" style="font-size: 16px; font-weight: bold;">-</span>
+    </div>
+    <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+        <b style="font-size: 16px;">Company:</b> <span id="sal-rcpt-company" style="font-size: 16px;">-</span>
+    </div>
+    <div style="display: flex; justify-content: space-between; border-top: 2px dashed #ddd; padding-top: 16px; margin-top: 16px;">
+        <b style="font-size: 20px;">Total Salary:</b> <b id="sal-rcpt-amt" style="font-size: 22px; color: #000;">₹0</b>
+    </div>
+</div>
+
+<div id="expense-receipt-card" style="position: absolute; left: -9999px; top: 0; width: 380px; background: #fff; padding: 24px; border-radius: 12px; color: #000; font-family: sans-serif; border: 4px solid #FF3B30; z-index: -10;">
+    <div style="text-align: center; border-bottom: 2px dashed #ddd; padding-bottom: 12px; margin-bottom: 16px;">
+        <div style="font-size: 30px; margin-bottom: 5px;">🧾</div>
+        <h2 style="font-size: 24px; font-weight: 800; color: #FF3B30; margin:0;">Expense Bill</h2>
+        <p style="font-size: 14px; color: #888; margin:0; text-transform: uppercase;">Aarish Dairy Pro</p>
+    </div>
+    <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+        <b style="font-size: 16px;">Date / Month:</b> <span id="exp-rcpt-date" style="font-size: 16px; font-weight: bold;">-</span>
+    </div>
+    <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+        <b style="font-size: 16px;">Detail:</b> <span id="exp-rcpt-cat" style="font-size: 16px;">-</span>
+    </div>
+    <div style="display: flex; justify-content: space-between; border-top: 2px dashed #ddd; padding-top: 16px; margin-top: 16px;">
+        <b style="font-size: 20px;">Amount:</b> <b id="exp-rcpt-amt" style="font-size: 22px; color: #FF3B30;">₹0</b>
+    </div>
+</div>
+
+<div id="diary-receipt-card" style="position: absolute; left: -9999px; top: 0; width: 400px; background: #FDFBF7; padding: 24px; border-radius: 12px; color: #3f2a1e; font-family: 'Georgia', serif; border: 1px solid #d4b48c; box-shadow: inset 0 0 40px rgba(212, 180, 140, 0.15); z-index: -10;">
+    <div style="border-bottom: 2px solid #d4b48c; padding-bottom: 12px; margin-bottom: 16px;">
+        <p style="font-size: 12px; color: #F5A623; margin:0; font-weight: bold; text-transform: uppercase; font-family: sans-serif;" id="diary-rcpt-date">-</p>
+        <h2 style="font-size: 24px; font-weight: 800; margin:5px 0 0 0;" id="diary-rcpt-title">Title</h2>
+    </div>
+    <div style="font-size: 16px; line-height: 1.8; white-space: pre-wrap; word-wrap: break-word; font-style: italic;" id="diary-rcpt-content">
+        Content goes here...
+    </div>
+    <div style="text-align: right; margin-top: 24px; font-size: 11px; color: #aaa; font-family: sans-serif;">
+        Shared from Aarish Dairy Personal Diary
+    </div>
+</div>
+
+<div id="udhar-receipt-card" style="position: absolute; left: -9999px; top: 0; width: 380px; background: #fff; padding: 24px; border-radius: 12px; color: #000; font-family: sans-serif; border: 4px solid #3B82F6; z-index: -10;">
+    <div style="text-align: center; border-bottom: 2px dashed #ddd; padding-bottom: 12px; margin-bottom: 16px;">
+        <div style="font-size: 30px; margin-bottom: 5px;">🤝</div>
+        <h2 style="font-size: 24px; font-weight: 800; color: #3B82F6; margin:0;">Credit Ledger</h2>
+        <p style="font-size: 14px; color: #888; margin:0; text-transform: uppercase;">Aarish Dairy Pro</p>
+    </div>
+    <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+        <b style="font-size: 16px;">Name:</b> <span id="udh-rcpt-name" style="font-size: 16px; font-weight: bold;">-</span>
+    </div>
+    <div style="display: flex; justify-content: space-between; border-top: 2px dashed #ddd; padding-top: 16px; margin-top: 16px;">
+        <b style="font-size: 20px;" id="udh-rcpt-status">Net Balance:</b> <b id="udh-rcpt-amt" style="font-size: 22px; color: #000;">₹0</b>
+    </div>
+    <div style="text-align: center; margin-top: 24px; font-size: 11px; color: #aaa;">
+        Generated securely via Aarish Dairy Pro
+    </div>
+</div>
+
+<script>
+    // ========================== HAPTICS & THEME ==========================
+    function haptic() { if (navigator.vibrate) navigator.vibrate(45); }
+
+    function toggleTheme() {
+        const html = document.documentElement;
+        if (html.classList.contains('dark')) {
+            html.classList.remove('dark'); localStorage.setItem('theme', 'light');
+        } else {
+            html.classList.add('dark'); localStorage.setItem('theme', 'dark');
+        }
+    }
+    if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        document.documentElement.classList.add('dark');
+    }
+
+    // ========================== FIREBASE CONFIG ==========================
+    const firebaseConfig = {
+        apiKey: "AIzaSyBfmBQwCUVwDh7pBs4QbOyH_y2E4UW_nS8",
+        authDomain: "diary-book-21a91.firebaseapp.com",
+        databaseURL: "https://diary-book-21a91-default-rtdb.firebaseio.com",
+        projectId: "diary-book-21a91",
+        storageBucket: "diary-book-21a91.firebasestorage.app",
+        messagingSenderId: "1012787958774",
+        appId: "1:1012787958774:web:4278ee2987cfd6cd362dd7"
+    };
+
+    let app, auth, database, currentUserUID = null, appDataRef = null;
+    let milkDB = {}, udharDB = [], expenseDB = [], salaryDB = {}, diaryDB = [];
+    let activeMilkCustomer = null;
+    let activeSalaryPerson = null;
+    let activeExpenseCategory = null;
+    let activeUdharPerson = null;
+    let activeDiaryIndex = null;
+    
+    let selectedMonth = new Date().getMonth(), selectedYear = new Date().getFullYear();
+    const DEFAULT_RATE = 55;
+    const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+    // UI Helpers & The iOS Modal Push Animation
+    function showLoader(text = "SYNCING DATA...") { document.getElementById('loader-text').textContent = text; document.getElementById('global-loader').classList.add('show'); }
+    function hideLoader() { document.getElementById('global-loader').classList.remove('show'); }
+    function showToast(msg) {
+        const t = document.getElementById('toast'); document.getElementById('toast-msg').innerHTML = msg;
+        t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2500);
+    }
+    function openModal(id) { 
+        const m = document.getElementById(id);
+        m.style.display = 'flex';
+        document.getElementById('main-app').classList.add('app-scale-down'); // 3D depth effect
+        setTimeout(() => m.style.opacity = '1', 10);
+    }
+    function closeModal(id) { 
+        const m = document.getElementById(id);
+        m.style.opacity = '0';
+        document.getElementById('main-app').classList.remove('app-scale-down');
+        setTimeout(() => m.style.display = 'none', 400);
+    }
+    
+    // Empty State Helper Function
+    function getEmptyState(iconClass, message) {
+        return `
+        <div class="flex flex-col items-center justify-center py-16 opacity-50 list-enter">
+            <div class="w-20 h-20 bg-gray-200 dark:bg-gray-800 rounded-full flex items-center justify-center mb-5 shadow-inner">
+                <i class="fa-solid ${iconClass} text-3xl text-gray-400"></i>
+            </div>
+            <p class="font-semibold text-sm tracking-wide text-gray-500">${message}</p>
+        </div>`;
+    }
+
+    // Timezone Adjusted Date ISO Generator
+    const getTodayISO = () => {
+        const d = new Date();
+        d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+        return d.toISOString().split('T')[0];
+    };
+    
+    const formatDisplayDate = (iso) => iso ? new Date(iso).toLocaleDateString('en-IN', {day:'numeric', month:'short'}) : '—';
+
+    // Filters (Monthly)
+    function initFilters() {
+        const yearSelects = ['filter-year-milk', 'filter-year-exp', 'filter-year-salary'];
+        const monthSelects = ['filter-month-milk', 'filter-month-exp', 'filter-month-salary'];
+        
+        const currentYear = new Date().getFullYear();
+        
+        let monthOptions = MONTHS.map((m, i) => `<option value="${i}">${m}</option>`).join('');
+        let yearOptions = '';
+        for (let y = currentYear - 2; y <= currentYear + 1; y++) yearOptions += `<option value="${y}">${y}</option>`;
+
+        yearSelects.forEach(id => { 
+            let el = document.getElementById(id); 
+            if(el) { el.innerHTML = yearOptions; el.value = selectedYear; }
+        });
+        monthSelects.forEach(id => { 
+            let el = document.getElementById(id); 
+            if(el) { el.innerHTML = monthOptions; el.value = selectedMonth; }
+        });
+    }
+        
+    function updateMonthFilter() {
+        const activeTab = document.querySelector('.nav-item.active').id.replace('tab-', '');
+        if(activeTab === 'milk' || document.getElementById('milk-detail-screen').classList.contains('active')) {
+            selectedMonth = parseInt(document.getElementById('filter-month-milk').value);
+            selectedYear = parseInt(document.getElementById('filter-year-milk').value);
+            document.getElementById('filter-month-exp').value = selectedMonth;
+            document.getElementById('filter-year-exp').value = selectedYear;
+            if(document.getElementById('filter-month-salary')) document.getElementById('filter-month-salary').value = selectedMonth;
+            if(document.getElementById('filter-year-salary')) document.getElementById('filter-year-salary').value = selectedYear;
+            renderMilkRecords();
+            renderMilkList();
+        } else if(activeTab === 'expenses' || document.getElementById('expense-detail-screen').classList.contains('active')) {
+            selectedMonth = parseInt(document.getElementById('filter-month-exp').value);
+            selectedYear = parseInt(document.getElementById('filter-year-exp').value);
+            document.getElementById('filter-month-milk').value = selectedMonth;
+            document.getElementById('filter-year-milk').value = selectedYear;
+            if(document.getElementById('filter-month-salary')) document.getElementById('filter-month-salary').value = selectedMonth;
+            if(document.getElementById('filter-year-salary')) document.getElementById('filter-year-salary').value = selectedYear;
+            renderExpenseList();
+            renderExpenseRecords();
+        } else if(document.getElementById('salary-detail-screen').classList.contains('active')) {
+            selectedMonth = parseInt(document.getElementById('filter-month-salary').value);
+            selectedYear = parseInt(document.getElementById('filter-year-salary').value);
+            document.getElementById('filter-month-milk').value = selectedMonth;
+            document.getElementById('filter-year-milk').value = selectedYear;
+            document.getElementById('filter-month-exp').value = selectedMonth;
+            document.getElementById('filter-year-exp').value = selectedYear;
+            renderSalaryRecords();
+        }
+        
+        if (document.getElementById('filter-month-salary')) {
+            document.getElementById('filter-month-salary').value = selectedMonth;
+        }
+        if (document.getElementById('filter-year-salary')) {
+            document.getElementById('filter-year-salary').value = selectedYear;
+        }
+
+        updateDashboard();
+    }
+
+    function filterByMonth(records) {
+        if (!Array.isArray(records)) return [];
+        return records.filter(r => {
+            if (!r?.date) return false;
+            const d = new Date(r.date);
+            return !isNaN(d) && d.getMonth() === selectedMonth && d.getFullYear() === selectedYear;
+        });
+    }
+
+    // ========================== GOOGLE AUTH ==========================
+    function initFirebase() {
+        if (!app) {
+            app = firebase.initializeApp(firebaseConfig);
+            auth = firebase.auth();
+            database = firebase.database();
+            
+            auth.onAuthStateChanged((user) => {
+                if (user) {
+                    currentUserUID = user.uid;
+                    document.getElementById('login-screen').style.display = 'none';
+                    document.getElementById('main-app').classList.remove('hidden');
+                    loadUserData();
+                } else {
+                    hideLoader();
+                    document.getElementById('login-screen').style.display = 'flex';
+                    document.getElementById('main-app').classList.add('hidden');
+                }
+            });
+        }
+    }
+   
+    function handleGoogleLogin() {
+        showLoader("CONNECTING...");
+        const provider = new firebase.auth.GoogleAuthProvider();
+        auth.signInWithPopup(provider).then((result) => {
+            showToast('Welcome ' + result.user.displayName.split(' ')[0] + '!');
+        }).catch((err) => { hideLoader(); showToast(err.message); });
+    }
+
+    function logout() {
+        if (confirm('Are you sure you want to logout?')) {
+            auth.signOut().then(() => {
+                if (appDataRef) appDataRef.off();
+                currentUserUID = null;
+                document.getElementById('main-app').classList.add('hidden');
+                document.getElementById('login-screen').style.display = 'flex';
+                showToast('Logout success');
+            });
+        }
+    }
+
+    // ========================== DATA SYNC ==========================
+    function loadUserData() {
+        showLoader("LOADING...");
+        appDataRef = database.ref(`users/${currentUserUID}/appData`);
+        
+        appDataRef.on('value', (snapshot) => {
+            const data = snapshot.val() || {};
+            milkDB = data.milkDB || {};
+            udharDB = data.udharDB || [];
+            expenseDB = data.expenseDB || [];
+            salaryDB = data.salaryDB || {};
+            diaryDB = data.diaryDB || [];
+
+            updateActiveScreen();
+            hideLoader();
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('main-app').classList.remove('hidden');
+        });
+    }
+
+    async function saveDB() {
+        if (!currentUserUID) return;
+        await appDataRef.set({ milkDB, udharDB, expenseDB, salaryDB, diaryDB });
+    }
+
+    // ========================== DASHBOARD & UI UPDATES ==========================
+    function updateActiveScreen() {
+        const activeTab = document.querySelector('.nav-item.active').id.replace('tab-', '');
+        if (activeTab === 'home') updateDashboard();
+        else if (activeTab === 'milk') renderMilkList();
+        else if (activeTab === 'salary') renderSalaryList();
+        else if (activeTab === 'udhar') renderUdharList();
+        else if (activeTab === 'expenses') renderExpenseList();
+        else if (activeTab === 'diary') renderDiaryList();
+        
+        if(document.getElementById('milk-detail-screen').classList.contains('active')) renderMilkRecords();
+        if(document.getElementById('salary-detail-screen').classList.contains('active')) renderSalaryRecords();
+        if(document.getElementById('udhar-detail-screen').classList.contains('active')) renderUdharRecords();
+        if(document.getElementById('expense-detail-screen').classList.contains('active')) renderExpenseRecords();
+        
+        updateDashboard(); 
+    }
+
+    function updateDashboard() {
+        let rev = 0, exp = 0, lenaHai = 0, denaHai = 0;
+        
+        Object.values(milkDB).forEach(c => {
+            let monthTotal = 0;
+            filterByMonth(c.records || []).forEach(r => monthTotal += ((Number(r.morning)||0) + (Number(r.evening)||0)) * (c.rate || DEFAULT_RATE));
+            if (c.type === 'dene_wala') exp += monthTotal; else rev += monthTotal;
+        });
+        
+        filterByMonth(expenseDB).forEach(e => exp += Number(e.amount||0));
+        
+        (udharDB || []).forEach(u => {
+            if(u.type === 'credit') lenaHai += Number(u.amount);
+            else denaHai += Number(u.amount);
+        });
+
+        Object.values(salaryDB).forEach(s => {
+            let monthTotal = 0;
+            filterByMonth(s.records || []).forEach(r => monthTotal += Number(r.amount||0));
+            if (s.type === 'lene_wala') rev += monthTotal; 
+            else exp += monthTotal; 
+        });
+
+        document.getElementById('dash-lena').textContent = `₹${Math.round(lenaHai).toLocaleString('en-IN')}`;
+        document.getElementById('dash-dena').textContent = `₹${Math.round(denaHai).toLocaleString('en-IN')}`;
+        document.getElementById('dash-expenses').textContent = `₹${Math.round(exp).toLocaleString('en-IN')}`;
+        document.getElementById('dash-profit').textContent = `₹${Math.round(rev - exp).toLocaleString('en-IN')}`;
+        document.getElementById('dash-profit').style.color = (rev - exp) < 0 ? '#FF3B30' : '#34C759';
+
+        const udharLenaEl = document.getElementById('udhar-total-lena');
+        const udharDenaEl = document.getElementById('udhar-total-dena');
+        if(udharLenaEl) udharLenaEl.textContent = `₹${Math.round(lenaHai).toLocaleString('en-IN')}`;
+        if(udharDenaEl) udharDenaEl.textContent = `₹${Math.round(denaHai).toLocaleString('en-IN')}`;
+    }
+
+    // ========================== DIARY ==========================
+    function openDiaryModal(idx = null) {
+        activeDiaryIndex = idx;
+        if (idx !== null) {
+            document.getElementById('diary-modal-title').textContent = 'Edit Page';
+            document.getElementById('diary-entry-date').value = diaryDB[idx].date;
+            document.getElementById('diary-entry-title').value = diaryDB[idx].title;
+            document.getElementById('diary-entry-content').value = diaryDB[idx].content;
+        } else {
+            document.getElementById('diary-modal-title').textContent = 'New Diary Page';
+            document.getElementById('diary-entry-date').value = getTodayISO();
+            document.getElementById('diary-entry-title').value = '';
+            document.getElementById('diary-entry-content').value = '';
+        }
+        openModal('diary-entry-modal');
+    }
+
+    async function saveDiaryEntry() {
+        const date = document.getElementById('diary-entry-date').value;
+        let title = document.getElementById('diary-entry-title').value.trim() || 'Untitled';
+        title = title.replace(/[<>]/g, ''); // XSS protection
+        let content = document.getElementById('diary-entry-content').value.trim();
+        content = content.replace(/[<>]/g, ''); // XSS protection
+        
+        if(!date || !content) return showToast('Please write something!');
+        
+        const entry = { date, title, content, updated: Date.now() };
+        
+        if (activeDiaryIndex !== null) {
+            diaryDB[activeDiaryIndex] = entry; 
+        } else {
+            diaryDB.unshift(entry);
+        }
+        
+        await saveDB(); 
+        closeModal('diary-entry-modal'); 
+        renderDiaryList();
+        if(document.getElementById('diary-detail-screen').classList.contains('active')) openDiaryDetail(activeDiaryIndex !== null ? activeDiaryIndex : 0);
+        showToast('Diary Saved!');
+    }
+
+    function renderDiaryList() {
+        const queryText = (document.getElementById('diary-search').value || '').toLowerCase().trim();
+        const searchWords = queryText.split(' ').filter(w => w !== ''); 
+
+        const records = (diaryDB || []).map((d, i) => ({...d, idx: i}))
+                        .filter(d => {
+                            const fullText = (d.title + " " + d.content + " " + formatDisplayDate(d.date)).toLowerCase();
+                            return searchWords.every(word => fullText.includes(word));
+                        })
+                        .sort((a,b) => new Date(b.date) - new Date(a.date));
+        
+        const html = records.map((d, index) => {
+            const previewText = d.content.length > 60 ? d.content.substring(0, 60) + '...' : d.content;
+            return `<div onclick="haptic(); openDiaryDetail(${d.idx})" class="glass-card diary-card mb-4 cursor-pointer w-full ring-1 ring-white/40 dark:ring-white/5 list-enter" style="animation-delay: ${index * 0.05}s;">
+                <div class="flex justify-between items-center mb-2 w-full min-w-0 gap-2">
+                    <h4 class="font-bold text-xl text-[#F5A623] truncate flex-1 min-w-0 tracking-tight">${d.title}</h4>
+                    <i class="fa-solid fa-chevron-right text-gray-300 shrink-0 text-[13px]"></i>
+                </div>
+                ${d.content ? `<p class="text-[15px] font-serif text-gray-600 dark:text-gray-300 italic mb-3 truncate w-full min-w-0 opacity-80">"${previewText}"</p>` : ''}
+                <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-2 truncate w-full min-w-0">${formatDisplayDate(d.date)}</p>
+            </div>`;
+        }).join('');
+        
+        document.getElementById('diary-list').innerHTML = html || getEmptyState('fa-book-open', 'No diary pages found');
+    }
+
+    function filterDiaryList() { renderDiaryList(); }
+
+    function openDiaryDetail(idx) {
+        activeDiaryIndex = idx;
+        const d = diaryDB[idx];
+        if(!d) return;
+        
+        document.getElementById('diary-view-title').textContent = d.title;
+        document.getElementById('diary-view-date').textContent = formatDisplayDate(d.date);
+        document.getElementById('diary-view-content').textContent = d.content;
+        
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById('diary-detail-screen').classList.add('active');
+    }
+
+    async function deleteDiary(idx, goBack = false) { 
+        if(confirm('Delete this page permanently?')) { 
+            diaryDB.splice(idx,1); 
+            await saveDB(); 
+            if(goBack) switchTab('diary');
+            else renderDiaryList();
+            showToast('Deleted!'); 
+        } 
+    }
+
+    // Global Long Press State handler
+    let isLongPress = false;
+    
+    // ========================== SALARY ==========================
+    async function addSalaryPerson() {
+        let name = document.getElementById('new-salary-name').value.trim();
+        name = name.replace(/[.#$\[\]<>]/g, ''); // XSS Fix included
+        let company = document.getElementById('new-salary-company').value.trim() || '—';
+        company = company.replace(/[<>]/g, ''); // XSS Fix included
+        const type = document.getElementById('new-salary-type').value;
+        
+        if (!name) return showToast('Enter Name!');
+        if (salaryDB[name]) return showToast('Person already exists!');
+        
+        salaryDB[name] = { company: company, type: type, records: [] }; 
+        await saveDB(); 
+        closeModal('add-salary-person-modal'); 
+        renderSalaryList(); 
+        showToast('Profile Added!');
+    }
+
+    let salaryPressTimer;
+    function startSalaryLongPress(name) {
+        isLongPress = false;
+        salaryPressTimer = setTimeout(() => { 
+            isLongPress = true;
+            haptic(); 
+            deleteSalaryPersonProfile(name); 
+        }, 800); 
+    }
+    function cancelSalaryLongPress() { clearTimeout(salaryPressTimer); }
+
+    async function deleteSalaryPersonProfile(name) {
+        if (confirm(`Are you sure you want to permanently delete the employee "${name}" and all their records?`)) {
+            delete salaryDB[name]; 
+            await saveDB();      
+            if(activeSalaryPerson === name) activeSalaryPerson = null; 
+            renderSalaryList();    
+            updateDashboard();   
+            showToast('Profile Deleted!');
+        }
+    }
+
+    function renderSalaryList() {
+        const q = (document.getElementById('salary-search').value || '').toLowerCase();
+        const html = Object.keys(salaryDB).filter(n => n.toLowerCase().includes(q)).map((name, index) => {
+            const s = salaryDB[name];
+            let totalAmt = 0;
+            filterByMonth(s.records || []).forEach(r => totalAmt += Number(r.amount||0));
+            
+            const isLeneWala = s.type === 'lene_wala';
+            const colorClass = isLeneWala ? 'text-[#34C759]' : 'text-[#FF3B30]';
+            const bgClass = isLeneWala ? 'bg-[#34C759]/10' : 'bg-[#FF3B30]/10';
+            const borderClass = isLeneWala ? 'border-l-[#34C759]' : 'border-l-[#FF3B30]';
+            const sign = isLeneWala ? '+' : '-';
+            const typeLabel = isLeneWala ? 'Receives' : 'Pays';
+
+            return `<div 
+                onclick="haptic(); openSalaryDetail('${name}')" 
+                ontouchstart="startSalaryLongPress('${name}')" 
+                ontouchend="cancelSalaryLongPress()" 
+                ontouchmove="cancelSalaryLongPress()" 
+                onmousedown="startSalaryLongPress('${name}')" 
+                onmouseup="cancelSalaryLongPress()" 
+                onmouseleave="cancelSalaryLongPress()"
+                class="glass-card mb-3.5 flex items-center justify-between cursor-pointer border-l-[3px] ${borderClass} w-full ring-1 ring-white/40 dark:ring-white/5 list-enter" style="animation-delay: ${index * 0.05}s;">
+
+                <div class="flex items-center gap-4 w-full min-w-0">
+                    <div class="w-12 h-12 shrink-0 squircle ${bgClass} ${colorClass} font-bold flex items-center justify-center text-lg"><i class="fa-solid fa-indian-rupee-sign"></i></div>
+                    <div class="flex-1 min-w-0">
+                        <h4 class="font-bold text-[17px] leading-tight truncate w-full flex items-center text-gray-900 dark:text-white">${name}</h4>
+                        <p class="text-[13px] text-gray-500 font-medium truncate w-full mt-0.5 tracking-tight">${s.company} • <span class="${colorClass} font-extrabold text-[15px] ml-1">${sign}₹${Math.round(totalAmt).toLocaleString('en-IN')}</span></p>
+                    </div>
+                </div>
+                <i class="fa-solid fa-chevron-right text-gray-300 shrink-0 ml-3 text-[13px]"></i>
+            </div>`;
+        }).join('');
+        document.getElementById('salary-list').innerHTML = html || getEmptyState('fa-users', 'No employees found');
+    }
+
+    function filterSalaryList() { renderSalaryList(); }
+
+    function openSalaryDetail(name) {
+        if(isLongPress) { isLongPress = false; return; } // Touch conflict fix
+        activeSalaryPerson = name;
+        document.getElementById('salary-detail-title').textContent = name;
+        document.getElementById('filter-month-salary').value = selectedMonth;
+        document.getElementById('filter-year-salary').value = selectedYear;
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById('salary-detail-screen').classList.add('active');
+        renderSalaryRecords();
+    }
+
+    function openSalaryEntryModal(name) {
+        activeSalaryPerson = name;
+        document.getElementById('salary-entry-date').value = getTodayISO();
+        document.getElementById('salary-entry-amount').value = '';
+        openModal('add-salary-entry-modal');
+    }
+
+    async function saveSalaryEntry() {
+        const date = document.getElementById('salary-entry-date').value;
+        const amt = parseFloat(document.getElementById('salary-entry-amount').value);
+        if (!date || !amt) return showToast('Enter amount and date');
+        
+        if (!salaryDB[activeSalaryPerson].records) salaryDB[activeSalaryPerson].records = [];
+        
+        const existingIndex = salaryDB[activeSalaryPerson].records.findIndex(r => r.date === date);
+        if (existingIndex !== -1) {
+            return showToast('Salary for this date is already added!');
+        }
+
+        salaryDB[activeSalaryPerson].records.push({ date, amount: amt });
+        await saveDB(); 
+        closeModal('add-salary-entry-modal'); 
+        renderSalaryList();
+        if(document.getElementById('salary-detail-screen').classList.contains('active')) renderSalaryRecords();
+        updateDashboard();
+        showToast('Saved!');
+    }
+
+    function renderSalaryRecords() {
+        if (!activeSalaryPerson || !salaryDB[activeSalaryPerson]) return;
+        const s = salaryDB[activeSalaryPerson];
+        let totalAmt = 0;
+        
+        const records = filterByMonth((s.records || []).map((r, i) => ({...r, originalIndex: i})))
+                        .sort((a,b) => new Date(b.date) - new Date(a.date));
+
+        const html = records.map((r, index) => {
+            totalAmt += Number(r.amount||0);
+            return `<tr class="list-enter" style="animation-delay: ${index * 0.05}s;">
+                <td>${formatDisplayDate(r.date)}</td>
+                <td class="font-bold text-[#10B981]">₹${Number(r.amount).toLocaleString('en-IN')}</td>
+                <td class="text-right"><button onclick="haptic(); deleteSalarySingleEntry(${r.originalIndex})" class="action-btn shrink-0"><i class="fa-solid fa-trash text-xs"></i></button></td>
+            </tr>`;
+        }).join('');
+        
+        document.getElementById('salary-detail-records').innerHTML = html || `<tr><td colspan="3" class="text-center py-8 text-gray-400 font-semibold">No entries for ${MONTHS[selectedMonth]}</td></tr>`;
+        
+        const isLeneWala = s.type === 'lene_wala';
+        const sign = isLeneWala ? '+' : '-';
+        
+        const detailCard = document.querySelector('#salary-detail-screen .glass-card');
+        detailCard.className = isLeneWala 
+            ? "glass-card mb-6 flex justify-between items-center bg-gradient-to-br from-[#10B981] to-[#059669] text-white border-none shadow-[0_8px_24px_rgba(16,185,129,0.3)] ring-1 ring-white/30 w-full min-w-0 gap-3"
+            : "glass-card mb-6 flex justify-between items-center bg-gradient-to-br from-[#FF3B30] to-[#c92a2a] text-white border-none shadow-[0_8px_24px_rgba(255,59,48,0.3)] ring-1 ring-white/30 w-full min-w-0 gap-3";
+
+        document.getElementById('salary-detail-total').textContent = `${sign}₹${totalAmt.toLocaleString('en-IN')}`;
+    }
+
+    async function deleteSalarySingleEntry(idx) {
+        if(confirm('Are you sure you want to delete this specific entry?')) { 
+            salaryDB[activeSalaryPerson].records.splice(idx,1); 
+            await saveDB(); 
+            renderSalaryRecords();
+            updateDashboard();
+            showToast('Entry Deleted!'); 
+        }
+    }
+
+    // ========================== MILK ==========================
+    async function addMilkCustomer() {
+        let name = document.getElementById('new-milk-name').value.trim();
+        name = name.replace(/[.#$\[\]<>]/g, ''); // XSS Fix included
+        const rate = parseFloat(document.getElementById('new-milk-rate').value) || DEFAULT_RATE;
+        const type = document.getElementById('new-milk-type').value; 
+        
+        if (!name) return showToast('Enter Name!');
+        if (milkDB[name]) return showToast('Customer already exists!');
+        
+        milkDB[name] = { rate: rate, type: type, records: [] }; 
+        await saveDB(); 
+        closeModal('add-milk-customer-modal'); 
+        renderMilkList(); 
+        showToast('Customer Added!');
+    }
+
+    let pressTimer;
+    function startLongPress(name) {
+        isLongPress = false;
+        pressTimer = setTimeout(() => { 
+            isLongPress = true;
+            haptic(); 
+            deleteMilkCustomerProfile(name); 
+        }, 800); 
+    }
+    function cancelLongPress() { clearTimeout(pressTimer); }
+
+    async function deleteMilkCustomerProfile(name) {
+        if (confirm(`Are you sure you want to permanently delete the customer "${name}" and all their records?`)) {
+            delete milkDB[name]; 
+            await saveDB();      
+            if(activeMilkCustomer === name) activeMilkCustomer = null; 
+            renderMilkList();    
+            updateDashboard();   
+            showToast('Customer Deleted!');
+        }
+    }
+
+    function renderMilkList() {
+        const q = (document.getElementById('milk-search').value || '').toLowerCase();
+        const html = Object.keys(milkDB).filter(n => n.toLowerCase().includes(q)).map((name, index) => {
+            const c = milkDB[name];
+            let kg = 0; filterByMonth(c.records || []).forEach(r => kg += ((Number(r.morning)||0) + (Number(r.evening)||0)));
+            
+            const isDeneWala = c.type === 'dene_wala';
+            const colorClass = isDeneWala ? 'text-[#34C759]' : 'text-[#FF3B30]';
+            const bgClass = isDeneWala ? 'bg-[#34C759]/10' : 'bg-[#FF3B30]/10';
+            const borderClass = isDeneWala ? 'border-l-[#34C759]' : 'border-l-[#FF3B30]';
+            const sign = isDeneWala ? '+' : '-';
+            const typeLabel = isDeneWala ? 'Seller' : 'Buyer';
+
+            return `<div 
+                onclick="haptic(); openMilkDetail('${name}')" 
+                ontouchstart="startLongPress('${name}')" 
+                ontouchend="cancelLongPress()" 
+                ontouchmove="cancelLongPress()" 
+                onmousedown="startLongPress('${name}')" 
+                onmouseup="cancelLongPress()" 
+                onmouseleave="cancelLongPress()"
+                class="glass-card mb-3.5 flex items-center justify-between cursor-pointer border-l-[3px] ${borderClass} w-full ring-1 ring-white/40 dark:ring-white/5 list-enter" style="animation-delay: ${index * 0.05}s;">
+
+                <div class="flex items-center gap-4 w-full min-w-0">
+                    <div class="w-12 h-12 shrink-0 squircle ${bgClass} ${colorClass} font-extrabold flex items-center justify-center text-lg">${name[0].toUpperCase()}</div>
+                    <div class="flex-1 min-w-0">
+                        <h4 class="font-bold text-[17px] leading-tight truncate w-full flex items-center text-gray-900 dark:text-white">${name}</h4>
+                        <p class="text-[13px] text-gray-500 font-medium truncate w-full mt-0.5 tracking-tight">${kg.toFixed(2)} KG • <span class="${colorClass} font-extrabold text-[15px] ml-1">${sign}₹${Math.round(kg * c.rate)}</span></p>
+                    </div>
+                </div>
+                <i class="fa-solid fa-chevron-right text-gray-300 shrink-0 ml-3 text-[13px]"></i>
+            </div>`;
+        }).join('');
+        document.getElementById('milk-list').innerHTML = html || getEmptyState('fa-jug-detergent', 'No customers found');
+    }
+
+    function filterMilkList() { renderMilkList(); }
+
+    function openMilkDetail(name) {
+        if(isLongPress) { isLongPress = false; return; } // Touch conflict fix
+        activeMilkCustomer = name;
+        document.getElementById('milk-detail-title').textContent = name;
+        document.getElementById('filter-month-milk').value = selectedMonth;
+        document.getElementById('filter-year-milk').value = selectedYear;
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById('milk-detail-screen').classList.add('active');
+        renderMilkRecords();
+    }
+
+    function renderMilkRecords() {
+        if (!activeMilkCustomer || !milkDB[activeMilkCustomer]) return;
+        const c = milkDB[activeMilkCustomer];
+        let totalKg = 0;
+        
+        const records = filterByMonth((c.records || []).map((r, i) => ({...r, originalIndex: i})))
+                        .sort((a,b) => new Date(b.date) - new Date(a.date));
+
+        const html = records.map((r, index) => {
+            const t = (Number(r.morning)||0) + (Number(r.evening)||0); totalKg += t;
+            return `<tr class="list-enter" style="animation-delay: ${index * 0.05}s;">
+                <td>${formatDisplayDate(r.date)}</td>
+                <td>${r.morning||'-'}</td>
+                <td>${r.evening||'-'}</td>
+                <td class="font-bold text-[#34C759]">${t.toFixed(2)}</td>
+                <td class="text-right"><button onclick="haptic(); deleteMilkEntry(${r.originalIndex})" class="action-btn shrink-0"><i class="fa-solid fa-trash text-xs"></i></button></td>
+            </tr>`;
+        }).join('');
+        
+        document.getElementById('milk-detail-records').innerHTML = html || `<tr><td colspan="5" class="text-center py-8 text-gray-400 font-semibold">No entries for ${MONTHS[selectedMonth]}</td></tr>`;
+        
+        const isDeneWala = c.type === 'dene_wala';
+        const sign = isDeneWala ? '+' : '-';
+        
+        const detailCard = document.querySelector('#milk-detail-screen .glass-card');
+        if(isDeneWala) {
+            detailCard.className = "glass-card mb-6 flex justify-between items-center bg-gradient-to-br from-[#34C759] to-[#28a745] text-white border-none shadow-[0_8px_24px_rgba(52,199,89,0.3)] ring-1 ring-white/30 w-full min-w-0 gap-3";
+        } else {
+            detailCard.className = "glass-card mb-6 flex justify-between items-center bg-gradient-to-br from-[#FF3B30] to-[#c92a2a] text-white border-none shadow-[0_8px_24px_rgba(255,59,48,0.3)] ring-1 ring-white/30 w-full min-w-0 gap-3";
+        }
+
+        document.getElementById('milk-detail-kg').textContent = `${totalKg.toFixed(2)} KG`;
+        document.getElementById('milk-detail-bill').textContent = `${sign}₹${Math.round(totalKg * (c.rate || DEFAULT_RATE)).toLocaleString('en-IN')}`;
+    }
+
+    function openMilkEntryModal() {
+        document.getElementById('milk-entry-date').value = getTodayISO();
+        document.getElementById('milk-morning-kg').value = '';
+        document.getElementById('milk-evening-kg').value = '';
+        openModal('add-milk-entry-modal');
+    }
+
+    async function saveMilkEntry() {
+        const date = document.getElementById('milk-entry-date').value;
+        const m = parseFloat(document.getElementById('milk-morning-kg').value) || 0;
+        const e = parseFloat(document.getElementById('milk-evening-kg').value) || 0;
+        if (!date || (m===0 && e===0)) return showToast('Please enter quantity');
+        
+        if (!milkDB[activeMilkCustomer].records) milkDB[activeMilkCustomer].records = [];
+
+        const existingIndex = milkDB[activeMilkCustomer].records.findIndex(r => r.date === date);
+        if (existingIndex !== -1) {
+            return showToast('Entry for this date already exists! Please delete the old one first.');
+        }
+
+        milkDB[activeMilkCustomer].records.push({ date, morning: m, evening: e });
+        await saveDB(); 
+        closeModal('add-milk-entry-modal'); 
+        renderMilkRecords();
+        updateDashboard();
+        showToast('Saved!');
+    }
+
+    async function deleteMilkEntry(idx) {
+        if(confirm('Are you sure you want to delete this entry?')) { 
+            milkDB[activeMilkCustomer].records.splice(idx,1); 
+            await saveDB(); 
+            renderMilkRecords();
+            updateDashboard();
+            showToast('Deleted!'); 
+        }
+    }
+
+    // ========================== WHATSAPP PHOTO BILL SHARE FUNCTIONS ==========================
+    async function generateAndShareBill() {
+        if (!activeMilkCustomer || !milkDB[activeMilkCustomer]) return;
+        showLoader("Generating bill photo...");
+        const c = milkDB[activeMilkCustomer];
+        let totalKg = 0;
+        filterByMonth(c.records || []).forEach(r => totalKg += (Number(r.morning)||0) + (Number(r.evening)||0));
+        const totalAmt = Math.round(totalKg * (c.rate || DEFAULT_RATE));
+        
+        document.getElementById('rcpt-name').textContent = activeMilkCustomer;
+        document.getElementById('rcpt-month').textContent = `${MONTHS[selectedMonth]} ${selectedYear}`;
+        document.getElementById('rcpt-qty').textContent = totalKg.toFixed(2);
+        document.getElementById('rcpt-amt').textContent = `₹${totalAmt.toLocaleString('en-IN')}`;
+        
+        await exportAndShareCanvas('receipt-card', `${activeMilkCustomer}_Bill.png`, `Hello ${activeMilkCustomer},\nHere is your Aarish Dairy bill for this month. Total: ₹${totalAmt}`);
+    }
+
+    async function shareSalaryBill(name) {
+        showLoader("Generating Salary Slip...");
+        const s = salaryDB[name];
+        let totalAmt = 0;
+        filterByMonth(s.records || []).forEach(r => totalAmt += Number(r.amount||0));
+        
+        document.getElementById('sal-rcpt-name').textContent = name;
+        document.getElementById('sal-rcpt-company').textContent = s.company || 'N/A';
+        document.getElementById('sal-rcpt-amt').textContent = `₹${totalAmt.toLocaleString('en-IN')}`;
+        
+        await exportAndShareCanvas('salary-receipt-card', `${name}_SalarySlip.png`, `Hello ${name},\nHere is your Salary Slip. Total: ₹${totalAmt}`);
+    }
+
+    async function shareDiaryBill(idx) {
+        showLoader("Generating Diary Page...");
+        const d = diaryDB[idx];
+        
+        document.getElementById('diary-rcpt-date').textContent = formatDisplayDate(d.date);
+        document.getElementById('diary-rcpt-title').textContent = d.title;
+        document.getElementById('diary-rcpt-content').textContent = d.content;
+        
+        let msg = `Diary Page: ${d.title}\nDate: ${formatDisplayDate(d.date)}`;
+
+        await exportAndShareCanvas('diary-receipt-card', `Diary_${d.date}.png`, msg);
+    }
+
+    async function shareAllExpensesBill() {
+        showLoader("Generating All Expenses Bill...");
+        let total = 0;
+        filterByMonth(expenseDB || []).forEach(e => total += Number(e.amount));
+        
+        document.getElementById('exp-rcpt-date').textContent = `${MONTHS[selectedMonth]} ${selectedYear}`;
+        document.getElementById('exp-rcpt-cat').textContent = 'All Expenses Summary';
+        document.getElementById('exp-rcpt-amt').textContent = `₹${total.toLocaleString('en-IN')}`;
+        
+        await exportAndShareCanvas('expense-receipt-card', `All_Expenses_${MONTHS[selectedMonth]}.png`, `All Expenses for ${MONTHS[selectedMonth]} - ₹${total}`);
+    }
+
+    async function shareExpenseCategoryBill() {
+        if(!activeExpenseCategory) return;
+        showLoader("Generating Expense Bill...");
+        let total = 0;
+        filterByMonth(expenseDB || []).forEach(e => {
+            if(e.category === activeExpenseCategory) total += Number(e.amount);
+        });
+        
+        document.getElementById('exp-rcpt-date').textContent = `${MONTHS[selectedMonth]} ${selectedYear}`;
+        document.getElementById('exp-rcpt-cat').textContent = activeExpenseCategory;
+        document.getElementById('exp-rcpt-amt').textContent = `₹${total.toLocaleString('en-IN')}`;
+        
+        await exportAndShareCanvas('expense-receipt-card', `${activeExpenseCategory}_Expenses.png`, `${activeExpenseCategory} Expenses - ₹${total}`);
+    }
+
+    async function exportAndShareCanvas(elementId, fileName, shareText) {
+        const receipt = document.getElementById(elementId);
+        try {
+            const canvas = await html2canvas(receipt, { scale: 2, backgroundColor: '#ffffff' });
+            canvas.toBlob(async (blob) => {
+                const file = new File([blob], fileName, { type: 'image/png' });
+                if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                    hideLoader();
+                    await navigator.share({ files: [file], title: 'Aarish Dairy Pro', text: shareText });
+                } else {
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url; a.download = fileName; a.click();
+                    hideLoader(); showToast("Photo downloaded!");
+                }
+            });
+        } catch (error) {
+            hideLoader(); showToast("Error! Photo generation failed.");
+        }
+    }
+
+    // ========================== EXCEL (CSV) EXPORT ==========================
+    function downloadExcel() {
+        let csv = "Type,Name/Category,Date,Amount\n";
+        
+        Object.keys(milkDB).forEach(name => {
+            let label = milkDB[name].type === 'dene_wala' ? 'Milk (Expense)' : 'Milk (Income)';
+            (milkDB[name].records||[]).forEach(r => {
+                let total = ((Number(r.morning)||0) + (Number(r.evening)||0)) * (milkDB[name].rate||DEFAULT_RATE);
+                csv += `${label},${name},${r.date},${total}\n`;
+            });
+        });
+        
+        expenseDB.forEach(e => csv += `Expense,${e.category},${e.date},${e.amount}\n`);
+        udharDB.forEach(u => csv += `Credit (${u.type}),${u.name},${u.date},${u.amount}\n`);
+        
+        Object.keys(salaryDB).forEach(name => {
+            (salaryDB[name].records||[]).forEach(r => {
+                csv += `Salary (${salaryDB[name].type}),${name},${r.date},${r.amount}\n`;
+            });
+        });
+
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `AarishDairy_Export_${getTodayISO()}.csv`;
+        a.click();
+        showToast("Export Downloaded!");
+    }
+
+    // ========================== UDHAR ==========================
+    function openUdharModal(name = null) {
+        document.getElementById('udhar-date').value = getTodayISO();
+        const nameInput = document.getElementById('udhar-name');
+        document.getElementById('udhar-amount').value = '';
+
+        if (name && typeof name === 'string') {
+            nameInput.value = name;
+            nameInput.setAttribute('readonly', true);
+            nameInput.style.opacity = '0.6';
+        } else {
+            nameInput.value = '';
+            nameInput.removeAttribute('readonly');
+            nameInput.style.opacity = '1';
+        }
+        openModal('add-udhar-modal');
+    }
+
+    async function saveUdharEntry(type) {
+        const date = document.getElementById('udhar-date').value;
+        let name = document.getElementById('udhar-name').value.trim();
+        name = name.replace(/[<>]/g, ''); // XSS protection
+        const amt = parseFloat(document.getElementById('udhar-amount').value);
+        if(!date || !name || !amt) return showToast('Fill complete form!');
+        
+        udharDB.unshift({date, name, amount: amt, type});
+        await saveDB(); 
+        closeModal('add-udhar-modal'); 
+        renderUdharList();
+        if(document.getElementById('udhar-detail-screen').classList.contains('active')) renderUdharRecords();
+        updateDashboard();
+        showToast('Saved!');
+    }
+
+    function renderUdharList() {
+        const q = (document.getElementById('udhar-search').value || '').toLowerCase();
+        
+        let grouped = {};
+        (udharDB || []).forEach((u, i) => {
+            if (!grouped[u.name]) grouped[u.name] = { name: u.name, net: 0, lastDate: u.date };
+            if (u.type === 'credit') grouped[u.name].net += Number(u.amount);
+            else grouped[u.name].net -= Number(u.amount);
+            
+            if (new Date(u.date) > new Date(grouped[u.name].lastDate)) grouped[u.name].lastDate = u.date;
+        });
+
+        const html = Object.values(grouped)
+            .filter(g => g.name.toLowerCase().includes(q))
+            .sort((a,b) => new Date(b.lastDate) - new Date(a.lastDate))
+            .map((g, index) => {
+                const isPlus = g.net >= 0;
+                const colorClass = isPlus ? 'text-[#34C759]' : 'text-[#FF3B30]';
+                const bgClass = isPlus ? 'bg-[#34C759]/10' : 'bg-[#FF3B30]/10';
+                const borderClass = isPlus ? 'border-l-[#34C759]' : 'border-l-[#FF3B30]';
+                const sign = isPlus ? '+' : '-';
+                const label = isPlus ? 'To Receive' : 'To Pay';
+                const displayNet = Math.abs(g.net).toLocaleString('en-IN');
+
+                return `<div onclick="haptic(); openUdharDetail('${g.name}')" class="glass-card mb-3.5 flex items-center justify-between cursor-pointer border-l-[3px] ${borderClass} w-full min-w-0 ring-1 ring-white/40 dark:ring-white/5 list-enter" style="animation-delay: ${index * 0.05}s;">
+                    <div class="flex-1 min-w-0 mr-3">
+                        <h4 class="font-bold text-[17px] truncate w-full min-w-0 text-gray-900 dark:text-white flex items-center gap-2">
+                            ${g.name}
+                        </h4>
+                        <p class="text-[13px] text-gray-500 font-medium truncate w-full min-w-0 mt-0.5 tracking-tight">Last entry: ${formatDisplayDate(g.lastDate)}</p>
+                    </div>
+                    <div class="flex flex-col items-end gap-1 shrink-0">
+                        <span class="text-[9px] font-extrabold uppercase tracking-wider ${colorClass} bg-current/10 px-2 py-0.5 rounded-full">${label}</span>
+                        <div class="flex items-center gap-1">
+                            <span class="font-extrabold ${colorClass} shrink-0 text-lg">${sign}₹${displayNet}</span>
+                            <i class="fa-solid fa-chevron-right text-gray-300 text-[13px] ml-1"></i>
+                        </div>
+                    </div>
+                </div>`;
+            }).join('');
+        document.getElementById('udhar-list').innerHTML = html || getEmptyState('fa-handshake', 'No credit records found');
+    }
+
+    function filterUdharList() { renderUdharList(); }
+
+    function openUdharDetail(name) {
+        activeUdharPerson = name;
+        document.getElementById('udhar-detail-title').textContent = name;
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById('udhar-detail-screen').classList.add('active');
+        renderUdharRecords();
+    }
+
+    function renderUdharRecords() {
+        if (!activeUdharPerson) return;
+        let net = 0;
+        
+        const records = udharDB.map((u, i) => ({...u, originalIndex: i}))
+                               .filter(u => u.name === activeUdharPerson)
+                               .sort((a,b) => new Date(b.date) - new Date(a.date));
+
+        const html = records.map((r, index) => {
+            const isCredit = r.type === 'credit';
+            if(isCredit) net += Number(r.amount); else net -= Number(r.amount);
+
+            return `<tr class="list-enter" style="animation-delay: ${index * 0.05}s;">
+                <td>${formatDisplayDate(r.date)}</td>
+                <td><span class="text-[10px] font-extrabold uppercase px-2 py-1 rounded-md ${isCredit ? 'bg-[#34C759]/10 text-[#34C759]' : 'bg-[#FF3B30]/10 text-[#FF3B30]'}">${isCredit ? 'Given' : 'Taken'}</span></td>
+                <td class="font-bold text-[16px]">₹${Number(r.amount).toLocaleString('en-IN')}</td>
+                <td class="text-right"><button onclick="event.stopPropagation(); haptic(); deleteUdhar(${r.originalIndex})" class="action-btn shrink-0"><i class="fa-solid fa-trash text-xs"></i></button></td>
+            </tr>`;
+        }).join('');
+
+        document.getElementById('udhar-detail-records').innerHTML = html || `<tr><td colspan="4" class="text-center py-8 text-gray-400 font-semibold">No entries found</td></tr>`;
+
+        const detailCard = document.getElementById('udhar-detail-card');
+        const statusEl = document.getElementById('udhar-detail-status');
+        const totalEl = document.getElementById('udhar-detail-total');
+
+        if(net >= 0) {
+            detailCard.className = "glass-card mb-6 flex justify-between items-center bg-gradient-to-br from-[#34C759] to-[#28a745] text-white border-none shadow-[0_8px_24px_rgba(52,199,89,0.3)] ring-1 ring-white/30 w-full min-w-0 gap-3";
+            statusEl.textContent = "Net Balance (To Receive)";
+            totalEl.textContent = `+ ₹${net.toLocaleString('en-IN')}`;
+        } else {
+            detailCard.className = "glass-card mb-6 flex justify-between items-center bg-gradient-to-br from-[#FF3B30] to-[#c92a2a] text-white border-none shadow-[0_8px_24px_rgba(255,59,48,0.3)] ring-1 ring-white/30 w-full min-w-0 gap-3";
+            statusEl.textContent = "Net Balance (To Pay)";
+            totalEl.textContent = `- ₹${Math.abs(net).toLocaleString('en-IN')}`;
+        }
+    }
+    
+    async function deleteUdhar(idx) { 
+        if(confirm('Delete permanently?')) { 
+            udharDB.splice(idx,1); 
+            await saveDB(); 
+            renderUdharList();
+            if(document.getElementById('udhar-detail-screen').classList.contains('active')) renderUdharRecords();
+            updateDashboard();
+            showToast('Deleted!'); 
+        } 
+    }
+
+    async function shareUdharBill() {
+        if (!activeUdharPerson) return;
+        showLoader("Generating Ledger...");
+        let net = 0;
+        udharDB.forEach(u => {
+            if(u.name === activeUdharPerson) {
+                if(u.type === 'credit') net += Number(u.amount); else net -= Number(u.amount);
+            }
+        });
+
+        document.getElementById('udh-rcpt-name').textContent = activeUdharPerson;
+        const rcptStatus = document.getElementById('udh-rcpt-status');
+        const rcptAmt = document.getElementById('udh-rcpt-amt');
+
+        if(net >= 0) {
+            rcptStatus.textContent = "You need to pay us:";
+            rcptAmt.textContent = `₹${net.toLocaleString('en-IN')}`;
+            rcptAmt.style.color = "#34C759";
+        } else {
+            rcptStatus.textContent = "We owe you:";
+            rcptAmt.textContent = `₹${Math.abs(net).toLocaleString('en-IN')}`;
+            rcptAmt.style.color = "#FF3B30";
+        }
+
+        await exportAndShareCanvas('udhar-receipt-card', `${activeUdharPerson}_Ledger.png`, `Hello ${activeUdharPerson},\nHere is your Credit Ledger summary. Net Balance: ₹${Math.abs(net)}`);
+    }
+
+    // ========================== EXPENSES ==========================
+    function openExpenseEntryModal() {
+        document.getElementById('expense-date').value = getTodayISO();
+        document.getElementById('expense-amount').value = '';
+        if (activeExpenseCategory && document.getElementById('expense-detail-screen').classList.contains('active')) {
+            document.getElementById('expense-category').value = activeExpenseCategory;
+        } else {
+            document.getElementById('expense-category').value = '';
+        }
+        openModal('add-expense-modal');
+    }
+
+    async function saveExpenseEntry() {
+        const date = document.getElementById('expense-date').value;
+        let cat = document.getElementById('expense-category').value.trim() || 'Other';
+        cat = cat.replace(/[<>]/g, ''); // XSS protection
+        const amt = parseFloat(document.getElementById('expense-amount').value);
+        if(!date || !amt) return showToast('Please enter details!');
+        
+        expenseDB.unshift({date, category: cat, amount: amt});
+        await saveDB(); 
+        closeModal('add-expense-modal'); 
+        renderExpenseList();
+        if(document.getElementById('expense-detail-screen').classList.contains('active')) renderExpenseRecords();
+        updateDashboard();
+        showToast('Saved!');
+    }
+
+    function renderExpenseList() {
+        let total = 0;
+        const records = filterByMonth((expenseDB || []).map((e, i) => ({...e, idx: i})));
+        
+        let grouped = {};
+        records.forEach(e => {
+            total += Number(e.amount);
+            if(!grouped[e.category]) grouped[e.category] = { category: e.category, total: 0, lastDate: e.date };
+            grouped[e.category].total += Number(e.amount);
+            if(new Date(e.date) > new Date(grouped[e.category].lastDate)) grouped[e.category].lastDate = e.date;
+        });
+
+        const html = Object.values(grouped).sort((a,b) => new Date(b.lastDate) - new Date(a.lastDate)).map((g, index) => {
+            return `<div onclick="haptic(); openExpenseDetail('${g.category}')" class="glass-card mb-3.5 flex items-center justify-between border-l-[3px] border-l-[#FF3B30] w-full min-w-0 cursor-pointer ring-1 ring-white/40 dark:ring-white/5 list-enter" style="animation-delay: ${index * 0.05}s;">
+                <div class="flex-1 min-w-0 mr-3">
+                    <h4 class="font-bold text-[17px] truncate w-full min-w-0 text-gray-900 dark:text-white">${g.category}</h4>
+                    <p class="text-[13px] text-gray-500 font-medium truncate w-full min-w-0 mt-0.5 tracking-tight">Last entry: ${formatDisplayDate(g.lastDate)}</p>
+                </div>
+                <div class="flex items-center gap-3 shrink-0">
+                    <span class="font-extrabold text-[#FF3B30] shrink-0 text-lg">₹${Number(g.total).toLocaleString('en-IN')}</span>
+                    <i class="fa-solid fa-chevron-right text-gray-300 text-[13px] ml-1"></i>
+                </div>
+            </div>`;
+        }).join('');
+        
+        document.getElementById('expense-list-container').innerHTML = html || getEmptyState('fa-receipt', 'No expenses for this month');
+        document.getElementById('total-expense-display').textContent = `₹${total.toLocaleString('en-IN')}`;
+    }
+
+    function openExpenseDetail(category) {
+        activeExpenseCategory = category;
+        document.getElementById('expense-detail-title').textContent = category;
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById('expense-detail-screen').classList.add('active');
+        renderExpenseRecords();
+    }
+
+    function renderExpenseRecords() {
+        if (!activeExpenseCategory) return;
+        let total = 0;
+        
+        const records = filterByMonth((expenseDB || []).map((e, i) => ({...e, originalIndex: i})))
+                        .filter(e => e.category === activeExpenseCategory)
+                        .sort((a,b) => new Date(b.date) - new Date(a.date));
+
+        const html = records.map((r, index) => {
+            total += Number(r.amount);
+            return `<tr class="list-enter" style="animation-delay: ${index * 0.05}s;">
+                <td>${formatDisplayDate(r.date)}</td>
+                <td class="font-bold text-[#FF3B30] text-[16px]">₹${Number(r.amount).toLocaleString('en-IN')}</td>
+                <td class="text-right"><button onclick="haptic(); deleteExpense(${r.originalIndex})" class="action-btn shrink-0"><i class="fa-solid fa-trash text-xs"></i></button></td>
+            </tr>`;
+        }).join('');
+
+        document.getElementById('expense-detail-records').innerHTML = html || `<tr><td colspan="3" class="text-center py-8 text-gray-400 font-semibold">No entries for ${MONTHS[selectedMonth]}</td></tr>`;
+        document.getElementById('expense-detail-total').textContent = `₹${total.toLocaleString('en-IN')}`;
+    }
+
+    async function deleteExpense(idx) { 
+        if(confirm('Delete expense?')) { 
+            expenseDB.splice(idx,1); 
+            await saveDB(); 
+            renderExpenseList();
+            if(document.getElementById('expense-detail-screen').classList.contains('active')) renderExpenseRecords();
+            updateDashboard();
+            showToast('Deleted!'); 
+        } 
+    }
+
+    // ========================== NAVIGATION ==========================
+    function switchTab(tab) {
+        document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+        document.getElementById('tab-' + tab)?.classList.add('active');
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById(tab + '-screen')?.classList.add('active');
+        
+        updateActiveScreen();
+    }
+
+    // ========================== PWA APP INSTALL LOGIC ==========================
+    let deferredPrompt;
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        const installBtn = document.getElementById('install-app-btn');
+        if(installBtn) installBtn.classList.remove('hidden');
+    });
+
+    async function installAppPWA() {
+        if (deferredPrompt) {
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            if (outcome === 'accepted') {
+                showToast("Installing App! 🎉");
+                document.getElementById('install-app-btn').classList.add('hidden');
+            }
+            deferredPrompt = null;
+        } else {
+            showToast("App already installed or not supported.");
+        }
+    }
+
+    window.onload = () => { 
+        document.getElementById('expense-date').value = getTodayISO();
+        document.getElementById('udhar-date').value = getTodayISO();
+        document.getElementById('salary-entry-date').value = getTodayISO();
+        initFilters();
+        initFirebase(); 
+        
+        const manifestString = `{"name":"Aarish Dairy Pro","short_name":"Aarish Dairy","display":"standalone","background_color":"#F5F5F7","theme_color":"#34C759","icons":[{"src":"https://cdn-icons-png.flaticon.com/512/2965/2965358.png","sizes":"512x512","type":"image/png", "purpose": "any maskable"}]}`;
+
+        const blob = new Blob([manifestString], {type: 'application/json'});
+        const manifestURL = URL.createObjectURL(blob);
+        const link = document.createElement('link');
+        link.rel = 'manifest'; link.href = manifestURL;
+        document.head.appendChild(link);
+        
+        const swCode = `self.addEventListener('fetch', function(e) {});`;
+        const swBlob = new Blob([swCode], {type: 'application/javascript'});
+        navigator.serviceWorker.register(URL.createObjectURL(swBlob));
+    };
+</script>
+
+</body>
+</html>
