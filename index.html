@@ -1219,12 +1219,77 @@
 
         const udharLenaEl = document.getElementById('udhar-total-lena');
         const udharDenaEl = document.getElementById('udhar-total-dena');
-        if(udharLenaEl) udharLenaEl.textContent = `₹${Math.round(lenaHai).toLocaleString('en-IN')}`;
+                if(udharLenaEl) udharLenaEl.textContent = `₹${Math.round(lenaHai).toLocaleString('en-IN')}`;
         if(udharDenaEl) udharDenaEl.textContent = `₹${Math.round(denaHai).toLocaleString('en-IN')}`;
     }
 
+    // ===== PARTY LEDGER LOGIC (MILK + CREDIT MERGER) =====
+    function openAllBalances() {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById('balances-screen').classList.add('active');
+        renderDashboardBalances();
+    }
+
+    function renderDashboardBalances() {
+        let balances = {};
+        const q = (document.getElementById('balance-search').value || '').toLowerCase();
+
+        // 1. Milk Calculation
+        Object.keys(milkDB).forEach(name => {
+            let c = milkDB[name];
+            let total = 0;
+            filterByMonth(c.records || []).forEach(r => total += ((Number(r.morning)||0) + (Number(r.evening)||0)) * (c.rate || DEFAULT_RATE));
+            if (!balances[name]) balances[name] = 0;
+            if (c.type === 'dene_wala') balances[name] -= total; 
+            else balances[name] += total; 
+        });
+
+        // 2. Udhar Calculation
+        (udharDB || []).forEach(u => {
+            if (!balances[u.name]) balances[u.name] = 0;
+            if (u.type === 'credit') balances[u.name] += Number(u.amount); 
+            else balances[u.name] -= Number(u.amount); 
+        });
+
+        let html = '';
+        let hasData = false;
+        
+        Object.keys(balances)
+            .filter(n => n.toLowerCase().includes(q))
+            .sort((a,b) => Math.abs(balances[b]) - Math.abs(balances[a]))
+            .forEach((name, i) => {
+            let net = balances[name];
+            if (Math.round(net) === 0) return;
+            hasData = true;
+            let isPlus = net > 0;
+            let colorClass = isPlus ? 'text-[#34C759]' : 'text-[#FF3B30]';
+            let bgClass = isPlus ? 'bg-[#34C759]/10' : 'bg-[#FF3B30]/10';
+            let sign = isPlus ? '+' : '-';
+            let label = isPlus ? 'To Receive' : 'To Pay';
+            let displayNet = Math.round(Math.abs(net)).toLocaleString('en-IN');
+
+            html += `<div class="glass-card mb-3 flex items-center justify-between w-full min-w-0 list-enter" style="padding: 16px; border-left: 4px solid ${isPlus ? '#34C759' : '#FF3B30'}; animation-delay: ${i * 0.05}s; flex-shrink: 0 !important; min-width: 0 !important;">
+                <div class="flex items-center gap-3 w-full min-w-0 mr-2">
+                    <div class="w-10 h-10 shrink-0 squircle ${bgClass} ${colorClass} font-extrabold flex items-center justify-center text-sm">${name[0].toUpperCase()}</div>
+                    <div class="flex-1 min-w-0">
+                        <h4 class="font-bold text-[16px] truncate w-full text-gray-900 dark:text-white leading-tight">${name}</h4>
+                        <p class="text-[10px] text-gray-500 font-bold uppercase tracking-wider truncate w-full mt-0.5">${label}</p>
+                    </div>
+                </div>
+                <div class="text-right shrink-0">
+                    <span class="font-extrabold ${colorClass} text-[17px]">${sign}₹${displayNet}</span>
+                </div>
+            </div>`;
+        });
+
+        if (!hasData) html = `<div class="text-center py-10 text-gray-400 font-semibold text-sm">No active balances!</div>`;
+        document.getElementById('dash-balances-list').innerHTML = html;
+    }
+    // =============================================================
+
     // ========================== DIARY ==========================
     function openDiaryModal(idx = null) {
+
         activeDiaryIndex = idx;
         if (idx !== null) {
             document.getElementById('diary-modal-title').textContent = 'Edit Page';
