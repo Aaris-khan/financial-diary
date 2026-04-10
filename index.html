@@ -461,20 +461,48 @@
                     <p class="text-[10px] text-gray-500 font-bold uppercase tracking-wider truncate w-full">Month Expense</p>
                     <h3 id="dash-expenses" class="text-2xl font-extrabold mt-1 tracking-tight truncate w-full">₹0</h3>
                 </div>
-                <div class="glass-card flex flex-col justify-center min-w-0 w-full ring-1 ring-white/40 dark:ring-white/5 transition-transform">
+                                <div class="glass-card flex flex-col justify-center min-w-0 w-full ring-1 ring-white/40 dark:ring-white/5 transition-transform">
                     <div class="w-11 h-11 shrink-0 squircle bg-blue-500/10 flex items-center justify-center mb-3 text-[#007AFF]"><i class="fa-solid fa-money-bill-trend-up text-[19px]"></i></div>
                     <p class="text-[10px] text-gray-500 font-bold uppercase tracking-wider truncate w-full">Month Profit</p>
                     <h3 id="dash-profit" class="text-2xl font-extrabold mt-1 tracking-tight truncate w-full">₹0</h3>
                 </div>
             </div>
-        </div>
+            
+            <div onclick="haptic(); openAllBalances()" class="glass-card mt-4 flex items-center justify-between w-full min-w-0 cursor-pointer transition-transform active:scale-95" style="flex-shrink: 0 !important; min-height: 80px !important;">
+                <div class="flex items-center gap-4 w-full min-w-0">
+                    <div class="w-12 h-12 shrink-0 squircle bg-purple-500/10 flex items-center justify-center text-purple-600 dark:text-purple-400"><i class="fa-solid fa-address-book text-[20px]"></i></div>
+                    <div class="flex-1 min-w-0">
+                        <h3 class="font-extrabold text-[18px] text-gray-900 dark:text-white truncate w-full">Party Ledger</h3>
+                        <p class="text-[11px] text-gray-500 font-bold uppercase tracking-wider truncate w-full mt-0.5">Combined Milk & Credit</p>
+                    </div>
+                </div>
+                <i class="fa-solid fa-chevron-right text-gray-300 shrink-0 ml-3 text-[14px]"></i>
+            </div>
+            </div>
     </div>
 
+
+        <div id="balances-screen" class="screen">
+        <div class="header-sticky">
+            <div class="flex items-center gap-3 w-full min-w-0">
+                <button onclick="haptic(); switchTab('home')" class="w-10 h-10 shrink-0 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center transition-transform active:scale-95"><i class="fa-solid fa-chevron-left"></i></button>
+                <h1 class="text-xl font-extrabold truncate flex-1 min-w-0 w-full">Party Ledger</h1>
+            </div>
+        </div>
+        <div class="p-5">
+            <div class="relative w-full mb-6">
+                <i class="fa-solid fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                <input id="balance-search" type="text" placeholder="Search party name..." class="input-box w-full pl-11" onkeyup="renderDashboardBalances()">
+            </div>
+            <div id="dash-balances-list" class="space-y-3.5 w-full"></div>
+        </div>
+    </div>
     <div id="milk-screen" class="screen">
         <div class="header-sticky">
             <h1 class="text-2xl font-extrabold truncate flex-1 min-w-0">Milk Record</h1>
             <button onclick="haptic(); openModal('add-milk-customer-modal')" class="btn-primary w-auto px-5 py-2 !min-h-[38px] text-sm !rounded-[14px]"><i class="fa-solid fa-plus"></i> New</button>
         </div>
+
         <div class="p-5">
             <div class="relative w-full mb-6">
                 <i class="fa-solid fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
