@@ -1966,13 +1966,32 @@
         document.getElementById('total-expense-display').textContent = `₹${total.toLocaleString('en-IN')}`;
     }
 
+        let expensePressTimer;
+    function startExpenseLongPress(category) {
+        isLongPress = false;
+        expensePressTimer = setTimeout(() => { 
+            isLongPress = true; haptic(); deleteExpenseCategoryProfile(category); 
+        }, 800); 
+    }
+    function cancelExpenseLongPress() { clearTimeout(expensePressTimer); }
+    async function deleteExpenseCategoryProfile(category) {
+        if (confirm(`Delete the expense category "${category}" and all its records?`)) {
+            expenseDB = expenseDB.filter(e => e.category !== category); 
+            await saveDB(); 
+            if(activeExpenseCategory === category) activeExpenseCategory = null; 
+            renderExpenseList(); updateDashboard(); showToast('Category Deleted!');
+        }
+    }
+
     function openExpenseDetail(category) {
+        if(isLongPress) { isLongPress = false; return; } // Touch conflict fix
         activeExpenseCategory = category;
         document.getElementById('expense-detail-title').textContent = category;
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
         document.getElementById('expense-detail-screen').classList.add('active');
         renderExpenseRecords();
     }
+
 
     function renderExpenseRecords() {
         if (!activeExpenseCategory) return;
