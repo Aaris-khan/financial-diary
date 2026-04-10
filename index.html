@@ -733,10 +733,11 @@
             <input id="new-milk-rate" type="number" class="input-box mb-8 w-full" placeholder="Rate per KG (₹)">
             <input type="hidden" id="new-milk-type" value="lene_wala">
             
-            <div class="flex gap-4 w-full min-w-0">
-                <button onclick="document.getElementById('new-milk-type').value='dene_wala'; haptic(); addMilkCustomer();" class="btn-primary flex-1 min-w-0 !bg-[#34C759] !shadow-[0_4px_14px_rgba(52,199,89,0.25)]"><i class="fa-solid fa-arrow-down"></i> Seller</button>
-                <button onclick="document.getElementById('new-milk-type').value='lene_wala'; haptic(); addMilkCustomer();" class="btn-primary flex-1 min-w-0 !bg-[#FF3B30] !shadow-[0_4px_14px_rgba(255,59,48,0.25)]"><i class="fa-solid fa-arrow-up"></i> Buyer</button>
+                        <div class="flex gap-4 w-full min-w-0">
+                <button onclick="document.getElementById('new-milk-type').value='dene_wala'; haptic(); addMilkCustomer();" class="btn-primary flex-1 min-w-0 !bg-[#34C759] !shadow-[0_4px_14px_rgba(52,199,89,0.25)]"><i class="fa-solid fa-plus text-lg"></i> Seller</button>
+                <button onclick="document.getElementById('new-milk-type').value='lene_wala'; haptic(); addMilkCustomer();" class="btn-primary flex-1 min-w-0 !bg-[#FF3B30] !shadow-[0_4px_14px_rgba(255,59,48,0.25)]"><i class="fa-solid fa-minus text-lg"></i> Buyer</button>
             </div>
+
         </div>
     </div>
 
@@ -761,10 +762,11 @@
             <input id="new-salary-company" class="input-box mb-8 w-full" placeholder="Company / Details">
             <input type="hidden" id="new-salary-type" value="lene_wala">
             
-            <div class="flex gap-4 w-full min-w-0">
-                <button onclick="document.getElementById('new-salary-type').value='lene_wala'; haptic(); addSalaryPerson();" class="btn-primary flex-1 min-w-0 !bg-[#10B981] !shadow-[0_4px_14px_rgba(16,185,129,0.25)]"><i class="fa-solid fa-arrow-down"></i> Receives</button>
-                <button onclick="document.getElementById('new-salary-type').value='dene_wala'; haptic(); addSalaryPerson();" class="btn-primary flex-1 min-w-0 !bg-[#FF3B30] !shadow-[0_4px_14px_rgba(255,59,48,0.25)]"><i class="fa-solid fa-arrow-up"></i> Pays</button>
+                        <div class="flex gap-4 w-full min-w-0">
+                <button onclick="document.getElementById('new-salary-type').value='lene_wala'; haptic(); addSalaryPerson();" class="btn-primary flex-1 min-w-0 !bg-[#10B981] !shadow-[0_4px_14px_rgba(16,185,129,0.25)]"><i class="fa-solid fa-plus text-lg"></i> Receives</button>
+                <button onclick="document.getElementById('new-salary-type').value='dene_wala'; haptic(); addSalaryPerson();" class="btn-primary flex-1 min-w-0 !bg-[#FF3B30] !shadow-[0_4px_14px_rgba(255,59,48,0.25)]"><i class="fa-solid fa-minus text-lg"></i> Pays</button>
             </div>
+
         </div>
     </div>
 
