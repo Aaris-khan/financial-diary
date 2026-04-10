@@ -108,15 +108,16 @@
         .screen.active { display: flex; animation: slideIn 0.4s cubic-bezier(0.32, 0.72, 0, 1); }
         @keyframes slideIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
         
-        /* 2. STAGGERED LIST ANIMATION (Zinda App Effect) */
+                /* 2. PREMIUM SIDE-SLIDE ANIMATION */
         .list-enter {
-            animation: slideUpFade 0.5s cubic-bezier(0.32, 0.72, 0, 1) forwards;
+            animation: slideInRight 0.45s cubic-bezier(0.25, 1, 0.5, 1) forwards;
             opacity: 0;
-            transform: translateY(15px);
+            transform: translateX(40px);
         }
-        @keyframes slideUpFade {
-            to { opacity: 1; transform: translateY(0); }
+        @keyframes slideInRight {
+            to { opacity: 1; transform: translateX(0); }
         }
+
 
         /* Advanced Frosted Glass Cards + Premium Active Glow */
         .glass-card { 
@@ -718,11 +719,13 @@
         <div onclick="haptic(); switchTab('milk')" class="nav-item shrink-0" id="tab-milk"><i class="fa-solid fa-jug-detergent"></i>Milk</div>
         <div onclick="haptic(); switchTab('udhar')" class="nav-item shrink-0" id="tab-udhar"><i class="fa-solid fa-hand-holding-dollar"></i>Credit</div>
         <div onclick="haptic(); switchTab('expenses')" class="nav-item shrink-0" id="tab-expenses"><i class="fa-solid fa-receipt"></i>Expenses</div>
-        <div onclick="haptic(); switchTab('salary')" class="nav-item shrink-0" id="tab-salary"><i class="fa-solid fa-sack-dollar"></i>Salary</div>
+                <div onclick="haptic(); switchTab('salary')" class="nav-item shrink-0" id="tab-salary"><i class="fa-solid fa-sack-dollar"></i>Salary</div>
         <div onclick="haptic(); switchTab('diary')" class="nav-item shrink-0" id="tab-diary"><i class="fa-solid fa-book"></i>Diary</div>
     </div>
+</div>
 
     <div id="add-milk-customer-modal" class="modal-overlay" onclick="if(event.target.id==='add-milk-customer-modal')closeModal('add-milk-customer-modal')">
+
         <div class="modal-content" onclick="event.stopImmediatePropagation()">
             <div class="w-12 h-1.5 bg-gray-300 dark:bg-gray-600 shrink-0 rounded-full mx-auto mb-8"></div>
             <h2 class="text-2xl font-extrabold mb-6 truncate w-full">New Customer</h2>
@@ -782,10 +785,11 @@
             <input type="date" id="udhar-date" class="input-box mb-4 w-full">
             <input id="udhar-name" type="text" class="input-box mb-4 w-full" placeholder="Name (Given to / Taken from)">
             <input id="udhar-amount" type="number" class="input-box mb-8 w-full" placeholder="Amount (₹)">
-            <div class="flex gap-4 w-full min-w-0">
-                <button onclick="haptic(); saveUdharEntry('credit')" class="btn-primary flex-1 min-w-0 !bg-[#34C759] !shadow-[0_4px_14px_rgba(52,199,89,0.25)]"><i class="fa-solid fa-arrow-up"></i> Given</button>
-                <button onclick="haptic(); saveUdharEntry('debit')" class="btn-primary flex-1 min-w-0 !bg-[#FF3B30] !shadow-[0_4px_14px_rgba(255,59,48,0.25)]"><i class="fa-solid fa-arrow-down"></i> Taken</button>
+                        <div class="flex gap-4 w-full min-w-0">
+                <button onclick="haptic(); saveUdharEntry('credit')" class="btn-primary flex-1 min-w-0 !bg-[#34C759] !shadow-[0_4px_14px_rgba(52,199,89,0.25)]"><i class="fa-solid fa-plus text-lg"></i> Given</button>
+                <button onclick="haptic(); saveUdharEntry('debit')" class="btn-primary flex-1 min-w-0 !bg-[#FF3B30] !shadow-[0_4px_14px_rgba(255,59,48,0.25)]"><i class="fa-solid fa-minus text-lg"></i> Taken</button>
             </div>
+
         </div>
     </div>
 
@@ -810,14 +814,12 @@
             <div class="diary-paper w-full h-[320px] mb-8">
                 <textarea id="diary-entry-content" class="w-full h-full bg-transparent resize-none outline-none diary-textarea text-gray-800 dark:text-gray-200" placeholder="What happened today? Write unlimited here..."></textarea>
             </div>
-            
-            <button onclick="haptic(); saveDiaryEntry()" class="btn-primary shrink-0 w-full !bg-[#F5A623] !shadow-[0_4px_14px_rgba(245,166,35,0.25)] !text-white"><i class="fa-solid fa-check"></i> Save Page</button>
+                        <button onclick="haptic(); saveDiaryEntry()" class="btn-primary shrink-0 w-full !bg-[#F5A623] !shadow-[0_4px_14px_rgba(245,166,35,0.25)] !text-white"><i class="fa-solid fa-check"></i> Save Page</button>
         </div>
     </div>
 
-</div>
-
 <div id="receipt-card" style="position: absolute; left: -9999px; top: 0; width: 380px; background: #fff; padding: 24px; border-radius: 12px; color: #000; font-family: sans-serif; z-index: -10;">
+
     <div style="text-align: center; border-bottom: 2px dashed #ddd; padding-bottom: 12px; margin-bottom: 16px;">
         <h2 style="font-size: 26px; font-weight: 800; color: #34C759; margin:0;">Aarish Dairy</h2>
         <p style="font-size: 14px; color: #888; margin:0; text-transform: uppercase; letter-spacing: 1px;">Monthly Statement</p>
