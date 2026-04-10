@@ -1769,8 +1769,17 @@
                 const label = isPlus ? 'To Receive' : 'To Pay';
                 const displayNet = Math.abs(g.net).toLocaleString('en-IN');
 
-                return `<div onclick="haptic(); openUdharDetail('${g.name}')" class="glass-card mb-3.5 flex items-center justify-between cursor-pointer border-l-[3px] ${borderClass} w-full min-w-0 ring-1 ring-white/40 dark:ring-white/5 list-enter" style="animation-delay: ${index * 0.05}s;">
+                                return `<div 
+                    onclick="haptic(); openUdharDetail('${g.name}')" 
+                    ontouchstart="startUdharLongPress('${g.name}')" 
+                    ontouchend="cancelUdharLongPress()" 
+                    ontouchmove="cancelUdharLongPress()" 
+                    onmousedown="startUdharLongPress('${g.name}')" 
+                    onmouseup="cancelUdharLongPress()" 
+                    onmouseleave="cancelUdharLongPress()"
+                    class="glass-card mb-3.5 flex items-center justify-between cursor-pointer border-l-[3px] ${borderClass} w-full min-w-0 ring-1 ring-white/40 dark:ring-white/5 list-enter" style="animation-delay: ${index * 0.05}s;">
                     <div class="flex-1 min-w-0 mr-3">
+
                         <h4 class="font-bold text-[17px] truncate w-full min-w-0 text-gray-900 dark:text-white flex items-center gap-2">
                             ${g.name}
                         </h4>
@@ -1788,10 +1797,28 @@
         document.getElementById('udhar-list').innerHTML = html || getEmptyState('fa-handshake', 'No credit records found');
     }
 
-    function filterUdharList() { renderUdharList(); }
+        function filterUdharList() { renderUdharList(); }
+
+    let udharPressTimer;
+    function startUdharLongPress(name) {
+        isLongPress = false;
+        udharPressTimer = setTimeout(() => { 
+            isLongPress = true; haptic(); deleteUdharPersonProfile(name); 
+        }, 800); 
+    }
+    function cancelUdharLongPress() { clearTimeout(udharPressTimer); }
+    async function deleteUdharPersonProfile(name) {
+        if (confirm(`Delete the credit profile for "${name}" and all their records?`)) {
+            udharDB = udharDB.filter(u => u.name !== name); 
+            await saveDB(); if(activeUdharPerson === name) activeUdharPerson = null; 
+            renderUdharList(); updateDashboard(); showToast('Profile Deleted!');
+        }
+    }
 
     function openUdharDetail(name) {
+        if(isLongPress) { isLongPress = false; return; } // Touch conflict fix
         activeUdharPerson = name;
+
         document.getElementById('udhar-detail-title').textContent = name;
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
         document.getElementById('udhar-detail-screen').classList.add('active');
@@ -1913,9 +1940,18 @@
             if(new Date(e.date) > new Date(grouped[e.category].lastDate)) grouped[e.category].lastDate = e.date;
         });
 
-        const html = Object.values(grouped).sort((a,b) => new Date(b.lastDate) - new Date(a.lastDate)).map((g, index) => {
-            return `<div onclick="haptic(); openExpenseDetail('${g.category}')" class="glass-card mb-3.5 flex items-center justify-between border-l-[3px] border-l-[#FF3B30] w-full min-w-0 cursor-pointer ring-1 ring-white/40 dark:ring-white/5 list-enter" style="animation-delay: ${index * 0.05}s;">
+                const html = Object.values(grouped).sort((a,b) => new Date(b.lastDate) - new Date(a.lastDate)).map((g, index) => {
+            return `<div 
+                onclick="haptic(); openExpenseDetail('${g.category}')" 
+                ontouchstart="startExpenseLongPress('${g.category}')" 
+                ontouchend="cancelExpenseLongPress()" 
+                ontouchmove="cancelExpenseLongPress()" 
+                onmousedown="startExpenseLongPress('${g.category}')" 
+                onmouseup="cancelExpenseLongPress()" 
+                onmouseleave="cancelExpenseLongPress()"
+                class="glass-card mb-3.5 flex items-center justify-between border-l-[3px] border-l-[#FF3B30] w-full min-w-0 cursor-pointer ring-1 ring-white/40 dark:ring-white/5 list-enter" style="animation-delay: ${index * 0.05}s;">
                 <div class="flex-1 min-w-0 mr-3">
+
                     <h4 class="font-bold text-[17px] truncate w-full min-w-0 text-gray-900 dark:text-white">${g.category}</h4>
                     <p class="text-[13px] text-gray-500 font-medium truncate w-full min-w-0 mt-0.5 tracking-tight">Last entry: ${formatDisplayDate(g.lastDate)}</p>
                 </div>
