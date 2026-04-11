@@ -761,15 +761,58 @@
         </div>
     </div>
 
-    <div class="bottom-nav" id="bottomNav">
+     
+        <div id="projects-screen" class="screen">
+        <div class="header-sticky">
+            <h1 class="text-2xl font-extrabold truncate flex-1 min-w-0">Business Hub</h1>
+            <button onclick="haptic(); openModal('add-project-modal')" class="btn-primary w-auto px-5 py-2 !min-h-[38px] text-sm !rounded-[14px] !bg-[#000] dark:!bg-[#FFF] dark:!text-[#000] !shadow-[0_4px_14px_rgba(0,0,0,0.25)] dark:!shadow-[0_4px_14px_rgba(255,255,255,0.25)]"><i class="fa-solid fa-folder-plus"></i> New</button>
+        </div>
+        <div class="p-5">
+            <div class="relative w-full mb-6">
+                <i class="fa-solid fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                <input id="project-search" type="text" placeholder="Search business khata..." class="input-box w-full pl-11" onkeyup="filterProjectList()">
+            </div>
+            <div id="project-list" class="space-y-3.5 w-full"></div>
+        </div>
+    </div>
+
+    <div id="project-detail-screen" class="screen">
+        <div class="header-sticky">
+            <div class="flex items-center gap-3 w-full min-w-0">
+                <button onclick="haptic(); switchTab('projects')" class="w-10 h-10 shrink-0 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center transition-transform active:scale-95"><i class="fa-solid fa-chevron-left"></i></button>
+                <h1 id="project-detail-title" class="text-xl font-extrabold truncate flex-1 min-w-0 w-full">Khata</h1>
+            </div>
+            <button onclick="haptic(); openProjectEntryModal()" class="btn-primary w-auto px-5 py-2 !min-h-[38px] text-sm !rounded-[14px] !bg-[#000] dark:!bg-[#FFF] dark:!text-[#000] !shadow-[0_4px_14px_rgba(0,0,0,0.25)] dark:!shadow-[0_4px_14px_rgba(255,255,255,0.25)]"><i class="fa-solid fa-plus"></i> Entry</button>
+        </div>
+        <div class="p-5">
+            <div id="project-dynamic-totals" class="grid grid-cols-2 gap-3 mb-6 w-full"></div>
+
+            <div class="flex justify-between items-center mb-4 w-full min-w-0 gap-2">
+                <h3 class="font-bold text-[19px] tracking-tight truncate flex-1 min-w-0">All Entries</h3>
+            </div>
+
+            <div class="glass-card p-0 overflow-x-auto w-full ring-1 ring-white/40 dark:ring-white/5 shadow-sm">
+                <table class="table-custom min-w-full">
+                    <thead class="bg-black/5 dark:bg-white/5">
+                        <tr><th>Date</th><th>Detail</th><th>Amount</th><th class="text-right"></th></tr>
+                    </thead>
+                    <tbody id="project-detail-records"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+        <div class="bottom-nav" id="bottomNav">
         <div onclick="haptic(); switchTab('home')" class="nav-item active shrink-0" id="tab-home"><i class="fa-solid fa-house"></i>Home</div>
         <div onclick="haptic(); switchTab('milk')" class="nav-item shrink-0" id="tab-milk"><i class="fa-solid fa-jug-detergent"></i>Milk</div>
         <div onclick="haptic(); switchTab('udhar')" class="nav-item shrink-0" id="tab-udhar"><i class="fa-solid fa-hand-holding-dollar"></i>Credit</div>
         <div onclick="haptic(); switchTab('expenses')" class="nav-item shrink-0" id="tab-expenses"><i class="fa-solid fa-receipt"></i>Expenses</div>
-                <div onclick="haptic(); switchTab('salary')" class="nav-item shrink-0" id="tab-salary"><i class="fa-solid fa-sack-dollar"></i>Salary</div>
+        <div onclick="haptic(); switchTab('salary')" class="nav-item shrink-0" id="tab-salary"><i class="fa-solid fa-sack-dollar"></i>Salary</div>
         <div onclick="haptic(); switchTab('diary')" class="nav-item shrink-0" id="tab-diary"><i class="fa-solid fa-book"></i>Diary</div>
+        <div onclick="haptic(); switchTab('projects')" class="nav-item shrink-0" id="tab-projects"><i class="fa-solid fa-briefcase"></i>Business</div>
     </div>
 </div>
+
 
     <div id="add-milk-customer-modal" class="modal-overlay" onclick="if(event.target.id==='add-milk-customer-modal')closeModal('add-milk-customer-modal')">
 
@@ -864,6 +907,48 @@
                 <textarea id="diary-entry-content" class="w-full h-full bg-transparent resize-none outline-none diary-textarea text-gray-800 dark:text-gray-200" placeholder="What happened today? Write unlimited here..."></textarea>
             </div>
                         <button onclick="haptic(); saveDiaryEntry()" class="btn-primary shrink-0 w-full !bg-[#F5A623] !shadow-[0_4px_14px_rgba(245,166,35,0.25)] !text-white"><i class="fa-solid fa-check"></i> Save Page</button>
+        </div>
+    </div>
+    <div id="add-project-modal" class="modal-overlay" onclick="if(event.target.id==='add-project-modal')closeModal('add-project-modal')">
+        <div class="modal-content" onclick="event.stopImmediatePropagation()">
+            <div class="w-12 h-1.5 bg-gray-300 dark:bg-gray-600 shrink-0 rounded-full mx-auto mb-8"></div>
+            <h2 class="text-2xl font-extrabold mb-6 truncate w-full">New Business Khata</h2>
+            <input id="new-project-name" type="text" class="input-box mb-8 w-full font-bold text-lg" placeholder="Business ka naam likho (e.g. Dukaan)">
+            <button onclick="haptic(); saveNewProject()" class="btn-primary shrink-0 w-full !bg-[#000] dark:!bg-[#FFF] dark:!text-[#000] !shadow-[0_4px_14px_rgba(0,0,0,0.25)]"><i class="fa-solid fa-check"></i> Create Khata</button>
+        </div>
+    </div>
+
+    <div id="add-project-entry-modal" class="modal-overlay" onclick="if(event.target.id==='add-project-entry-modal')closeModal('add-project-entry-modal')">
+        <div class="modal-content" onclick="event.stopImmediatePropagation()">
+            <div class="w-12 h-1.5 bg-gray-300 dark:bg-gray-600 shrink-0 rounded-full mx-auto mb-6"></div>
+            <h2 class="text-2xl font-extrabold mb-6 truncate w-full">Add Record</h2>
+            
+            <input type="date" id="proj-entry-date" class="input-box mb-4 w-full">
+            <input id="proj-entry-title" type="text" class="input-box mb-4 w-full font-medium" placeholder="Detail (e.g. Samaan bika, Bill diya)">
+            <input id="proj-entry-amount" type="number" class="input-box mb-6 w-full font-bold text-xl text-[#007AFF] dark:text-[#32ade6]" placeholder="Amount (₹)">
+            
+            <p class="text-[11px] text-gray-500 font-bold uppercase tracking-wider mb-4">Select Category Type</p>
+            <div class="grid grid-cols-4 gap-3 mb-8 w-full">
+                <button onclick="selectProjColor('green')" id="p-color-green" class="flex flex-col items-center justify-center gap-2 opacity-50 transition-all scale-95">
+                    <div class="w-12 h-12 rounded-full bg-gradient-to-br from-[#34C759] to-[#28a745] shadow-[0_4px_10px_rgba(52,199,89,0.3)] flex items-center justify-center text-white"><i class="fa-solid fa-arrow-down"></i></div>
+                    <span class="text-[10px] font-bold text-gray-600 dark:text-gray-300">INCOME</span>
+                </button>
+                <button onclick="selectProjColor('red')" id="p-color-red" class="flex flex-col items-center justify-center gap-2 opacity-50 transition-all scale-95">
+                    <div class="w-12 h-12 rounded-full bg-gradient-to-br from-[#FF3B30] to-[#c92a2a] shadow-[0_4px_10px_rgba(255,59,48,0.3)] flex items-center justify-center text-white"><i class="fa-solid fa-arrow-up"></i></div>
+                    <span class="text-[10px] font-bold text-gray-600 dark:text-gray-300">EXPENSE</span>
+                </button>
+                <button onclick="selectProjColor('blue')" id="p-color-blue" class="flex flex-col items-center justify-center gap-2 opacity-50 transition-all scale-95">
+                    <div class="w-12 h-12 rounded-full bg-gradient-to-br from-[#007AFF] to-[#0056b3] shadow-[0_4px_10px_rgba(0,122,255,0.3)] flex items-center justify-center text-white"><i class="fa-solid fa-building-columns"></i></div>
+                    <span class="text-[10px] font-bold text-gray-600 dark:text-gray-300">BANK</span>
+                </button>
+                <button onclick="selectProjColor('orange')" id="p-color-orange" class="flex flex-col items-center justify-center gap-2 opacity-50 transition-all scale-95">
+                    <div class="w-12 h-12 rounded-full bg-gradient-to-br from-[#FF9500] to-[#d67a00] shadow-[0_4px_10px_rgba(255,149,0,0.3)] flex items-center justify-center text-white"><i class="fa-solid fa-clock-rotate-left"></i></div>
+                    <span class="text-[10px] font-bold text-gray-600 dark:text-gray-300">PENDING</span>
+                </button>
+                <input type="hidden" id="proj-entry-color" value="green">
+            </div>
+
+            <button onclick="haptic(); saveProjectEntry()" class="btn-primary shrink-0 w-full !bg-[#000] dark:!bg-[#FFF] dark:!text-[#000] !shadow-[0_4px_14px_rgba(0,0,0,0.25)]"><i class="fa-solid fa-check"></i> Save Record</button>
         </div>
     </div>
 
@@ -981,13 +1066,15 @@
         appId: "1:1012787958774:web:4278ee2987cfd6cd362dd7"
     };
 
-    let app, auth, database, currentUserUID = null, appDataRef = null;
-    let milkDB = {}, udharDB = [], expenseDB = [], salaryDB = {}, diaryDB = [];
+        let app, auth, database, currentUserUID = null, appDataRef = null;
+    let milkDB = {}, udharDB = [], expenseDB = [], salaryDB = {}, diaryDB = [], projectDB = {};
     let activeMilkCustomer = null;
     let activeSalaryPerson = null;
     let activeExpenseCategory = null;
     let activeUdharPerson = null;
     let activeDiaryIndex = null;
+    let activeProject = null;
+
     
     let selectedMonth = new Date().getMonth(), selectedYear = new Date().getFullYear();
     const DEFAULT_RATE = 55;
@@ -1165,13 +1252,14 @@
         });
     }
 
-    async function saveDB() {
+        async function saveDB() {
         if (!currentUserUID) return;
-        await appDataRef.set({ milkDB, udharDB, expenseDB, salaryDB, diaryDB });
+        await appDataRef.set({ milkDB, udharDB, expenseDB, salaryDB, diaryDB, projectDB });
     }
 
+
     // ========================== DASHBOARD & UI UPDATES ==========================
-    function updateActiveScreen() {
+        function updateActiveScreen() {
         const activeTab = document.querySelector('.nav-item.active').id.replace('tab-', '');
         if (activeTab === 'home') updateDashboard();
         else if (activeTab === 'milk') renderMilkList();
@@ -1179,14 +1267,17 @@
         else if (activeTab === 'udhar') renderUdharList();
         else if (activeTab === 'expenses') renderExpenseList();
         else if (activeTab === 'diary') renderDiaryList();
+        else if (activeTab === 'projects') renderProjectsList();
         
         if(document.getElementById('milk-detail-screen').classList.contains('active')) renderMilkRecords();
         if(document.getElementById('salary-detail-screen').classList.contains('active')) renderSalaryRecords();
         if(document.getElementById('udhar-detail-screen').classList.contains('active')) renderUdharRecords();
         if(document.getElementById('expense-detail-screen').classList.contains('active')) renderExpenseRecords();
+        if(document.getElementById('project-detail-screen').classList.contains('active')) renderProjectRecords();
         
         updateDashboard(); 
     }
+
 
     function updateDashboard() {
         let rev = 0, exp = 0, lenaHai = 0, denaHai = 0;
@@ -2147,6 +2238,159 @@
         updateActiveScreen();
     }
 
+         // ========================== PREMIUM BUSINESS HUB LOGIC ==========================
+    async function saveNewProject() {
+        let name = document.getElementById('new-project-name').value.trim();
+        name = name.replace(/[.#$\[\]<>]/g, ''); 
+        if (!name) return showToast('Enter Name!');
+        if (projectDB[name]) return showToast('Already exists!');
+        
+        projectDB[name] = { records: [], created: Date.now() }; 
+        await saveDB(); 
+        closeModal('add-project-modal'); 
+        renderProjectsList(); 
+        showToast('Khata Created!');
+    }
+
+    function renderProjectsList() {
+        const q = (document.getElementById('project-search')?.value || '').toLowerCase();
+        const html = Object.keys(projectDB).filter(n => n.toLowerCase().includes(q)).map((name, index) => {
+            const p = projectDB[name];
+            const recCount = p.records ? p.records.length : 0;
+
+            return `<div onclick="haptic(); openProjectDetail('${name}')" class="glass-card mb-3.5 flex items-center justify-between cursor-pointer border-l-[3px] border-l-black dark:border-l-white w-full min-w-0 ring-1 ring-white/40 dark:ring-white/5 list-enter" style="animation-delay: ${index * 0.05}s;">
+                <div class="flex items-center gap-4 w-full min-w-0">
+                    <div class="w-12 h-12 shrink-0 squircle bg-black/5 dark:bg-white/10 text-gray-800 dark:text-white font-extrabold flex items-center justify-center text-xl shadow-inner"><i class="fa-solid fa-briefcase"></i></div>
+                    <div class="flex-1 min-w-0">
+                        <h4 class="font-bold text-[18px] leading-tight truncate w-full flex items-center text-gray-900 dark:text-white">${name}</h4>
+                        <p class="text-[13px] text-gray-500 font-semibold truncate w-full mt-0.5 tracking-tight">${recCount} Records Logged</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3 shrink-0 ml-2">
+                    <button onclick="event.stopPropagation(); haptic(); deleteProject('${name}')" class="action-btn !w-9 !h-9 !bg-red-500/10"><i class="fa-solid fa-trash text-[12px] text-red-500"></i></button>
+                    <i class="fa-solid fa-chevron-right text-gray-300 text-[14px]"></i>
+                </div>
+            </div>`;
+        }).join('');
+        document.getElementById('project-list').innerHTML = html || getEmptyState('fa-folder-open', 'No business khatas added yet');
+    }
+
+    function filterProjectList() { renderProjectsList(); }
+
+    async function deleteProject(name) {
+        if (confirm(`Delete khata "${name}" permanently?`)) {
+            delete projectDB[name]; await saveDB(); renderProjectsList(); showToast('Deleted!');
+        }
+    }
+
+    function openProjectDetail(name) {
+        activeProject = name;
+        document.getElementById('project-detail-title').textContent = name;
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById('project-detail-screen').classList.add('active');
+        renderProjectRecords();
+    }
+
+    function selectProjColor(col) {
+        document.getElementById('proj-entry-color').value = col;
+        ['green', 'red', 'blue', 'orange'].forEach(c => {
+            const el = document.getElementById('p-color-' + c);
+            if(c === col) { 
+                el.classList.remove('opacity-50', 'scale-95'); 
+                el.classList.add('opacity-100', 'scale-105'); 
+            } else { 
+                el.classList.add('opacity-50', 'scale-95'); 
+                el.classList.remove('opacity-100', 'scale-105'); 
+            }
+        });
+        haptic();
+    }
+
+    function openProjectEntryModal() {
+        document.getElementById('proj-entry-date').value = getTodayISO();
+        document.getElementById('proj-entry-title').value = '';
+        document.getElementById('proj-entry-amount').value = '';
+        selectProjColor('green'); 
+        openModal('add-project-entry-modal');
+    }
+
+    async function saveProjectEntry() {
+        const date = document.getElementById('proj-entry-date').value;
+        let title = document.getElementById('proj-entry-title').value.trim() || 'Record';
+        title = title.replace(/[<>]/g, ''); 
+        const amt = parseFloat(document.getElementById('proj-entry-amount').value);
+        const col = document.getElementById('proj-entry-color').value;
+
+        // YAHAN FIX HAI: !amt ki jagah isNaN(amt)
+        if(!date || isNaN(amt)) return showToast('Enter details & valid amount!');
+        if(!projectDB[activeProject].records) projectDB[activeProject].records = [];
+        
+        projectDB[activeProject].records.unshift({ id: Date.now(), date, title, amount: amt, color: col });
+        await saveDB(); 
+        closeModal('add-project-entry-modal'); 
+        renderProjectRecords();
+        showToast('Saved Successfully!');
+    }
+
+    function renderProjectRecords() {
+        if (!activeProject || !projectDB[activeProject]) return;
+        const records = projectDB[activeProject].records || [];
+        
+        let colorTotals = { 'green': 0, 'red': 0, 'blue': 0, 'orange': 0 };
+        const colorHex = { 'green': '#34C759', 'red': '#FF3B30', 'blue': '#007AFF', 'orange': '#FF9500' };
+        
+        // Premium Apple-like Gradients for dynamic cards
+        const bgGradients = {
+            'green': 'bg-gradient-to-br from-[#34C759] to-[#28a745]',
+            'red': 'bg-gradient-to-br from-[#FF3B30] to-[#c92a2a]',
+            'blue': 'bg-gradient-to-br from-[#007AFF] to-[#0056b3]',
+            'orange': 'bg-gradient-to-br from-[#FF9500] to-[#d67a00]'
+        };
+        const colorLabels = { 'green': 'INCOME (AAYA)', 'red': 'EXPENSE (GAYA)', 'blue': 'BANK / OTHER', 'orange': 'PENDING / UDHAR' };
+
+        const html = records.map((r, index) => {
+            if(colorTotals[r.color] !== undefined) colorTotals[r.color] += Number(r.amount);
+            
+            // YAHAN FIX HAI: 100% Bug-Free Premium Badge using Inline Styles
+            const badgeStyle = `background-color: ${colorHex[r.color]}1A; color: ${colorHex[r.color]};`;
+            const badgeClass = `px-2 py-0.5 rounded-md text-[9px] font-extrabold uppercase tracking-wider w-fit mt-1`;
+            
+            return `<tr class="list-enter" style="animation-delay: ${index * 0.05}s;">
+                <td class="text-gray-500 font-medium text-[13px] shrink-0">${formatDisplayDate(r.date)}</td>
+                <td class="w-full max-w-[120px]">
+                    <div class="flex flex-col min-w-0">
+                        <span class="font-bold text-[15px] truncate w-full text-gray-900 dark:text-white">${r.title}</span>
+                        <span class="${badgeClass}" style="${badgeStyle}">${r.color}</span>
+                    </div>
+                </td>
+                <td class="font-extrabold text-[17px] tracking-tight text-right shrink-0" style="color: ${colorHex[r.color]};">₹${Number(r.amount).toLocaleString('en-IN')}</td>
+                <td class="text-right shrink-0 pl-2"><button onclick="haptic(); deleteProjectEntry(${r.id})" class="action-btn shrink-0 ml-auto"><i class="fa-solid fa-trash text-xs"></i></button></td>
+            </tr>`;
+        }).join('');
+
+        document.getElementById('project-detail-records').innerHTML = html || `<tr><td colspan="4" class="text-center py-10 text-gray-400 font-semibold text-sm">No records logged yet. Tap + Entry to start.</td></tr>`;
+
+        // Render the premium Apple-like dynamic total cards
+        let cardsHtml = '';
+        Object.keys(colorTotals).forEach(col => {
+            if(colorTotals[col] > 0) {
+                cardsHtml += `<div class="glass-card flex flex-col justify-center min-w-0 w-full border-none ring-1 ring-white/30 shadow-[0_8px_24px_rgba(0,0,0,0.12)] ${bgGradients[col]} text-white transition-transform">
+                    <p class="text-[10px] font-bold uppercase tracking-wider truncate w-full opacity-90 drop-shadow-sm">${colorLabels[col]}</p>
+                    <h3 class="text-[22px] font-extrabold mt-1 tracking-tight truncate w-full drop-shadow-md">₹${colorTotals[col].toLocaleString('en-IN')}</h3>
+                </div>`;
+            }
+        });
+        document.getElementById('project-dynamic-totals').innerHTML = cardsHtml;
+    }
+
+    async function deleteProjectEntry(id) {
+        if(confirm('Delete this record permanently?')) { 
+            projectDB[activeProject].records = projectDB[activeProject].records.filter(r => r.id !== id);
+            await saveDB(); renderProjectRecords(); showToast('Record Deleted!'); 
+        }
+    }
+
+    
     // ========================== PWA APP INSTALL LOGIC ==========================
     let deferredPrompt;
 
