@@ -913,7 +913,7 @@
         <div class="modal-content" onclick="event.stopImmediatePropagation()">
             <div class="w-12 h-1.5 bg-gray-300 dark:bg-gray-600 shrink-0 rounded-full mx-auto mb-8"></div>
             <h2 class="text-2xl font-extrabold mb-6 truncate w-full">New Business Khata</h2>
-            <input id="new-project-name" type="text" class="input-box mb-8 w-full font-bold text-lg" placeholder="Business ka naam likho (e.g. Dukaan)">
+            <input id="new-project-name" type="text" class="input-box mb-8 w-full font-bold text-lg" placeholder="Enter business name (e.g. shop)">
             <button onclick="haptic(); saveNewProject()" class="btn-primary shrink-0 w-full !bg-[#000] dark:!bg-[#FFF] dark:!text-[#000] !shadow-[0_4px_14px_rgba(0,0,0,0.25)]"><i class="fa-solid fa-check"></i> Create Khata</button>
         </div>
     </div>
@@ -2348,7 +2348,7 @@
             'blue': 'bg-gradient-to-br from-[#007AFF] to-[#0056b3]',
             'orange': 'bg-gradient-to-br from-[#FF9500] to-[#d67a00]'
         };
-        const colorLabels = { 'green': 'INCOME (AAYA)', 'red': 'EXPENSE (GAYA)', 'blue': 'BANK / OTHER', 'orange': 'PENDING / UDHAR' };
+        const colorLabels = { 'green': 'INCOME (RECIEVED)', 'red': 'EXPENSE (SENT)', 'blue': 'BANK / OTHER', 'orange': 'PENDING / UDHAR' };
 
         const html = records.map((r, index) => {
             if(colorTotals[r.color] !== undefined) colorTotals[r.color] += Number(r.amount);
