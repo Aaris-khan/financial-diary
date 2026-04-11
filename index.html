@@ -398,6 +398,22 @@
             flex-shrink: 0 !important;
             min-width: 0 !important;
         }
+
+            /* ==================== APPLE OFFLINE SCREEN CSS ==================== */
+        #offline-screen {
+            position: fixed; inset: 0; background-color: rgba(245, 245, 247, 0.85); 
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); z-index: 999999;
+            display: none; flex-direction: column; align-items: center; justify-content: center;
+            text-align: center; padding: 24px; opacity: 0; transition: opacity 0.4s ease;
+        }
+        .dark #offline-screen { background-color: rgba(0, 0, 0, 0.85); }
+        #offline-screen.show { display: flex; opacity: 1; }
+        .offline-icon-box { width: 88px; height: 88px; background: rgba(255, 59, 48, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 24px; box-shadow: inset 0 0 20px rgba(255,59,48,0.05); }
+        .offline-title { font-size: 26px; font-weight: 800; color: #1C1C1E; margin-bottom: 10px; letter-spacing: -0.5px; font-family: 'Inter', sans-serif; }
+        .dark .offline-title { color: #FFFFFF; }
+        .offline-desc { font-size: 15px; color: #8E8E93; font-weight: 500; max-width: 300px; line-height: 1.5; margin-bottom: 36px; font-family: 'Inter', sans-serif; }
+
+        
     </style>
 
      
@@ -414,6 +430,15 @@
 <div class="ambient-glow"></div>
 <div class="ambient-glow-2"></div>
 
+    <div id="offline-screen">
+        <div class="offline-icon-box">
+            <i class="fa-solid fa-wifi" style="font-size: 36px; color: #FF3B30;"></i>
+        </div>
+        <h2 class="offline-title">No Internet</h2>
+        <p class="offline-desc">Connection lost. Data cannot be saved offline. Please check your internet.</p>
+    </div>
+
+    
 <div id="login-screen" style="position: fixed; inset: 0; background: #000; display: flex; align-items: center; justify-content: center; z-index: 9999; overflow: hidden;">
     <div style="position:absolute; top:-20%; left:-20%; width: 70%; height: 70%; background: radial-gradient(circle, #007AFF 0%, transparent 70%); opacity: 0.3; filter: blur(80px);"></div>
     <div class="glass-card" style="width: 90%; max-width: 360px; text-align: center; position: relative; z-index: 1; background: rgba(28,28,30,0.8); border: 1px solid rgba(255,255,255,0.1);">
@@ -1043,6 +1068,23 @@
     // ========================== HAPTICS & THEME ==========================
     function haptic() { if (navigator.vibrate) navigator.vibrate(45); }
 
+         // ========================== INTERNET CHECKER ==========================
+    function updateOnlineStatus() {
+        const offlineScreen = document.getElementById('offline-screen');
+        if (navigator.onLine) {
+            offlineScreen.classList.remove('show');
+            setTimeout(() => offlineScreen.style.display = 'none', 400);
+        } else {
+            if (navigator.vibrate) navigator.vibrate([50, 50, 50]); // Error vibration
+            offlineScreen.style.display = 'flex';
+            setTimeout(() => offlineScreen.classList.add('show'), 10);
+        }
+    }
+    
+    window.addEventListener('online', updateOnlineStatus);
+    window.addEventListener('offline', updateOnlineStatus);
+
+    
     function toggleTheme() {
         const html = document.documentElement;
         if (html.classList.contains('dark')) {
@@ -2423,7 +2465,10 @@
         document.getElementById('salary-entry-date').value = getTodayISO();
         initFilters();
         initFirebase(); 
-        
+
+       
+                updateOnlineStatus(); 
+
         const manifestString = `{"name":"Aarish Dairy Pro","short_name":"Aarish Dairy","display":"standalone","background_color":"#F5F5F7","theme_color":"#34C759","icons":[{"src":"https://cdn-icons-png.flaticon.com/512/2965/2965358.png","sizes":"512x512","type":"image/png", "purpose": "any maskable"}]}`;
 
         const blob = new Blob([manifestString], {type: 'application/json'});
