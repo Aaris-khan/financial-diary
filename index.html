@@ -1237,15 +1237,17 @@
         showLoader("LOADING...");
         appDataRef = database.ref(`users/${currentUserUID}/appData`);
         
-        appDataRef.on('value', (snapshot) => {
+                appDataRef.on('value', (snapshot) => {
             const data = snapshot.val() || {};
             milkDB = data.milkDB || {};
             udharDB = data.udharDB || [];
             expenseDB = data.expenseDB || [];
             salaryDB = data.salaryDB || {};
             diaryDB = data.diaryDB || [];
+            projectDB = data.projectDB || {};
 
             updateActiveScreen();
+
             hideLoader();
             document.getElementById('login-screen').style.display = 'none';
             document.getElementById('main-app').classList.remove('hidden');
