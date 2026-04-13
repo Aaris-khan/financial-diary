@@ -1716,7 +1716,7 @@
             const c = milkDB[name];
             let kg = 0; filterByMonth(c.records || []).forEach(r => kg += ((Number(r.morning)||0) + (Number(r.evening)||0)));
             
-            const isDeneWala = c.type === 'dene_wala';
+            const isDeneWala = c.type === 'lene_wala';
             const colorClass = isDeneWala ? 'text-[#34C759]' : 'text-[#FF3B30]';
             const bgClass = isDeneWala ? 'bg-[#34C759]/10' : 'bg-[#FF3B30]/10';
             const borderClass = isDeneWala ? 'border-l-[#34C759]' : 'border-l-[#FF3B30]';
@@ -1780,7 +1780,7 @@
         
         document.getElementById('milk-detail-records').innerHTML = html || `<tr><td colspan="5" class="text-center py-8 text-gray-400 font-semibold">No entries for ${MONTHS[selectedMonth]}</td></tr>`;
         
-        const isDeneWala = c.type === 'dene_wala';
+        const isDeneWala = c.type === 'lene_wala';
         const sign = isDeneWala ? '+' : '-';
         
         const detailCard = document.querySelector('#milk-detail-screen .glass-card');
