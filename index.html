@@ -830,10 +830,13 @@
             <input id="new-milk-rate" type="number" class="input-box mb-8 w-full" placeholder="Rate per KG (₹)">
             <input type="hidden" id="new-milk-type" value="lene_wala">
             
-                        <div class="flex gap-4 w-full min-w-0">
-                <button onclick="document.getElementById('new-milk-type').value='dene_wala'; haptic(); addMilkCustomer();" class="btn-primary flex-1 min-w-0 !bg-[#34C759] !shadow-[0_4px_14px_rgba(52,199,89,0.25)]"><i class="fa-solid fa-plus text-lg"></i> Seller</button>
-                <button onclick="document.getElementById('new-milk-type').value='lene_wala'; haptic(); addMilkCustomer();" class="btn-primary flex-1 min-w-0 !bg-[#FF3B30] !shadow-[0_4px_14px_rgba(255,59,48,0.25)]"><i class="fa-solid fa-minus text-lg"></i> Buyer</button>
-            </div>
+
+            <div class="flex gap-4 w-full min-w-0">
+    <button onclick="document.getElementById('new-milk-type').value='lene_wala'; haptic(); addMilkCustomer();" class="btn-primary flex-1 min-w-0 !bg-[#34C759] !shadow-[0_4px_14px_rgba(52,199,89,0.25)]"><i class="fa-solid fa-plus text-lg"></i> Seller</button>
+    
+    <button onclick="document.getElementById('new-milk-type').value='dene_wala'; haptic(); addMilkCustomer();" class="btn-primary flex-1 min-w-0 !bg-[#FF3B30] !shadow-[0_4px_14px_rgba(255,59,48,0.25)]"><i class="fa-solid fa-minus text-lg"></i> Buyer</button>
+</div>
+
 
         </div>
     </div>
@@ -1308,11 +1311,21 @@
     function updateDashboard() {
         let rev = 0, exp = 0, lenaHai = 0, denaHai = 0;
         
-        Object.values(milkDB).forEach(c => {
+                Object.values(milkDB).forEach(c => {
             let monthTotal = 0;
             filterByMonth(c.records || []).forEach(r => monthTotal += ((Number(r.morning)||0) + (Number(r.evening)||0)) * (c.rate || DEFAULT_RATE));
-            if (c.type === 'dene_wala') exp += monthTotal; else rev += monthTotal;
+            
+            if (c.type === 'dene_wala') {
+                // Aap BUYER ho (Kharidne wale) -> Paisa dena padega (To Pay) aur ye Kharcha (Expense) hai
+                exp += monthTotal;
+                denaHai += monthTotal;
+            } else {
+                // Aap SELLER ho (Bechne wale) -> Paisa aayega (To Receive) aur ye Profit (Revenue) hai
+                rev += monthTotal;
+                lenaHai += monthTotal;
+            }
         });
+
         
         filterByMonth(expenseDB).forEach(e => exp += Number(e.amount||0));
         
