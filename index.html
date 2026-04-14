@@ -1079,12 +1079,16 @@
 <div id="gemini-key-modal" class="modal-overlay" onclick="if(event.target.id==='gemini-key-modal')closeModal('gemini-key-modal')">
     <div class="modal-content" onclick="event.stopImmediatePropagation()">
         <div class="w-12 h-1.5 bg-gray-300 dark:bg-gray-600 rounded-full mx-auto mb-8"></div>
-        <h2 class="text-2xl font-extrabold mb-2 text-center">Activate AI</h2>
-        <p class="text-xs text-center text-gray-500 mb-6 font-bold uppercase tracking-wider">Please enter trusted AI app keys</p>
+        <h2 class="text-2xl font-extrabold mb-2 text-center">Activate AI Hub</h2>
+        <p class="text-xs text-center text-gray-500 mb-6 font-bold uppercase tracking-wider">Type Model Name & Paste Key</p>
+        
+        <input type="text" id="user-ai-model" class="input-box mb-4 w-full" placeholder="Model Name (e.g. gemini-2.5-flash ya gpt-4o)">
         <input type="text" id="user-gemini-key" class="input-box mb-6 w-full" placeholder="Paste your API key here">
+        
         <button onclick="haptic(); saveGeminiUserKey()" class="btn-primary w-full" style="background: linear-gradient(90deg, #4285F4, #9b72cb, #d96570); border:none;">Activate AI</button>
     </div>
 </div>
+
 
 <div id="gemini-floating-widget" style="display: none;">
     <div id="gemini-chat-window" class="hidden-chat glass-card">
