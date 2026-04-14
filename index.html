@@ -395,7 +395,20 @@
         .dark .offline-title { color: #FFFFFF; }
         .offline-desc { font-size: 15px; color: #8E8E93; font-weight: 500; max-width: 300px; line-height: 1.5; margin-bottom: 36px; font-family: 'Inter', sans-serif; }
 
-        
+                /* GEMINI AI LOCAL CSS */
+        #gemini-floating-widget { z-index: 999999; }
+        #gemini-draggable-logo { position: fixed; bottom: 85px; right: 20px; width: 54px; height: 54px; border-radius: 50%; background: #fff; box-shadow: 0 5px 20px rgba(0,0,0,0.15); display: flex; justify-content: center; align-items: center; border: 1px solid rgba(0,0,0,0.05); z-index: 999999; touch-action: none; }
+        .dark #gemini-draggable-logo { background: #1C1C1E; border-color: rgba(255,255,255,0.1); }
+        .gemini-spinning { animation: geminiSpin 1.5s linear infinite; }
+        @keyframes geminiSpin { 100% { transform: rotate(360deg); } }
+        #gemini-chat-window { position: fixed; bottom: 150px; right: 20px; width: 330px; height: 440px; background: #fff; border-radius: 24px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); display: flex; flex-direction: column; overflow: hidden; z-index: 999998; border: 1px solid rgba(155, 114, 203, 0.2); transition: 0.3s; }
+        .dark #gemini-chat-window { background: #1C1C1E; border-color: rgba(255,255,255,0.1); }
+        .hidden-chat { display: none !important; opacity: 0; transform: translateY(20px); }
+        .chat-msg { padding: 10px 14px; border-radius: 18px; font-size: 14px; max-width: 85%; line-height: 1.4; }
+        .chat-ai { background: rgba(0,0,0,0.04); color: #000; align-self: flex-start; border-bottom-left-radius: 4px; }
+        .dark .chat-ai { background: rgba(255,255,255,0.08); color: #fff; }
+        .chat-user { background: #007AFF; color: #fff; align-self: flex-end; border-bottom-right-radius: 4px; }
+
     </style>
 
      
@@ -441,8 +454,19 @@
     <div id="home-screen" class="screen active">
         <div class="header-sticky">
             <div class="min-w-0 flex-1">
-                <h1 class="text-[26px] font-extrabold tracking-tight truncate w-full">Dashboard</h1>
-                <p class="text-[10px] text-[#007AFF] font-bold tracking-widest uppercase truncate w-full mt-0.5">Aarish Dairy</p>
+
+             <h1 class="text-[26px] font-extrabold tracking-tight truncate w-full">Dashboard</h1>
+<div class="flex items-center gap-1 mt-0.5">
+    <p class="text-[10px] text-[#007AFF] font-bold tracking-widest uppercase m-0">Aarish Dairy</p>
+    <button onclick="haptic(); handleGeminiIconClick()" class="transition-transform active:scale-90" style="background:none; border:none; padding:0; outline:none; cursor:pointer; display:flex;">
+        <svg viewBox="0 0 24 24" width="14" height="14">
+            <path d="M12 24C12 17.3726 6.62742 12 0 12C6.62742 12 12 6.62742 12 0C12 6.62742 17.3726 12 24 12C17.3726 12 12 17.3726 12 24Z" fill="url(#gemini-dash-grad)"/>
+            <defs><linearGradient id="gemini-dash-grad" x1="0" y1="0" x2="24" y2="24"><stop stop-color="#4285F4"/><stop offset="0.5" stop-color="#9b72cb"/><stop offset="1" stop-color="#d96570"/></linearGradient></defs>
+        </svg>
+    </button>
+</div>
+
+                
             </div>
             <div class="flex gap-2 items-center shrink-0">
                 <button id="install-app-btn" onclick="haptic(); installAppPWA()" class="hidden w-10 h-10 shrink-0 rounded-full bg-[#007AFF]/10 text-[#007AFF] flex items-center justify-center shadow-sm font-bold transition-transform active:scale-95" title="Install App"><i class="fa-solid fa-download text-[15px]"></i></button>
@@ -1049,6 +1073,34 @@
     </div>
 </div>
 
+<div id="gemini-key-modal" class="modal-overlay" onclick="if(event.target.id==='gemini-key-modal')closeModal('gemini-key-modal')">
+    <div class="modal-content" onclick="event.stopImmediatePropagation()">
+        <div class="w-12 h-1.5 bg-gray-300 dark:bg-gray-600 rounded-full mx-auto mb-8"></div>
+        <h2 class="text-2xl font-extrabold mb-2 text-center">Activate Gemini</h2>
+        <p class="text-xs text-center text-gray-500 mb-6 font-bold uppercase tracking-wider">Only Google Gemini Keys Accepted</p>
+        <input type="text" id="user-gemini-key" class="input-box mb-6 w-full" placeholder="Paste AIza... key here">
+        <button onclick="haptic(); saveGeminiUserKey()" class="btn-primary w-full" style="background: linear-gradient(90deg, #4285F4, #9b72cb, #d96570); border:none;">Activate AI</button>
+    </div>
+</div>
+
+<div id="gemini-floating-widget" style="display: none;">
+    <div id="gemini-chat-window" class="hidden-chat glass-card">
+        <div id="gemini-header" style="padding:15px; border-bottom:1px solid rgba(0,0,0,0.05); display:flex; justify-content:space-between; align-items:center;">
+            <b style="font-size:14px;">✨ Aarish AI</b>
+            <button onclick="toggleGeminiChat()" style="background:none; border:none; color:#888;">✖</button>
+        </div>
+        <div id="gemini-chat-body" style="flex:1; padding:15px; overflow-y:auto; display:flex; flex-direction:column; gap:10px;">
+            <div class="chat-msg chat-ai">Bhai, Gemini key activate ho gayi hai! Data scan karne ke liye taiyar hoon.</div>
+        </div>
+        <div style="padding:12px; display:flex; gap:8px; border-top:1px solid rgba(0,0,0,0.05);">
+            <input type="text" id="gemini-input" class="input-box" style="min-height:40px !important; padding:8px 15px !important;" placeholder="Poocho...">
+            <button onclick="sendToGemini()" style="background:none; border:none; color:#007AFF; font-size:20px;">➤</button>
+        </div>
+    </div>
+    <div id="gemini-draggable-logo"><svg id="gemini-fab-icon" viewBox="0 0 24 24" width="28" height="28"><path d="M12 24C12 17.3726 6.62742 12 0 12C6.62742 12 12 6.62742 12 0C12 6.62742 17.3726 12 24 12C17.3726 12 12 17.3726 12 24Z" fill="url(#g-grad)"/><defs><linearGradient id="g-grad" x1="0" y1="0" x2="24" y2="24"><stop stop-color="#4285F4"/><stop offset="0.5" stop-color="#9b72cb"/><stop offset="1" stop-color="#d96570"/></linearGradient></defs></svg></div>
+</div>
+
+    
 <script>
     // ========================== HAPTICS & THEME ==========================
     function haptic() { if (navigator.vibrate) navigator.vibrate(45); }
@@ -2464,6 +2516,40 @@
         }
     }
 
+       /* GEMINI LOGIC */
+    function handleGeminiIconClick() {
+        if (localStorage.getItem('gemini_user_api_key')) { toggleGeminiChat(); } 
+        else { openModal('gemini-key-modal'); }
+    }
+    function saveGeminiUserKey() {
+        const key = document.getElementById('user-gemini-key').value.trim();
+        if (key.startsWith('AIza') && key.length > 30) {
+            localStorage.setItem('gemini_user_api_key', key);
+            closeModal('gemini-key-modal');
+            document.getElementById('gemini-floating-widget').style.display = 'block';
+            showToast("Gemini AI Activated! ✨");
+        } else { showToast("Error: Invalid Gemini Key!"); }
+    }
+    function toggleGeminiChat() { document.getElementById('gemini-chat-window').classList.toggle('hidden-chat'); }
+    
+    // Drag Logic
+    const fab = document.getElementById('gemini-draggable-logo');
+    let isDragging = false, dragX, dragY, initL, initT;
+    fab.addEventListener('touchstart', (e) => {
+        dragX = e.touches[0].clientX; dragY = e.touches[0].clientY;
+        const r = fab.getBoundingClientRect(); initL = r.left; initT = r.top;
+        fab.style.right = 'auto'; fab.style.bottom = 'auto';
+        fab.style.left = initL + 'px'; fab.style.top = initT + 'px';
+        isDragging = true;
+    });
+    fab.addEventListener('touchmove', (e) => {
+        if (!isDragging) return; e.preventDefault();
+        fab.style.left = (initL + (e.touches[0].clientX - dragX)) + 'px';
+        fab.style.top = (initT + (e.touches[0].clientY - dragY)) + 'px';
+    });
+    fab.addEventListener('touchend', () => { isDragging = false; });
+
+    
     window.onload = () => { 
         document.getElementById('expense-date').value = getTodayISO();
         document.getElementById('udhar-date').value = getTodayISO();
