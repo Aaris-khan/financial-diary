@@ -2537,31 +2537,33 @@
         }
     }
 
-        function saveGeminiUserKey() {
+        
+
+    function saveGeminiUserKey() {
+        const model = document.getElementById('user-ai-model').value.trim();
         const key = document.getElementById('user-gemini-key').value.trim();
-        if (!key) {
-            return showToast("Error: API Key cannot be empty!");
+        
+        if (!model || !key) {
+            return showToast("Bhai, Model aur Key dono daalo!");
         }
-        // Universal Accept: Koi lock nahi! Kisi bhi company ki key chalegi.
+        
+        localStorage.setItem('user_ai_model', model);
         localStorage.setItem('gemini_user_api_key', key);
+        
         closeModal('gemini-key-modal');
         document.getElementById('gemini-floating-widget').style.display = 'block';
-        showToast("AI Activated! ✨");
-        document.getElementById('user-gemini-key').value = '';
+        showToast("AI Hub Activated! ✨");
     }
 
-    // 🔥 NAYA FUNCTION: User ko apni API Key manually change ya delete karne dega
     function changeGeminiKey() {
-        // Purani key input box mein dikhayega
         const existingKey = localStorage.getItem('gemini_user_api_key');
-        if (existingKey) {
-            document.getElementById('user-gemini-key').value = existingKey;
-        }
-        // Chat window band karke key dalne wala dabba khol dega
+        const existingModel = localStorage.getItem('user_ai_model');
+        if (existingKey) document.getElementById('user-gemini-key').value = existingKey;
+        if (existingModel) document.getElementById('user-ai-model').value = existingModel;
+        
         toggleGeminiChat(); 
         openModal('gemini-key-modal'); 
     }
-
 
     function toggleGeminiChat() { 
         document.getElementById('gemini-chat-window').classList.toggle('hidden-chat'); 
@@ -2588,14 +2590,12 @@
 
     fab.addEventListener('touchend', (e) => {
         clearTimeout(dragTimer);
-        if (!isDragging) { haptic(); toggleGeminiChat(); } // If tapped, open chat
+        if (!isDragging) { haptic(); toggleGeminiChat(); }
         isDragging = false;
     });
 
-    // API Send Logic
-
-
-       async function sendToGemini() {
+    // === UNIVERSAL AI ROUTER LOGIC (Gemini + ChatGPT + Claude + Grok) ===
+    async function sendToGemini() {
         const inputEl = document.getElementById('gemini-input');
         const query = inputEl.value.trim();
         if(!query) return;
@@ -2607,39 +2607,81 @@
         fabStar.classList.add('gemini-spinning'); 
 
         const apiKey = localStorage.getItem('gemini_user_api_key');
-        if(!apiKey) {
+        const modelName = localStorage.getItem('user_ai_model');
+
+        if(!apiKey || !modelName) {
             fabStar.classList.remove('gemini-spinning');
-            return addMsgToAI("API Key missing. Please click the key icon to add it.", 'ai');
+            return addMsgToAI("Model ya API Key missing hai. Key icon par click karein.", 'ai');
         }
 
         const appDataJson = JSON.stringify({ milkDB, udharDB, expenseDB, salaryDB, diaryDB, projectDB });
-        const systemPrompt = `You are Aarish AI, the smart assistant for Aarish Dairy App. 
-        User Data: ${appDataJson}
-        Answer the user's question accurately based ONLY on this data. Keep the answer short, friendly, and in Hinglish. Format neatly.`;
+        const systemPrompt = `You are an AI assistant for Aarish Dairy App. User Data: ${appDataJson}. Answer the user's question accurately based ONLY on this data. Format neatly in Hinglish.`;
 
         try {
-            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ contents: [{ parts: [{ text: systemPrompt + "\nUser Question: " + query }] }] })
-            });
-            const data = await res.json();
-            
-            if (data.candidates) {
-                addMsgToAI(data.candidates[0].content.parts[0].text, 'ai');
-            } else if (data.error) {
-                console.error("Google API Error:", data.error);
-                addMsgToAI(`<b>Google Error:</b> ${data.error.message}`, 'ai');
-            } else {
-                addMsgToAI("Unknown Error. Check browser console.", 'ai');
+            let apiUrl = '';
+            let headers = { 'Content-Type': 'application/json' };
+            let body = {};
+            let finalReply = '';
+
+            // 1. CLAUDE (Anthropic - Badal Wala AI) AUTO-DETECT
+            if (apiKey.startsWith('sk-ant-')) {
+                apiUrl = 'https://api.anthropic.com/v1/messages';
+                headers['x-api-key'] = apiKey;
+                headers['anthropic-version'] = '2023-06-01';
+                headers['anthropic-dangerously-allow-browser'] = 'true'; 
+                body = {
+                    model: modelName,
+                    max_tokens: 1500,
+                    system: systemPrompt,
+                    messages: [{ role: 'user', content: query }]
+                };
+
+                const res = await fetch(apiUrl, { method: 'POST', headers, body: JSON.stringify(body) });
+                const data = await res.json();
+                if (data.type === 'error') throw new Error(data.error.message);
+                finalReply = data.content[0].text;
+            } 
+            // 2. CHATGPT / GROK / DEEPSEEK (OpenAI Format) AUTO-DETECT
+            else if (apiKey.startsWith('sk-') || apiKey.startsWith('xai-')) {
+                if (apiKey.startsWith('xai-') || modelName.includes('grok')) {
+                    apiUrl = 'https://api.x.ai/v1/chat/completions';
+                } else {
+                    apiUrl = 'https://api.openai.com/v1/chat/completions';
+                }
+                headers['Authorization'] = `Bearer ${apiKey}`;
+                body = {
+                    model: modelName,
+                    messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: query }]
+                };
+
+                const res = await fetch(apiUrl, { method: 'POST', headers, body: JSON.stringify(body) });
+                const data = await res.json();
+                if (data.error) throw new Error(data.error.message);
+                finalReply = data.choices[0].message.content;
+            } 
+            // 3. GOOGLE GEMINI DEFAULT
+            else {
+                apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+                body = {
+                    contents: [{ parts: [{ text: systemPrompt + "\nUser Question: " + query }] }]
+                };
+
+                const res = await fetch(apiUrl, { method: 'POST', headers, body: JSON.stringify(body) });
+                const data = await res.json();
+                if (data.error) throw new Error(data.error.message);
+                finalReply = data.candidates[0].content.parts[0].text;
             }
+
+            // Print AI Reply
+            addMsgToAI(finalReply, 'ai');
+
         } catch(e) {
-            console.error("Fetch Error:", e);
-            addMsgToAI(`<b>Connection Error:</b> ${e.message}`, 'ai');
+            console.error("AI Error:", e);
+            addMsgToAI(`<b>API Error:</b> ${e.message}`, 'ai');
         }
+        
         fabStar.classList.remove('gemini-spinning');
     }
-
 
     
 
