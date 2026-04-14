@@ -1075,12 +1075,13 @@
     </div>
 </div>
 
+
 <div id="gemini-key-modal" class="modal-overlay" onclick="if(event.target.id==='gemini-key-modal')closeModal('gemini-key-modal')">
     <div class="modal-content" onclick="event.stopImmediatePropagation()">
         <div class="w-12 h-1.5 bg-gray-300 dark:bg-gray-600 rounded-full mx-auto mb-8"></div>
-        <h2 class="text-2xl font-extrabold mb-2 text-center">Activate Gemini</h2>
-        <p class="text-xs text-center text-gray-500 mb-6 font-bold uppercase tracking-wider">Only Google Gemini Keys Accepted</p>
-        <input type="text" id="user-gemini-key" class="input-box mb-6 w-full" placeholder="Paste AIza... key here">
+        <h2 class="text-2xl font-extrabold mb-2 text-center">Activate AI</h2>
+        <p class="text-xs text-center text-gray-500 mb-6 font-bold uppercase tracking-wider">Please enter trusted AI app keys</p>
+        <input type="text" id="user-gemini-key" class="input-box mb-6 w-full" placeholder="Paste your API key here">
         <button onclick="haptic(); saveGeminiUserKey()" class="btn-primary w-full" style="background: linear-gradient(90deg, #4285F4, #9b72cb, #d96570); border:none;">Activate AI</button>
     </div>
 </div>
@@ -1089,14 +1090,14 @@
     <div id="gemini-chat-window" class="hidden-chat glass-card">
         <div id="gemini-header" style="padding:15px; border-bottom:1px solid rgba(0,0,0,0.05); display:flex; justify-content:space-between; align-items:center;">
             <b style="font-size:14px;">✨ Aarish AI</b>
-            <button onclick="toggleGeminiChat()" style="background:none; border:none; color:#888;">✖</button>
+            <button onclick="toggleGeminiChat()" style="background:none; border:none; color:#888; font-size: 16px; cursor: pointer;">✖</button>
         </div>
         <div id="gemini-chat-body" style="flex:1; padding:15px; overflow-y:auto; display:flex; flex-direction:column; gap:10px;">
-            <div class="chat-msg chat-ai">Bhai, Gemini key activate ho gayi hai! Data scan karne ke liye taiyar hoon.</div>
+            <div class="chat-msg chat-ai">AI is successfully activated! I am ready to assist you with your data.</div>
         </div>
         <div style="padding:12px; display:flex; gap:8px; border-top:1px solid rgba(0,0,0,0.05);">
-            <input type="text" id="gemini-input" class="input-box" style="min-height:40px !important; padding:8px 15px !important;" placeholder="Poocho...">
-            <button onclick="sendToGemini()" style="background:none; border:none; color:#007AFF; font-size:20px;">➤</button>
+            <input type="text" id="gemini-input" class="input-box" style="min-height:40px !important; padding:8px 15px !important;" placeholder="Ask anything...">
+            <button onclick="sendToGemini()" style="background:none; border:none; color:#007AFF; font-size:20px; cursor:pointer;">➤</button>
         </div>
     </div>
     <div id="gemini-draggable-logo"><svg id="gemini-fab-icon" viewBox="0 0 24 24" width="28" height="28"><path d="M12 24C12 17.3726 6.62742 12 0 12C6.62742 12 12 6.62742 12 0C12 6.62742 17.3726 12 24 12C17.3726 12 12 17.3726 12 24Z" fill="url(#g-grad)"/><defs><linearGradient id="g-grad" x1="0" y1="0" x2="24" y2="24"><stop stop-color="#4285F4"/><stop offset="0.5" stop-color="#9b72cb"/><stop offset="1" stop-color="#d96570"/></linearGradient></defs></svg></div>
@@ -2518,38 +2519,114 @@
         }
     }
 
-       /* GEMINI LOGIC */
+       
+        /* ==================== UNIVERSAL AI LOGIC & API CALL ==================== */
     function handleGeminiIconClick() {
-        if (localStorage.getItem('gemini_user_api_key')) { toggleGeminiChat(); } 
-        else { openModal('gemini-key-modal'); }
+        if (localStorage.getItem('gemini_user_api_key')) { 
+            document.getElementById('gemini-floating-widget').style.display = 'block';
+            toggleGeminiChat(); 
+        } else { 
+            openModal('gemini-key-modal'); 
+        }
     }
+
     function saveGeminiUserKey() {
         const key = document.getElementById('user-gemini-key').value.trim();
-        if (key.startsWith('AIza') && key.length > 30) {
-            localStorage.setItem('gemini_user_api_key', key);
-            closeModal('gemini-key-modal');
-            document.getElementById('gemini-floating-widget').style.display = 'block';
-            showToast("Gemini AI Activated! ✨");
-        } else { showToast("Error: Invalid Gemini Key!"); }
+        if (!key) {
+            return showToast("Error: API Key cannot be empty!");
+        }
+        // Universal Accept: Koi lock nahi! Kisi bhi company ki key chalegi.
+        localStorage.setItem('gemini_user_api_key', key);
+        closeModal('gemini-key-modal');
+        document.getElementById('gemini-floating-widget').style.display = 'block';
+        showToast("AI Activated! ✨");
+        document.getElementById('user-gemini-key').value = '';
     }
-    function toggleGeminiChat() { document.getElementById('gemini-chat-window').classList.toggle('hidden-chat'); }
+
+    function toggleGeminiChat() { 
+        document.getElementById('gemini-chat-window').classList.toggle('hidden-chat'); 
+    }
     
-    // Drag Logic
+    // Drag & Click Logic
     const fab = document.getElementById('gemini-draggable-logo');
-    let isDragging = false, dragX, dragY, initL, initT;
+    let isDragging = false, dragX, dragY, initL, initT, dragTimer;
+    
     fab.addEventListener('touchstart', (e) => {
+        isDragging = false;
         dragX = e.touches[0].clientX; dragY = e.touches[0].clientY;
         const r = fab.getBoundingClientRect(); initL = r.left; initT = r.top;
         fab.style.right = 'auto'; fab.style.bottom = 'auto';
         fab.style.left = initL + 'px'; fab.style.top = initT + 'px';
-        isDragging = true;
-    });
+        dragTimer = setTimeout(() => { isDragging = true; }, 150);
+    }, {passive: false});
+
     fab.addEventListener('touchmove', (e) => {
         if (!isDragging) return; e.preventDefault();
         fab.style.left = (initL + (e.touches[0].clientX - dragX)) + 'px';
         fab.style.top = (initT + (e.touches[0].clientY - dragY)) + 'px';
+    }, {passive: false});
+
+    fab.addEventListener('touchend', (e) => {
+        clearTimeout(dragTimer);
+        if (!isDragging) { haptic(); toggleGeminiChat(); } // If tapped, open chat
+        isDragging = false;
     });
-    fab.addEventListener('touchend', () => { isDragging = false; });
+
+    // API Send Logic
+    async function sendToGemini() {
+        const inputEl = document.getElementById('gemini-input');
+        const query = inputEl.value.trim();
+        if(!query) return;
+
+        addMsgToAI(query, 'user');
+        inputEl.value = '';
+        
+        const fabStar = document.getElementById('gemini-fab-icon');
+        fabStar.classList.add('gemini-spinning'); 
+
+        const apiKey = localStorage.getItem('gemini_user_api_key');
+        if(!apiKey) {
+            fabStar.classList.remove('gemini-spinning');
+            return addMsgToAI("API Key missing. Please click the star on Dashboard to add it.", 'ai');
+        }
+
+        const appDataJson = JSON.stringify({ milkDB, udharDB, expenseDB, salaryDB, diaryDB, projectDB });
+        const systemPrompt = `You are Aarish AI, the smart assistant for Aarish Dairy App. 
+        User Data: ${appDataJson}
+        Answer the user's question accurately based ONLY on this data. Keep the answer short, friendly, and in Hinglish. Format neatly.`;
+
+        try {
+            // Note: Current endpoint is for Gemini API. If Universal keys are intended to hit different endpoints later, this fetch URL can be made dynamic. For now it hits Gemini.
+            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ contents: [{ parts: [{ text: systemPrompt + "\nUser Question: " + query }] }] })
+            });
+            const data = await res.json();
+            if(data.candidates) addMsgToAI(data.candidates[0].content.parts[0].text, 'ai');
+            else addMsgToAI("API Error. Make sure your key is valid.", 'ai');
+        } catch(e) {
+            addMsgToAI("Internet error or invalid API Key.", 'ai');
+        }
+        fabStar.classList.remove('gemini-spinning');
+    }
+
+    function addMsgToAI(text, sender) {
+        const body = document.getElementById('gemini-chat-body');
+        const d = document.createElement('div');
+        d.className = `chat-msg chat-${sender}`;
+        d.innerHTML = text.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>'); 
+        body.appendChild(d);
+        body.scrollTop = body.scrollHeight;
+    }
+
+    // Auto-show logo if key exists on app reload
+    document.addEventListener('DOMContentLoaded', () => {
+        if(localStorage.getItem('gemini_user_api_key')) {
+            document.getElementById('gemini-floating-widget').style.display = 'block';
+        }
+    });
+    /* ======================================================================== */
 
     
     window.onload = () => { 
