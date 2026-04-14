@@ -1310,6 +1310,9 @@
 
     function updateDashboard() {
         let rev = 0, exp = 0, lenaHai = 0, denaHai = 0;
+
+       let udharOnlyLena = 0, udharOnlyDena = 0;
+
         
                 Object.values(milkDB).forEach(c => {
             let monthTotal = 0;
@@ -1329,10 +1332,16 @@
         
         filterByMonth(expenseDB).forEach(e => exp += Number(e.amount||0));
         
-        (udharDB || []).forEach(u => {
-            if(u.type === 'credit') lenaHai += Number(u.amount);
-            else denaHai += Number(u.amount);
+                (udharDB || []).forEach(u => {
+            if(u.type === 'credit') {
+                lenaHai += Number(u.amount);
+                udharOnlyLena += Number(u.amount);
+            } else {
+                denaHai += Number(u.amount);
+                udharOnlyDena += Number(u.amount);
+            }
         });
+
 
         Object.values(salaryDB).forEach(s => {
             let monthTotal = 0;
@@ -1349,8 +1358,9 @@
 
         const udharLenaEl = document.getElementById('udhar-total-lena');
         const udharDenaEl = document.getElementById('udhar-total-dena');
-                if(udharLenaEl) udharLenaEl.textContent = `₹${Math.round(lenaHai).toLocaleString('en-IN')}`;
-        if(udharDenaEl) udharDenaEl.textContent = `₹${Math.round(denaHai).toLocaleString('en-IN')}`;
+                        if(udharLenaEl) udharLenaEl.textContent = `₹${Math.round(udharOnlyLena).toLocaleString('en-IN')}`;
+        if(udharDenaEl) udharDenaEl.textContent = `₹${Math.round(udharOnlyDena).toLocaleString('en-IN')}`;
+
     }
 
     // ===== PARTY LEDGER LOGIC (MILK + CREDIT MERGER) =====
