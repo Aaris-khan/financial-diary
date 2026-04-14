@@ -2593,7 +2593,9 @@
     });
 
     // API Send Logic
-    async function sendToGemini() {
+
+
+       async function sendToGemini() {
         const inputEl = document.getElementById('gemini-input');
         const query = inputEl.value.trim();
         if(!query) return;
@@ -2607,7 +2609,7 @@
         const apiKey = localStorage.getItem('gemini_user_api_key');
         if(!apiKey) {
             fabStar.classList.remove('gemini-spinning');
-            return addMsgToAI("API Key missing. Please click the star on Dashboard to add it.", 'ai');
+            return addMsgToAI("API Key missing. Please click the key icon to add it.", 'ai');
         }
 
         const appDataJson = JSON.stringify({ milkDB, udharDB, expenseDB, salaryDB, diaryDB, projectDB });
@@ -2616,20 +2618,30 @@
         Answer the user's question accurately based ONLY on this data. Keep the answer short, friendly, and in Hinglish. Format neatly.`;
 
         try {
-            // Note: Current endpoint is for Gemini API. If Universal keys are intended to hit different endpoints later, this fetch URL can be made dynamic. For now it hits Gemini.
             const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ contents: [{ parts: [{ text: systemPrompt + "\nUser Question: " + query }] }] })
             });
             const data = await res.json();
-            if(data.candidates) addMsgToAI(data.candidates[0].content.parts[0].text, 'ai');
-            else addMsgToAI("API Error. Make sure your key is valid.", 'ai');
+            
+            if (data.candidates) {
+                addMsgToAI(data.candidates[0].content.parts[0].text, 'ai');
+            } else if (data.error) {
+                console.error("Google API Error:", data.error);
+                addMsgToAI(`<b>Google Error:</b> ${data.error.message}`, 'ai');
+            } else {
+                addMsgToAI("Unknown Error. Check browser console.", 'ai');
+            }
         } catch(e) {
-            addMsgToAI("Internet error or invalid API Key.", 'ai');
+            console.error("Fetch Error:", e);
+            addMsgToAI(`<b>Connection Error:</b> ${e.message}`, 'ai');
         }
         fabStar.classList.remove('gemini-spinning');
     }
+
+
+    
 
     function addMsgToAI(text, sender) {
         const body = document.getElementById('gemini-chat-body');
