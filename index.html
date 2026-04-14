@@ -1088,10 +1088,17 @@
 
 <div id="gemini-floating-widget" style="display: none;">
     <div id="gemini-chat-window" class="hidden-chat glass-card">
-        <div id="gemini-header" style="padding:15px; border-bottom:1px solid rgba(0,0,0,0.05); display:flex; justify-content:space-between; align-items:center;">
+
+               <div id="gemini-header" style="padding:15px; border-bottom:1px solid rgba(0,0,0,0.05); display:flex; justify-content:space-between; align-items:center;">
             <b style="font-size:14px;">✨ Aarish AI</b>
-            <button onclick="toggleGeminiChat()" style="background:none; border:none; color:#888; font-size: 16px; cursor: pointer;">✖</button>
+            <div style="display: flex; gap: 15px; align-items: center;">
+                <button onclick="changeGeminiKey()" style="background:none; border:none; color:#007AFF; font-size: 13px; font-weight: bold; cursor: pointer;"><i class="fa-solid fa-key"></i> Key</button>
+                <button onclick="toggleGeminiChat()" style="background:none; border:none; color:#888; font-size: 16px; cursor: pointer;">✖</button>
+            </div>
         </div>
+
+
+        
         <div id="gemini-chat-body" style="flex:1; padding:15px; overflow-y:auto; display:flex; flex-direction:column; gap:10px;">
             <div class="chat-msg chat-ai">AI is successfully activated! I am ready to assist you with your data.</div>
         </div>
@@ -2530,7 +2537,7 @@
         }
     }
 
-    function saveGeminiUserKey() {
+        function saveGeminiUserKey() {
         const key = document.getElementById('user-gemini-key').value.trim();
         if (!key) {
             return showToast("Error: API Key cannot be empty!");
@@ -2542,6 +2549,19 @@
         showToast("AI Activated! ✨");
         document.getElementById('user-gemini-key').value = '';
     }
+
+    // 🔥 NAYA FUNCTION: User ko apni API Key manually change ya delete karne dega
+    function changeGeminiKey() {
+        // Purani key input box mein dikhayega
+        const existingKey = localStorage.getItem('gemini_user_api_key');
+        if (existingKey) {
+            document.getElementById('user-gemini-key').value = existingKey;
+        }
+        // Chat window band karke key dalne wala dabba khol dega
+        toggleGeminiChat(); 
+        openModal('gemini-key-modal'); 
+    }
+
 
     function toggleGeminiChat() { 
         document.getElementById('gemini-chat-window').classList.toggle('hidden-chat'); 
