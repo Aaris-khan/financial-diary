@@ -2598,8 +2598,150 @@
         isDragging = false;
     });
 
-    // === UNIVERSAL AI ROUTER LOGIC (Gemini + ChatGPT + Claude + Grok) ===
+    // === UNIVERSAL AI ROUTER LOGIC (PURE GEMINI FUTURE-PROOF) ===
+
+    // 1. Global AI Memory & Pagination State
+    window.aiPendingChunks = []; 
+    window.isAiPaginating = false; 
+    window.aiChatMemory = []; 
+
+    // 2. Typing Indicator (Chat Animation)
+    function toggleTypingIndicator(show) {
+        const body = document.getElementById('gemini-chat-body');
+        if (show) {
+            const d = document.createElement('div');
+            d.id = 'ai-typing-indicator';
+            d.className = `chat-msg chat-ai`;
+            d.innerHTML = `<span style="opacity:0.6;"><i class="fa-solid fa-circle-notch fa-spin"></i> Data analyze kar raha hoon...</span>`;
+            body.appendChild(d);
+            body.scrollTop = body.scrollHeight;
+        } else {
+            const el = document.getElementById('ai-typing-indicator');
+            if (el) el.remove();
+        }
+    }
+
+    // 3. Smart Data Filter Engine (Month/Date/Year Detection)
+    function getSmartFilteredContext(query) {
+        const q = query.toLowerCase();
+        const currentYear = new Date().getFullYear();
+        
+        // Agar aage ka data chahiye (Proceed Logic)
+        if ((q.includes('proceed') || q.includes('aage') || q.includes('next')) && window.aiPendingChunks.length > 0) {
+            const nextChunk = window.aiPendingChunks.shift();
+            if (window.aiPendingChunks.length === 0) window.isAiPaginating = false;
+            return { data: JSON.stringify(nextChunk), isProceed: true, hasMore: window.aiPendingChunks.length > 0 };
+        }
+
+        let filterCondition = null;
+        let isYearlySplit = false;
+
+        // Date, Year, Month Pehchan-ne ka logic
+        const exactDateMatch = q.match(/\b(20\d{2}-\d{2}-\d{2})\b/);
+        const yearMatch = q.match(/\b(20\d{2})\b/);
+        const targetYear = yearMatch ? parseInt(yearMatch[1]) : currentYear;
+
+        const monthMap = {
+            0: /january|jan\b/, 1: /february|feb\b/, 2: /march|mar\b/,
+            3: /april|apr\b/, 4: /may\b/, 5: /june|jun\b/,
+            6: /july|jul\b/, 7: /august|aug\b/, 8: /september|sep\b/,
+            9: /october|oct\b/, 10: /november|nov\b/, 11: /december|dec\b/
+        };
+        
+        let targetMonths = [];
+        for (let m in monthMap) {
+            if (monthMap[m].test(q)) targetMonths.push(parseInt(m));
+        }
+
+        // Conditions
+        if (exactDateMatch) {
+            const targetDate = exactDateMatch[1];
+            filterCondition = (dateStr) => dateStr === targetDate;
+        } else if (targetMonths.length > 0) {
+            filterCondition = (dateStr) => {
+                if (!dateStr) return false;
+                const d = new Date(dateStr);
+                return targetMonths.includes(d.getMonth()) && d.getFullYear() === targetYear;
+            };
+        } else if (yearMatch || q.includes('saal') || q.includes('year')) {
+            isYearlySplit = true;
+            // First Chunk: Jan to Jun
+            filterCondition = (dateStr) => {
+                if (!dateStr) return false;
+                const d = new Date(dateStr);
+                return d.getFullYear() === targetYear && d.getMonth() <= 5;
+            };
+            // Second Chunk: Jul to Dec (Save for later)
+            const filterConditionPart2 = (dateStr) => {
+                if (!dateStr) return false;
+                const d = new Date(dateStr);
+                return d.getFullYear() === targetYear && d.getMonth() > 5;
+            };
+            const chunk2 = applyFilterToDBs(filterConditionPart2);
+            window.aiPendingChunks = [chunk2];
+            window.isAiPaginating = true;
+        } else {
+            // Default 30 days
+            const thirtyDaysAgo = new Date();
+            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+            filterCondition = (dateStr) => {
+                if (!dateStr) return false;
+                return new Date(dateStr) >= thirtyDaysAgo;
+            };
+        }
+
+        const chunk1 = applyFilterToDBs(filterCondition);
+        return { data: JSON.stringify(chunk1), isProceed: false, isYearlySplit: isYearlySplit, hasMore: window.aiPendingChunks.length > 0 };
+    }
+
+    // 4. Safe Database Extractor (Crash Preventer)
+    function applyFilterToDBs(condition) {
+        const minifiedDB = {};
+
+        const safeMilkDB = typeof milkDB !== 'undefined' ? milkDB : {};
+        const filteredMilk = {};
+        Object.keys(safeMilkDB).forEach(n => {
+            const recs = (safeMilkDB[n]?.records || []).filter(r => condition(r.date));
+            if (recs.length > 0) filteredMilk[n] = { rate: safeMilkDB[n].rate, type: safeMilkDB[n].type, records: recs };
+        });
+        if (Object.keys(filteredMilk).length > 0) minifiedDB.milk = filteredMilk;
+
+        const safeUdharDB = typeof udharDB !== 'undefined' ? udharDB : [];
+        const filteredUdhar = safeUdharDB.filter(u => condition(u.date));
+        if (filteredUdhar.length > 0) minifiedDB.udhar = filteredUdhar;
+
+        const safeExpenseDB = typeof expenseDB !== 'undefined' ? expenseDB : [];
+        const filteredExp = safeExpenseDB.filter(e => condition(e.date));
+        if (filteredExp.length > 0) minifiedDB.expenses = filteredExp;
+
+        const safeDiaryDB = typeof diaryDB !== 'undefined' ? diaryDB : [];
+        const filteredDiary = safeDiaryDB.filter(d => condition(d.date));
+        if (filteredDiary.length > 0) minifiedDB.diary = filteredDiary;
+
+        const safeSalaryDB = typeof salaryDB !== 'undefined' ? salaryDB : {};
+        const filteredSalary = {};
+        Object.keys(safeSalaryDB).forEach(n => {
+            const recs = (safeSalaryDB[n]?.records || []).filter(r => condition(r.date));
+            if (recs.length > 0) filteredSalary[n] = { company: safeSalaryDB[n].company, records: recs };
+        });
+        if (Object.keys(filteredSalary).length > 0) minifiedDB.salary = filteredSalary;
+
+        const safeProjectDB = typeof projectDB !== 'undefined' ? projectDB : {};
+        const filteredProject = {};
+        Object.keys(safeProjectDB).forEach(n => {
+            const recs = (safeProjectDB[n]?.records || []).filter(r => condition(r.date));
+            if (recs.length > 0) filteredProject[n] = { records: recs };
+        });
+        if (Object.keys(filteredProject).length > 0) minifiedDB.project = filteredProject;
+
+        return minifiedDB;
+    }
+
+    // 5. Ultimate Gemini API Caller (Future Proof & Memory Managed)
     async function sendToGemini() {
+        // BUG FIX: Stop Spam Clicks
+        if(document.getElementById('ai-typing-indicator')) return;
+
         const inputEl = document.getElementById('gemini-input');
         const query = inputEl.value.trim();
         if(!query) return;
@@ -2609,85 +2751,85 @@
         
         const fabStar = document.getElementById('gemini-fab-icon');
         fabStar.classList.add('gemini-spinning'); 
+        toggleTypingIndicator(true); 
 
         const apiKey = localStorage.getItem('gemini_user_api_key');
-        const modelName = localStorage.getItem('user_ai_model');
+        // Any new Gemini model typed by user will work automatically
+        let modelName = localStorage.getItem('user_ai_model') || 'gemini-1.5-flash'; 
 
-        if(!apiKey || !modelName) {
+        if(!apiKey) {
             fabStar.classList.remove('gemini-spinning');
-            return addMsgToAI("Model ya API Key missing hai. Key icon par click karein.", 'ai');
+            toggleTypingIndicator(false);
+            return addMsgToAI("⚠️ API Key missing hai. Key icon par click karein aur activate karein.", 'ai');
         }
 
-        const appDataJson = JSON.stringify({ milkDB, udharDB, expenseDB, salaryDB, diaryDB, projectDB });
-        const systemPrompt = `You are an AI assistant for Aarish Dairy App. User Data: ${appDataJson}. Answer the user's question accurately based ONLY on this data. Format neatly in Hinglish.`;
+        // Memory Management: Save user query
+        window.aiChatMemory.push({ role: "user", parts: [{ text: query }] });
+        
+        // BUG FIX: Splicing correctly (User + Model pairs)
+        if (window.aiChatMemory.length > 6) {
+            window.aiChatMemory.splice(0, 2); 
+        }
+
+        const contextObj = getSmartFilteredContext(query);
+        
+        let systemPrompt = `You are a helpful AI assistant for Aarish Dairy App. Analyze this exact user data carefully: ${contextObj.data}. Calculate exactly based on JSON. Reply in Hinglish, clearly and concisely. You remember the conversation context.`;
+
+        if (contextObj.isProceed) systemPrompt += `\nNote: This is PART 2 of the previous yearly data.`;
+        else if (contextObj.isYearlySplit) systemPrompt += `\nNote: This is ONLY PART 1. Tell user to type 'proceed' for the rest.`;
+
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
 
         try {
-            let apiUrl = '';
-            let headers = { 'Content-Type': 'application/json' };
-            let body = {};
-            let finalReply = '';
+            let res = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    systemInstruction: { parts: [{ text: systemPrompt }] },
+                    contents: window.aiChatMemory 
+                })
+            });
 
-            // 1. CLAUDE (Anthropic - Badal Wala AI) AUTO-DETECT
-            if (apiKey.startsWith('sk-ant-')) {
-                apiUrl = 'https://api.anthropic.com/v1/messages';
-                headers['x-api-key'] = apiKey;
-                headers['anthropic-version'] = '2023-06-01';
-                headers['anthropic-dangerously-allow-browser'] = 'true'; 
-                body = {
-                    model: modelName,
-                    max_tokens: 1500,
-                    system: systemPrompt,
-                    messages: [{ role: 'user', content: query }]
-                };
+            let data = await res.json();
 
-                const res = await fetch(apiUrl, { method: 'POST', headers, body: JSON.stringify(body) });
-                const data = await res.json();
-                if (data.type === 'error') throw new Error(data.error.message);
-                finalReply = data.content[0].text;
-            } 
-            // 2. CHATGPT / GROK / DEEPSEEK (OpenAI Format) AUTO-DETECT
-            else if (apiKey.startsWith('sk-') || apiKey.startsWith('xai-')) {
-                if (apiKey.startsWith('xai-') || modelName.includes('grok')) {
-                    apiUrl = 'https://api.x.ai/v1/chat/completions';
-                } else {
-                    apiUrl = 'https://api.openai.com/v1/chat/completions';
-                }
-                headers['Authorization'] = `Bearer ${apiKey}`;
-                body = {
-                    model: modelName,
-                    messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: query }]
-                };
-
-                const res = await fetch(apiUrl, { method: 'POST', headers, body: JSON.stringify(body) });
-                const data = await res.json();
-                if (data.error) throw new Error(data.error.message);
-                finalReply = data.choices[0].message.content;
-            } 
-            // 3. GOOGLE GEMINI DEFAULT
-            else {
-                apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
-                body = {
-                    contents: [{ parts: [{ text: systemPrompt + "\nUser Question: " + query }] }]
-                };
-
-                const res = await fetch(apiUrl, { method: 'POST', headers, body: JSON.stringify(body) });
-                const data = await res.json();
-                if (data.error) throw new Error(data.error.message);
-                finalReply = data.candidates[0].content.parts[0].text;
+            // Smart Fallback for older/newer Gemini format shifts
+            if (data.error && (data.error.code === 400 || data.error.message.includes('systemInstruction'))) {
+                const legacyHistory = window.aiChatMemory.map(msg => `${msg.role.toUpperCase()}: ${msg.parts[0].text}`).join("\n");
+                res = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: systemPrompt + "\n\nConversation History:\n" + legacyHistory }] }]
+                    })
+                });
+                data = await res.json();
             }
 
-            // Print AI Reply
+            if (data.error) throw new Error(data.error.message);
+
+            let finalReply = data.candidates[0].content.parts[0].text;
+            
+            if (contextObj.isYearlySplit && contextObj.hasMore) {
+                finalReply += `<br><br><span style="color:#007AFF; font-size:12px; font-weight:bold;">💡 AI Hint: Ye Jan-Jun ka data tha. Aage ke liye "proceed" type karein.</span>`;
+            }
+
+            toggleTypingIndicator(false);
             addMsgToAI(finalReply, 'ai');
+
+            // Memory Management: Save AI reply
+            window.aiChatMemory.push({ role: "model", parts: [{ text: finalReply }] });
 
         } catch(e) {
             console.error("AI Error:", e);
-            addMsgToAI(`<b>API Error:</b> ${e.message}`, 'ai');
+            toggleTypingIndicator(false);
+            addMsgToAI(`<b>Technical Error:</b> API response issue. Detail: ${e.message}`, 'ai');
+            
+            // Revert corrupt memory
+            window.aiChatMemory.pop();
         }
         
         fabStar.classList.remove('gemini-spinning');
     }
-
-    
 
     function addMsgToAI(text, sender) {
         const body = document.getElementById('gemini-chat-body');
