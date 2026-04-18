@@ -1686,26 +1686,36 @@
         openModal('add-salary-entry-modal');
     }
 
+
+
     async function saveSalaryEntry() {
         const date = document.getElementById('salary-entry-date').value;
         const amt = parseFloat(document.getElementById('salary-entry-amount').value);
         if (!date || !amt) return showToast('Enter amount and date');
         
         if (!salaryDB[activeSalaryPerson].records) salaryDB[activeSalaryPerson].records = [];
-        
         const existingIndex = salaryDB[activeSalaryPerson].records.findIndex(r => r.date === date);
-        if (existingIndex !== -1) {
-            return showToast('Salary for this date is already added!');
-        }
+        if (existingIndex !== -1) return showToast('Salary for this date is already added!');
 
-        salaryDB[activeSalaryPerson].records.push({ date, amount: amt });
-        await saveDB(); 
+        const uniqueId = "sal_" + Date.now();
+        const newEntry = { id: uniqueId, date, amount: amt };
+
+        salaryDB[activeSalaryPerson].records.push(newEntry);
+        
+        if (currentUserUID) {
+            await appDataRef.child(`salaryDB/${activeSalaryPerson}/records/${uniqueId}`).set(newEntry);
+        }
+        
         closeModal('add-salary-entry-modal'); 
         renderSalaryList();
         if(document.getElementById('salary-detail-screen').classList.contains('active')) renderSalaryRecords();
         updateDashboard();
-        showToast('Saved!');
+        showToast('Saved Safely!');
     }
+
+
+
+    
 
     function renderSalaryRecords() {
         if (!activeSalaryPerson || !salaryDB[activeSalaryPerson]) return;
@@ -1720,7 +1730,7 @@
             return `<tr class="list-enter" style="animation-delay: ${index * 0.05}s;">
                 <td>${formatDisplayDate(r.date)}</td>
                 <td class="font-bold text-[#10B981]">₹${Number(r.amount).toLocaleString('en-IN')}</td>
-                <td class="text-right"><button onclick="haptic(); deleteSalarySingleEntry(${r.originalIndex})" class="action-btn shrink-0"><i class="fa-solid fa-trash text-xs"></i></button></td>
+                <td class="text-right"><button onclick="haptic(); deleteSalarySingleEntry('${r.id}')"     class="action-btn shrink-0"><i class="fa-solid fa-trash text-xs"></i></button></td>
             </tr>`;
         }).join('');
         
@@ -1737,16 +1747,30 @@
         document.getElementById('salary-detail-total').textContent = `${sign}₹${totalAmt.toLocaleString('en-IN')}`;
     }
 
-    async function deleteSalarySingleEntry(idx) {
+
+
+
+
+
+    async function deleteSalarySingleEntry(id) {
         if(confirm('Are you sure you want to delete this specific entry?')) { 
-            salaryDB[activeSalaryPerson].records.splice(idx,1); 
-            await saveDB(); 
+            salaryDB[activeSalaryPerson].records = salaryDB[activeSalaryPerson].records.filter(r => r.id !== id);
+            
+            if (currentUserUID) {
+                await appDataRef.child(`salaryDB/${activeSalaryPerson}/records/${id}`).remove();
+            }
+            
             renderSalaryRecords();
             updateDashboard();
             showToast('Entry Deleted!'); 
         }
     }
 
+
+
+
+
+    
     // ========================== MILK ==========================
     async function addMilkCustomer() {
         let name = document.getElementById('new-milk-name').value.trim();
