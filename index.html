@@ -1325,14 +1325,8 @@
         }
     }
 
-    // ========================== DATA SYNC ==========================
-
-
-
-
-    
-
-       function loadUserData() {
+            // ========================== DATA SYNC ==========================
+    function loadUserData() {
         showLoader("LOADING...");
         appDataRef = database.ref(`users/${currentUserUID}/appData`);
         
@@ -1374,13 +1368,8 @@
             document.getElementById('main-app').classList.remove('hidden');
         });
     }
+    
 
-
-
-        
-
-        
-    }
 
         async function saveDB() {
         if (!currentUserUID) return;
