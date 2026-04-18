@@ -1326,51 +1326,85 @@
     }
 
             // ========================== DATA SYNC ==========================
-    function loadUserData() {
-        showLoader("LOADING...");
-        appDataRef = database.ref(`users/${currentUserUID}/appData`);
-        
-        appDataRef.on('value', (snapshot) => {
-            const data = snapshot.val() || {};
-
-            // 🔥 THE MASTER ENGINE: Ye Object ko Array banayega aur null gaddhon ko filter karega
-            const safeLoad = (dbData) => {
-                if (!dbData) return [];
-                return Object.entries(dbData)
-                    .filter(([key, val]) => val !== null && typeof val === 'object') 
-                    .map(([key, val]) => {
-                        return { ...val, id: val.id || key }; 
-                    });
-            };
-
-            // Purane data aur naye ID wale data dono ko safely list (array) mein badalna
-            udharDB = safeLoad(data.udharDB);
-            expenseDB = safeLoad(data.expenseDB);
-            diaryDB = safeLoad(data.diaryDB);
-
-            milkDB = data.milkDB || {};
-            Object.keys(milkDB).forEach(k => {
-                milkDB[k].records = safeLoad(milkDB[k].records);
-            });
-
-            salaryDB = data.salaryDB || {};
-            Object.keys(salaryDB).forEach(k => {
-                salaryDB[k].records = safeLoad(salaryDB[k].records);
-            });
-
-            // Projects pehle se theek tha, isliye isko safeLoad nahi chahiye
-            projectDB = data.projectDB || {};
-
-            updateActiveScreen();
-
-            hideLoader();
-            document.getElementById('login-screen').style.display = 'none';
-            document.getElementById('main-app').classList.remove('hidden');
-        });
-    }
     
 
 
+
+         function loadUserData() {
+    showLoader("SYNCING DATA...");
+    appDataRef = database.ref(`users/${currentUserUID}/appData`);
+    
+    // 🔥 THE MASTER ENGINE: Null values hatane aur ID jodne ke liye
+    const safeLoad = (dbData) => {
+        if (!dbData) return [];
+        return Object.entries(dbData)
+            .filter(([key, val]) => val !== null && typeof val === 'object') 
+            .map(([key, val]) => {
+                return { ...val, id: val.id || key }; 
+            });
+    };
+
+    let loadedModules = 0;
+    const initialSyncComplete = () => {
+        loadedModules++;
+        // Jab pehli baar 6 ke 6 module load ho jayein, tab app khulegi
+        if (loadedModules === 6) {
+            updateActiveScreen();
+            hideLoader();
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('main-app').classList.remove('hidden');
+        } else if (loadedModules > 6) {
+            // Live updates ke waqt sirf screen refresh hogi
+            updateActiveScreen();
+        }
+    };
+
+    // 1. UDHAR MODULE SYNC
+    appDataRef.child('udharDB').on('value', (snapshot) => {
+        udharDB = safeLoad(snapshot.val());
+        initialSyncComplete();
+    });
+
+    // 2. EXPENSE MODULE SYNC
+    appDataRef.child('expenseDB').on('value', (snapshot) => {
+        expenseDB = safeLoad(snapshot.val());
+        initialSyncComplete();
+    });
+
+    // 3. DIARY MODULE SYNC
+    appDataRef.child('diaryDB').on('value', (snapshot) => {
+        diaryDB = safeLoad(snapshot.val());
+        initialSyncComplete();
+    });
+
+    // 4. MILK MODULE SYNC
+    appDataRef.child('milkDB').on('value', (snapshot) => {
+        const data = snapshot.val() || {};
+        milkDB = data;
+        Object.keys(milkDB).forEach(k => {
+            milkDB[k].records = safeLoad(milkDB[k].records);
+        });
+        initialSyncComplete();
+    });
+
+    // 5. SALARY MODULE SYNC
+    appDataRef.child('salaryDB').on('value', (snapshot) => {
+        const data = snapshot.val() || {};
+        salaryDB = data;
+        Object.keys(salaryDB).forEach(k => {
+            salaryDB[k].records = safeLoad(salaryDB[k].records);
+        });
+        initialSyncComplete();
+    });
+
+    // 6. PROJECTS (BUSINESS HUB) SYNC
+    appDataRef.child('projectDB').on('value', (snapshot) => {
+        projectDB = snapshot.val() || {};
+        initialSyncComplete();
+    });
+}
+
+    
         
 
     // ========================== DASHBOARD & UI UPDATES ==========================
