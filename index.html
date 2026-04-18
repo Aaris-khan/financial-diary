@@ -2022,19 +2022,27 @@ function renderDiaryList() {
         await exportAndShareCanvas('salary-receipt-card', `${name}_SalarySlip.png`, `Hello ${name},\nHere is your Salary Slip. Total: ₹${totalAmt}`);
     }
 
-    async function shareDiaryBill(idx) {
-        showLoader("Generating Diary Page...");
-        const d = diaryDB[idx];
-        
-        document.getElementById('diary-rcpt-date').textContent = formatDisplayDate(d.date);
-        document.getElementById('diary-rcpt-title').textContent = d.title;
-        document.getElementById('diary-rcpt-content').textContent = d.content;
-        
-        let msg = `Diary Page: ${d.title}\nDate: ${formatDisplayDate(d.date)}`;
 
-        await exportAndShareCanvas('diary-receipt-card', `Diary_${d.date}.png`, msg);
+async function shareDiaryBill(id) {
+    showLoader("Generating Diary Page...");
+    const d = diaryDB.find(x => x.id === id);
+    
+    if (!d) {
+        hideLoader();
+        return showToast("Error: Diary not found!");
     }
+    
+    document.getElementById('diary-rcpt-date').textContent = formatDisplayDate(d.date);
+    document.getElementById('diary-rcpt-title').textContent = d.title;
+    document.getElementById('diary-rcpt-content').textContent = d.content;
+    
+    let msg = `Diary Page: ${d.title}\nDate: ${formatDisplayDate(d.date)}`;
 
+    await exportAndShareCanvas('diary-receipt-card', `Diary_${d.date}.png`, msg);
+}
+
+
+    
     async function shareAllExpensesBill() {
         showLoader("Generating All Expenses Bill...");
         let total = 0;
