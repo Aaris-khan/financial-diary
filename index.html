@@ -1330,13 +1330,41 @@
         showLoader("LOADING...");
         appDataRef = database.ref(`users/${currentUserUID}/appData`);
         
-                appDataRef.on('value', (snapshot) => {
+
+
+       function loadUserData() {
+        showLoader("LOADING...");
+        appDataRef = database.ref(`users/${currentUserUID}/appData`);
+        
+        appDataRef.on('value', (snapshot) => {
             const data = snapshot.val() || {};
+
+            // 🔥 THE MASTER ENGINE: Ye Object ko Array banayega aur null gaddhon ko filter karega
+            const safeLoad = (dbData) => {
+                if (!dbData) return [];
+                return Object.entries(dbData)
+                    .filter(([key, val]) => val !== null && typeof val === 'object') 
+                    .map(([key, val]) => {
+                        return { ...val, id: val.id || key }; 
+                    });
+            };
+
+            // Purane data aur naye ID wale data dono ko safely list (array) mein badalna
+            udharDB = safeLoad(data.udharDB);
+            expenseDB = safeLoad(data.expenseDB);
+            diaryDB = safeLoad(data.diaryDB);
+
             milkDB = data.milkDB || {};
-            udharDB = data.udharDB || [];
-            expenseDB = data.expenseDB || [];
+            Object.keys(milkDB).forEach(k => {
+                milkDB[k].records = safeLoad(milkDB[k].records);
+            });
+
             salaryDB = data.salaryDB || {};
-            diaryDB = data.diaryDB || [];
+            Object.keys(salaryDB).forEach(k => {
+                salaryDB[k].records = safeLoad(salaryDB[k].records);
+            });
+
+            // Projects pehle se theek tha, isliye isko safeLoad nahi chahiye
             projectDB = data.projectDB || {};
 
             updateActiveScreen();
@@ -1345,6 +1373,13 @@
             document.getElementById('login-screen').style.display = 'none';
             document.getElementById('main-app').classList.remove('hidden');
         });
+    }
+
+
+
+        
+
+        
     }
 
         async function saveDB() {
