@@ -1624,21 +1624,23 @@ function renderDiaryList() {
     
     // ========================== SALARY ==========================
     async function addSalaryPerson() {
-        let name = document.getElementById('new-salary-name').value.trim();
-        name = name.replace(/[.#$\[\]<>]/g, ''); // XSS Fix included
-        let company = document.getElementById('new-salary-company').value.trim() || '—';
-        company = company.replace(/[<>]/g, ''); // XSS Fix included
-        const type = document.getElementById('new-salary-type').value;
-        
-        if (!name) return showToast('Enter Name!');
-        if (salaryDB[name]) return showToast('Person already exists!');
-        
-        salaryDB[name] = { company: company, type: type, records: [] }; 
-        await saveDB(); 
-        closeModal('add-salary-person-modal'); 
-        renderSalaryList(); 
-        showToast('Profile Added!');
+    let name = document.getElementById('new-salary-name').value.trim().replace(/[.#$\[\]<>]/g, ''); 
+    let company = document.getElementById('new-salary-company').value.trim().replace(/[<>]/g, '') || '—';
+    const type = document.getElementById('new-salary-type').value;
+    
+    if (!name) return showToast('Enter Name!');
+    if (salaryDB[name]) return showToast('Person already exists!');
+    
+    salaryDB[name] = { company: company, type: type, records: [] }; 
+    
+    if (currentUserUID) {
+        await appDataRef.child(`salaryDB/${name}`).set(salaryDB[name]); 
     }
+    
+    closeModal('add-salary-person-modal'); 
+    renderSalaryList(); 
+    showToast('Profile Added!');
+}
 
     let salaryPressTimer;
     function startSalaryLongPress(name) {
@@ -1651,16 +1653,21 @@ function renderDiaryList() {
     }
     function cancelSalaryLongPress() { clearTimeout(salaryPressTimer); }
 
-    async function deleteSalaryPersonProfile(name) {
-        if (confirm(`Are you sure you want to permanently delete the employee "${name}" and all their records?`)) {
-            delete salaryDB[name]; 
-            await saveDB();      
-            if(activeSalaryPerson === name) activeSalaryPerson = null; 
-            renderSalaryList();    
-            updateDashboard();   
-            showToast('Profile Deleted!');
+async function deleteSalaryPersonProfile(name) {
+    if (confirm(`Are you sure you want to permanently delete the employee "${name}" and all their records?`)) {
+        delete salaryDB[name]; 
+        
+        if (currentUserUID) {
+            await appDataRef.child(`salaryDB/${name}`).remove();      
         }
+        
+        if(activeSalaryPerson === name) activeSalaryPerson = null; 
+        renderSalaryList();    
+        updateDashboard();   
+        showToast('Profile Deleted!');
     }
+}
+
 
     function renderSalaryList() {
         const q = (document.getElementById('salary-search').value || '').toLowerCase();
@@ -1805,22 +1812,28 @@ function renderDiaryList() {
 
     
     // ========================== MILK ==========================
-    async function addMilkCustomer() {
-        let name = document.getElementById('new-milk-name').value.trim();
-        name = name.replace(/[.#$\[\]<>]/g, ''); // XSS Fix included
-        const rate = parseFloat(document.getElementById('new-milk-rate').value) || DEFAULT_RATE;
-        const type = document.getElementById('new-milk-type').value; 
-        
-        if (!name) return showToast('Enter Name!');
-        if (milkDB[name]) return showToast('Customer already exists!');
-        
-        milkDB[name] = { rate: rate, type: type, records: [] }; 
-        await saveDB(); 
-        closeModal('add-milk-customer-modal'); 
-        renderMilkList(); 
-        showToast('Customer Added!');
+async function addMilkCustomer() {
+    let name = document.getElementById('new-milk-name').value.trim().replace(/[.#$\[\]<>]/g, ''); 
+    const rate = parseFloat(document.getElementById('new-milk-rate').value) || DEFAULT_RATE;
+    const type = document.getElementById('new-milk-type').value; 
+    
+    if (!name) return showToast('Enter Name!');
+    if (milkDB[name]) return showToast('Customer already exists!');
+    
+    milkDB[name] = { rate: rate, type: type, records: [] }; 
+    
+    if (currentUserUID) {
+        await appDataRef.child(`milkDB/${name}`).set(milkDB[name]); 
     }
+    
+    closeModal('add-milk-customer-modal'); 
+    renderMilkList(); 
+    showToast('Customer Added!');
+}
 
+
+
+    
     let pressTimer;
     function startLongPress(name) {
         isLongPress = false;
@@ -1833,15 +1846,20 @@ function renderDiaryList() {
     function cancelLongPress() { clearTimeout(pressTimer); }
 
     async function deleteMilkCustomerProfile(name) {
-        if (confirm(`Are you sure you want to permanently delete the customer "${name}" and all their records?`)) {
-            delete milkDB[name]; 
-            await saveDB();      
-            if(activeMilkCustomer === name) activeMilkCustomer = null; 
-            renderMilkList();    
-            updateDashboard();   
-            showToast('Customer Deleted!');
+    if (confirm(`Are you sure you want to permanently delete the customer "${name}" and all their records?`)) {
+        delete milkDB[name]; 
+        
+        if (currentUserUID) {
+            await appDataRef.child(`milkDB/${name}`).remove();      
         }
+        
+        if(activeMilkCustomer === name) activeMilkCustomer = null; 
+        renderMilkList();    
+        updateDashboard();   
+        showToast('Customer Deleted!');
     }
+}
+
 
     function renderMilkList() {
         const q = (document.getElementById('milk-search').value || '').toLowerCase();
@@ -2415,15 +2433,27 @@ async function shareDiaryBill(id) {
         }, 800); 
     }
     function cancelExpenseLongPress() { clearTimeout(expensePressTimer); }
-    async function deleteExpenseCategoryProfile(category) {
-        if (confirm(`Delete the expense category "${category}" and all its records?`)) {
-            expenseDB = expenseDB.filter(e => e.category !== category); 
-            await saveDB(); 
-            if(activeExpenseCategory === category) activeExpenseCategory = null; 
-            renderExpenseList(); updateDashboard(); showToast('Category Deleted!');
-        }
-    }
 
+async function deleteExpenseCategoryProfile(category) {
+    if (confirm(`Delete the expense category "${category}" and all its records?`)) {
+        const entriesToDelete = expenseDB.filter(e => e.category === category);
+        expenseDB = expenseDB.filter(e => e.category !== category); 
+        
+        if (currentUserUID) {
+            for (let e of entriesToDelete) {
+                await appDataRef.child(`expenseDB/${e.id}`).remove();
+            }
+        }
+        
+        if(activeExpenseCategory === category) activeExpenseCategory = null; 
+        renderExpenseList(); 
+        updateDashboard(); 
+        showToast('Category Deleted!');
+    }
+}
+
+
+    
     function openExpenseDetail(category) {
         if(isLongPress) { isLongPress = false; return; } // Touch conflict fix
         activeExpenseCategory = category;
@@ -2483,19 +2513,24 @@ async function shareDiaryBill(id) {
     }
 
          // ========================== PREMIUM BUSINESS HUB LOGIC ==========================
-    async function saveNewProject() {
-        let name = document.getElementById('new-project-name').value.trim();
-        name = name.replace(/[.#$\[\]<>]/g, ''); 
-        if (!name) return showToast('Enter Name!');
-        if (projectDB[name]) return showToast('Already exists!');
-        
-        projectDB[name] = { records: [], created: Date.now() }; 
-        await saveDB(); 
-        closeModal('add-project-modal'); 
-        renderProjectsList(); 
-        showToast('Khata Created!');
-    }
 
+async function saveNewProject() {
+    let name = document.getElementById('new-project-name').value.trim().replace(/[.#$\[\]<>]/g, ''); 
+    if (!name) return showToast('Enter Name!');
+    if (projectDB[name]) return showToast('Account already exists!');
+    
+    projectDB[name] = { records: [], created: Date.now() }; 
+    
+    if (currentUserUID) {
+        await appDataRef.child(`projectDB/${name}`).set(projectDB[name]); 
+    }
+    
+    closeModal('add-project-modal'); 
+    renderProjectsList(); 
+    showToast('Account Created!');
+}
+
+    
     function renderProjectsList() {
         const q = (document.getElementById('project-search')?.value || '').toLowerCase();
         const html = Object.keys(projectDB).filter(n => n.toLowerCase().includes(q)).map((name, index) => {
@@ -2522,10 +2557,17 @@ async function shareDiaryBill(id) {
     function filterProjectList() { renderProjectsList(); }
 
     async function deleteProject(name) {
-        if (confirm(`Delete khata "${name}" permanently?`)) {
-            delete projectDB[name]; await saveDB(); renderProjectsList(); showToast('Deleted!');
+    if (confirm(`Delete account "${name}" permanently?`)) {
+        delete projectDB[name]; 
+        
+        if (currentUserUID) {
+            await appDataRef.child(`projectDB/${name}`).remove(); 
         }
+        
+        renderProjectsList(); 
+        showToast('Account Deleted!');
     }
+}
 
     function openProjectDetail(name) {
         activeProject = name;
