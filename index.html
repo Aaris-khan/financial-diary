@@ -2620,7 +2620,10 @@ async function shareDiaryBill(id) {
                     </div>
                 </td>
                 <td class="font-extrabold text-[17px] tracking-tight text-right shrink-0" style="color: ${colorHex[r.color]};">₹${Number(r.amount).toLocaleString('en-IN')}</td>
-                <td class="text-right shrink-0 pl-2"><button onclick="haptic(); deleteProjectEntry(${r.id})" class="action-btn shrink-0 ml-auto"><i class="fa-solid fa-trash text-xs"></i></button></td>
+
+            <td class="text-right shrink-0 pl-2"><button onclick="haptic(); deleteProjectEntry('${r.id}')" class="action-btn shrink-0 ml-auto"><i class="fa-solid fa-trash text-xs"></i></button></td>
+
+                
             </tr>`;
         }).join('');
 
