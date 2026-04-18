@@ -2230,21 +2230,33 @@
         openModal('add-expense-modal');
     }
 
-    async function saveExpenseEntry() {
+
+        async function saveExpenseEntry() {
         const date = document.getElementById('expense-date').value;
         let cat = document.getElementById('expense-category').value.trim() || 'Other';
-        cat = cat.replace(/[<>]/g, ''); // XSS protection
+        cat = cat.replace(/[<>]/g, ''); 
         const amt = parseFloat(document.getElementById('expense-amount').value);
         if(!date || !amt) return showToast('Please enter details!');
         
-        expenseDB.unshift({date, category: cat, amount: amt});
-        await saveDB(); 
+        // Nayi ID aur Data
+        const uniqueId = "exp_" + Date.now();
+        const newEntry = { id: uniqueId, date, category: cat, amount: amt };
+
+        expenseDB.unshift(newEntry); // Local add
+
+        // SIRF EK EENT FIREBASE PAR BHEJI
+        if (currentUserUID) {
+            await appDataRef.child(`expenseDB/${uniqueId}`).set(newEntry);
+        }
+        
         closeModal('add-expense-modal'); 
         renderExpenseList();
         if(document.getElementById('expense-detail-screen').classList.contains('active')) renderExpenseRecords();
         updateDashboard();
-        showToast('Saved!');
+        showToast('Saved Safely!');
     }
+
+    
 
     function renderExpenseList() {
         let total = 0;
@@ -2324,7 +2336,7 @@
             return `<tr class="list-enter" style="animation-delay: ${index * 0.05}s;">
                 <td>${formatDisplayDate(r.date)}</td>
                 <td class="font-bold text-[#FF3B30] text-[16px]">₹${Number(r.amount).toLocaleString('en-IN')}</td>
-                <td class="text-right"><button onclick="haptic(); deleteExpense(${r.originalIndex})" class="action-btn shrink-0"><i class="fa-solid fa-trash text-xs"></i></button></td>
+                <td class="text-right"><button onclick="haptic(); deleteExpense('${r.id}')" class="action-btn shrink-0"><i class="fa-solid fa-trash text-xs"></i></button></td>
             </tr>`;
         }).join('');
 
@@ -2332,16 +2344,22 @@
         document.getElementById('expense-detail-total').textContent = `₹${total.toLocaleString('en-IN')}`;
     }
 
-    async function deleteExpense(idx) { 
+        async function deleteExpense(id) { 
         if(confirm('Delete expense?')) { 
-            expenseDB.splice(idx,1); 
-            await saveDB(); 
+            expenseDB = expenseDB.filter(e => e.id !== id); // Local se hataya
+            
+            // SIRF WAHI ENTRY FIREBASE SE UDAAYI
+            if (currentUserUID) {
+                await appDataRef.child(`expenseDB/${id}`).remove();
+            }
+            
             renderExpenseList();
             if(document.getElementById('expense-detail-screen').classList.contains('active')) renderExpenseRecords();
             updateDashboard();
             showToast('Deleted!'); 
         } 
     }
+
 
     // ========================== NAVIGATION ==========================
     function switchTab(tab) {
