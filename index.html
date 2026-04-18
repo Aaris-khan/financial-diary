@@ -2047,21 +2047,32 @@
         openModal('add-udhar-modal');
     }
 
-    async function saveUdharEntry(type) {
+
+        async function saveUdharEntry(type) {
         const date = document.getElementById('udhar-date').value;
         let name = document.getElementById('udhar-name').value.trim();
-        name = name.replace(/[<>]/g, ''); // XSS protection
+        name = name.replace(/[<>]/g, ''); 
         const amt = parseFloat(document.getElementById('udhar-amount').value);
         if(!date || !name || !amt) return showToast('Fill complete form!');
         
-        udharDB.unshift({date, name, amount: amt, type});
-        await saveDB(); 
+        const uniqueId = "udh_" + Date.now();
+        const newEntry = { id: uniqueId, date, name, amount: amt, type };
+        
+        udharDB.unshift(newEntry);
+        
+        if (currentUserUID) {
+            await appDataRef.child(`udharDB/${uniqueId}`).set(newEntry);
+        }
+        
         closeModal('add-udhar-modal'); 
         renderUdharList();
         if(document.getElementById('udhar-detail-screen').classList.contains('active')) renderUdharRecords();
         updateDashboard();
-        showToast('Saved!');
+        showToast('Saved Safely!');
     }
+
+
+    
 
     function renderUdharList() {
         const q = (document.getElementById('udhar-search').value || '').toLowerCase();
@@ -2159,7 +2170,7 @@
                 <td>${formatDisplayDate(r.date)}</td>
                 <td><span class="text-[10px] font-extrabold uppercase px-2 py-1 rounded-md ${isCredit ? 'bg-[#34C759]/10 text-[#34C759]' : 'bg-[#FF3B30]/10 text-[#FF3B30]'}">${isCredit ? 'Given' : 'Taken'}</span></td>
                 <td class="font-bold text-[16px]">₹${Number(r.amount).toLocaleString('en-IN')}</td>
-                <td class="text-right"><button onclick="event.stopPropagation(); haptic(); deleteUdhar(${r.originalIndex})" class="action-btn shrink-0"><i class="fa-solid fa-trash text-xs"></i></button></td>
+                <td class="text-right"><button onclick="event.stopPropagation(); haptic();  deleteUdhar('${r.id}')"  class="action-btn shrink-0"><i class="fa-solid fa-trash text-xs"></i></button></td>
             </tr>`;
         }).join('');
 
@@ -2180,16 +2191,24 @@
         }
     }
     
-    async function deleteUdhar(idx) { 
+
+       async function deleteUdhar(id) { 
         if(confirm('Delete permanently?')) { 
-            udharDB.splice(idx,1); 
-            await saveDB(); 
+            udharDB = udharDB.filter(u => u.id !== id); 
+            
+            if (currentUserUID) {
+                await appDataRef.child(`udharDB/${id}`).remove();
+            }
+            
             renderUdharList();
             if(document.getElementById('udhar-detail-screen').classList.contains('active')) renderUdharRecords();
             updateDashboard();
             showToast('Deleted!'); 
         } 
     }
+
+
+    
 
     async function shareUdharBill() {
         if (!activeUdharPerson) return;
