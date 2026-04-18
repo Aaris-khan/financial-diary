@@ -1371,11 +1371,7 @@
     
 
 
-        async function saveDB() {
-        if (!currentUserUID) return;
-        await appDataRef.set({ milkDB, udharDB, expenseDB, salaryDB, diaryDB, projectDB });
-    }
-
+        
 
     // ========================== DASHBOARD & UI UPDATES ==========================
         function updateActiveScreen() {
@@ -1535,80 +1531,93 @@
         openModal('diary-entry-modal');
     }
 
-    async function saveDiaryEntry() {
-        const date = document.getElementById('diary-entry-date').value;
-        let title = document.getElementById('diary-entry-title').value.trim() || 'Untitled';
-        title = title.replace(/[<>]/g, ''); // XSS protection
-        let content = document.getElementById('diary-entry-content').value.trim();
-        content = content.replace(/[<>]/g, ''); // XSS protection
-        
-        if(!date || !content) return showToast('Please write something!');
-        
-        const entry = { date, title, content, updated: Date.now() };
-        
-        if (activeDiaryIndex !== null) {
-            diaryDB[activeDiaryIndex] = entry; 
-        } else {
-            diaryDB.unshift(entry);
+   
+async function saveDiaryEntry() {
+    const date = document.getElementById('diary-entry-date').value;
+    let title = document.getElementById('diary-entry-title').value.trim() || 'Untitled';
+    title = title.replace(/[<>]/g, ''); 
+    let content = document.getElementById('diary-entry-content').value.trim();
+    content = content.replace(/[<>]/g, ''); 
+    
+    if(!date || !content) return showToast('Please write something!');
+    
+    if (activeDiaryIndex !== null) {
+        const entry = diaryDB.find(d => d.id === activeDiaryIndex);
+        if(entry) {
+            entry.date = date; entry.title = title; entry.content = content; entry.updated = Date.now();
+            if (currentUserUID) await appDataRef.child(`diaryDB/${activeDiaryIndex}`).set(entry);
         }
-        
-        await saveDB(); 
-        closeModal('diary-entry-modal'); 
-        renderDiaryList();
-        if(document.getElementById('diary-detail-screen').classList.contains('active')) openDiaryDetail(activeDiaryIndex !== null ? activeDiaryIndex : 0);
-        showToast('Diary Saved!');
+    } else {
+        const uniqueId = "dia_" + Date.now();
+        const entry = { id: uniqueId, date, title, content, updated: Date.now() };
+        diaryDB.unshift(entry);
+        if (currentUserUID) await appDataRef.child(`diaryDB/${uniqueId}`).set(entry);
+        activeDiaryIndex = uniqueId;
     }
+    
+    closeModal('diary-entry-modal'); 
+    renderDiaryList();
+    if(document.getElementById('diary-detail-screen').classList.contains('active')) openDiaryDetail(activeDiaryIndex);
+    showToast('Diary Saved!');
+}
 
-    function renderDiaryList() {
-        const queryText = (document.getElementById('diary-search').value || '').toLowerCase().trim();
-        const searchWords = queryText.split(' ').filter(w => w !== ''); 
+    
+function renderDiaryList() {
+    const queryText = (document.getElementById('diary-search').value || '').toLowerCase().trim();
+    const searchWords = queryText.split(' ').filter(w => w !== ''); 
 
-        const records = (diaryDB || []).map((d, i) => ({...d, idx: i}))
-                        .filter(d => {
-                            const fullText = (d.title + " " + d.content + " " + formatDisplayDate(d.date)).toLowerCase();
-                            return searchWords.every(word => fullText.includes(word));
-                        })
-                        .sort((a,b) => new Date(b.date) - new Date(a.date));
-        
-        const html = records.map((d, index) => {
-            const previewText = d.content.length > 60 ? d.content.substring(0, 60) + '...' : d.content;
-            return `<div onclick="haptic(); openDiaryDetail(${d.idx})" class="glass-card diary-card mb-4 cursor-pointer w-full ring-1 ring-white/40 dark:ring-white/5 list-enter" style="animation-delay: ${index * 0.05}s;">
-                <div class="flex justify-between items-center mb-2 w-full min-w-0 gap-2">
-                    <h4 class="font-bold text-xl text-[#F5A623] truncate flex-1 min-w-0 tracking-tight">${d.title}</h4>
-                    <i class="fa-solid fa-chevron-right text-gray-300 shrink-0 text-[13px]"></i>
-                </div>
-                ${d.content ? `<p class="text-[15px] font-serif text-gray-600 dark:text-gray-300 italic mb-3 truncate w-full min-w-0 opacity-80">"${previewText}"</p>` : ''}
-                <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-2 truncate w-full min-w-0">${formatDisplayDate(d.date)}</p>
-            </div>`;
-        }).join('');
-        
-        document.getElementById('diary-list').innerHTML = html || getEmptyState('fa-book-open', 'No diary pages found');
-    }
+    const records = (diaryDB || [])
+                    .filter(d => {
+                        const fullText = (d.title + " " + d.content + " " + formatDisplayDate(d.date)).toLowerCase();
+                        return searchWords.every(word => fullText.includes(word));
+                    })
+                    .sort((a,b) => new Date(b.date) - new Date(a.date));
+    
+    const html = records.map((d, index) => {
+        const previewText = d.content.length > 60 ? d.content.substring(0, 60) + '...' : d.content;
+        return `<div onclick="haptic(); openDiaryDetail('${d.id}')" class="glass-card diary-card mb-4 cursor-pointer w-full ring-1 ring-white/40 dark:ring-white/5 list-enter" style="animation-delay: ${index * 0.05}s;">
+            <div class="flex justify-between items-center mb-2 w-full min-w-0 gap-2">
+                <h4 class="font-bold text-xl text-[#F5A623] truncate flex-1 min-w-0 tracking-tight">${d.title}</h4>
+                <i class="fa-solid fa-chevron-right text-gray-300 shrink-0 text-[13px]"></i>
+            </div>
+            ${d.content ? `<p class="text-[15px] font-serif text-gray-600 dark:text-gray-300 italic mb-3 truncate w-full min-w-0 opacity-80">"${previewText}"</p>` : ''}
+            <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-2 truncate w-full min-w-0">${formatDisplayDate(d.date)}</p>
+        </div>`;
+    }).join('');
+    
+    document.getElementById('diary-list').innerHTML = html || getEmptyState('fa-book-open', 'No diary pages found');
+}
 
+
+    
+    
     function filterDiaryList() { renderDiaryList(); }
 
-    function openDiaryDetail(idx) {
-        activeDiaryIndex = idx;
-        const d = diaryDB[idx];
-        if(!d) return;
-        
-        document.getElementById('diary-view-title').textContent = d.title;
-        document.getElementById('diary-view-date').textContent = formatDisplayDate(d.date);
-        document.getElementById('diary-view-content').textContent = d.content;
-        
-        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-        document.getElementById('diary-detail-screen').classList.add('active');
-    }
+    function openDiaryDetail(id) {
+    activeDiaryIndex = id; 
+    const d = diaryDB.find(x => x.id === id);
+    if(!d) return;
+    
+    document.getElementById('diary-view-title').textContent = d.title;
+    document.getElementById('diary-view-date').textContent = formatDisplayDate(d.date);
+    document.getElementById('diary-view-content').textContent = d.content;
+    
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById('diary-detail-screen').classList.add('active');
+}
 
-    async function deleteDiary(idx, goBack = false) { 
-        if(confirm('Delete this page permanently?')) { 
-            diaryDB.splice(idx,1); 
-            await saveDB(); 
-            if(goBack) switchTab('diary');
-            else renderDiaryList();
-            showToast('Deleted!'); 
-        } 
-    }
+
+  async function deleteDiary(id, goBack = false) { 
+    if(confirm('Delete this page permanently?')) { 
+        diaryDB = diaryDB.filter(d => d.id !== id); 
+        if (currentUserUID) await appDataRef.child(`diaryDB/${id}`).remove();
+        
+        if(goBack) switchTab('diary');
+        else renderDiaryList();
+        showToast('Deleted!'); 
+    } 
+}
+
 
     // Global Long Press State handler
     let isLongPress = false;
