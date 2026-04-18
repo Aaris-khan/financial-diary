@@ -2559,22 +2559,34 @@ async function shareDiaryBill(id) {
     }
 
     async function saveProjectEntry() {
-        const date = document.getElementById('proj-entry-date').value;
-        let title = document.getElementById('proj-entry-title').value.trim() || 'Record';
-        title = title.replace(/[<>]/g, ''); 
-        const amt = parseFloat(document.getElementById('proj-entry-amount').value);
-        const col = document.getElementById('proj-entry-color').value;
+    const date = document.getElementById('proj-entry-date').value;
+    let title = document.getElementById('proj-entry-title').value.trim() || 'Record';
+    title = title.replace(/[<>]/g, ''); 
+    const amt = parseFloat(document.getElementById('proj-entry-amount').value);
+    const col = document.getElementById('proj-entry-color').value;
 
-        // YAHAN FIX HAI: !amt ki jagah isNaN(amt)
-        if(!date || isNaN(amt)) return showToast('Enter details & valid amount!');
-        if(!projectDB[activeProject].records) projectDB[activeProject].records = [];
-        
-        projectDB[activeProject].records.unshift({ id: Date.now(), date, title, amount: amt, color: col });
-        await saveDB(); 
-        closeModal('add-project-entry-modal'); 
-        renderProjectRecords();
-        showToast('Saved Successfully!');
+    if(!date || isNaN(amt)) return showToast('Enter details & valid amount!');
+    
+    // Agar records nahi hain, toh khali list banao
+    if(!projectDB[activeProject].records) projectDB[activeProject].records = [];
+    
+    // 🔥 1. Nayi Unique ID banayi
+    const uniqueId = "prj_" + Date.now();
+    const newEntry = { id: uniqueId, date, title, amount: amt, color: col };
+    
+    // 2. Local app mein sabse upar jod diya (unshift)
+    projectDB[activeProject].records.unshift(newEntry); 
+    
+    // 3. 🔥 SIRF NAYI ENTRY FIREBASE BHEJI (saveDB() hata diya)
+    if (currentUserUID) {
+        await appDataRef.child(`projectDB/${activeProject}/records/${uniqueId}`).set(newEntry);
     }
+    
+    closeModal('add-project-entry-modal'); 
+    renderProjectRecords();
+    showToast('Saved Successfully!');
+}
+
 
     function renderProjectRecords() {
         if (!activeProject || !projectDB[activeProject]) return;
@@ -2627,14 +2639,22 @@ async function shareDiaryBill(id) {
         document.getElementById('project-dynamic-totals').innerHTML = cardsHtml;
     }
 
-    async function deleteProjectEntry(id) {
-        if(confirm('Delete this record permanently?')) { 
-            projectDB[activeProject].records = projectDB[activeProject].records.filter(r => r.id !== id);
-            await saveDB(); renderProjectRecords(); showToast('Record Deleted!'); 
-        }
-    }
-
     
+    async function deleteProjectEntry(id) {
+    if(confirm('Delete this record permanently?')) { 
+        // 1. Local list se us ID wali entry ko hataya
+        projectDB[activeProject].records = projectDB[activeProject].records.filter(r => r.id !== id);
+        
+        // 2. 🔥 FIREBASE SE SIRF WOHI ENTRY HATAYI
+        if (currentUserUID) {
+            await appDataRef.child(`projectDB/${activeProject}/records/${id}`).remove();
+        }
+        
+        renderProjectRecords(); 
+        showToast('Record Deleted!'); 
+    }
+}
+
     // ========================== PWA APP INSTALL LOGIC ==========================
     let deferredPrompt;
 
