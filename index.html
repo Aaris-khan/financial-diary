@@ -1850,7 +1850,7 @@
                 <td>${r.morning||'-'}</td>
                 <td>${r.evening||'-'}</td>
                 <td class="font-bold text-[#34C759]">${t.toFixed(2)}</td>
-                <td class="text-right"><button onclick="haptic(); deleteMilkEntry(${r.originalIndex})" class="action-btn shrink-0"><i class="fa-solid fa-trash text-xs"></i></button></td>
+                <td class="text-right"><button onclick="haptic();   deleteMilkEntry('${r.id}')"    class="action-btn shrink-0"><i class="fa-solid fa-trash text-xs"></i></button></td>
             </tr>`;
         }).join('');
         
@@ -1877,37 +1877,64 @@
         openModal('add-milk-entry-modal');
     }
 
-    async function saveMilkEntry() {
+
+
+
+        async function saveMilkEntry() {
         const date = document.getElementById('milk-entry-date').value;
         const m = parseFloat(document.getElementById('milk-morning-kg').value) || 0;
         const e = parseFloat(document.getElementById('milk-evening-kg').value) || 0;
-        if (!date || (m===0 && e===0)) return showToast('Please enter quantity');
         
+        if (!date || (m===0 && e===0)) return showToast('Please enter quantity');
         if (!milkDB[activeMilkCustomer].records) milkDB[activeMilkCustomer].records = [];
 
         const existingIndex = milkDB[activeMilkCustomer].records.findIndex(r => r.date === date);
-        if (existingIndex !== -1) {
-            return showToast('Entry for this date already exists! Please delete the old one first.');
+        if (existingIndex !== -1) return showToast('Entry for this date already exists! Please delete the old one first.');
+
+        const uniqueId = "mlk_" + Date.now();
+        const newEntry = { id: uniqueId, date, morning: m, evening: e };
+
+        milkDB[activeMilkCustomer].records.push(newEntry);
+
+        if (currentUserUID) {
+            await appDataRef.child(`milkDB/${activeMilkCustomer}/records/${uniqueId}`).set(newEntry);
         }
 
-        milkDB[activeMilkCustomer].records.push({ date, morning: m, evening: e });
-        await saveDB(); 
         closeModal('add-milk-entry-modal'); 
+
+        const entryDateObj = new Date(date);
+        selectedMonth = entryDateObj.getMonth();
+        selectedYear = entryDateObj.getFullYear();
+        if (document.getElementById('filter-month-milk')) document.getElementById('filter-month-milk').value = selectedMonth;
+        if (document.getElementById('filter-year-milk')) document.getElementById('filter-year-milk').value = selectedYear;
+
         renderMilkRecords();
         updateDashboard();
-        showToast('Saved!');
+        showToast('Saved Safely!');
     }
 
-    async function deleteMilkEntry(idx) {
+
+
+    
+
+
+         async function deleteMilkEntry(id) {
         if(confirm('Are you sure you want to delete this entry?')) { 
-            milkDB[activeMilkCustomer].records.splice(idx,1); 
-            await saveDB(); 
+            milkDB[activeMilkCustomer].records = milkDB[activeMilkCustomer].records.filter(r => r.id !== id);
+            
+            if (currentUserUID) {
+                await appDataRef.child(`milkDB/${activeMilkCustomer}/records/${id}`).remove();
+            }
+            
             renderMilkRecords();
             updateDashboard();
             showToast('Deleted!'); 
         }
     }
 
+
+
+    
     // ========================== WHATSAPP PHOTO BILL SHARE FUNCTIONS ==========================
     async function generateAndShareBill() {
         if (!activeMilkCustomer || !milkDB[activeMilkCustomer]) return;
