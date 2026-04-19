@@ -1397,11 +1397,22 @@
         initialSyncComplete();
     });
 
+
     // 6. PROJECTS (BUSINESS HUB) SYNC
     appDataRef.child('projectDB').on('value', (snapshot) => {
-        projectDB = snapshot.val() || {};
+        const data = snapshot.val() || {};
+        projectDB = data;
+        
+        // 🔥 FIX: Project (Business Hub) ke records par bhi safeLoad lagaya
+        Object.keys(projectDB).forEach(k => {
+            projectDB[k].records = safeLoad(projectDB[k].records);
+        });
+        
         initialSyncComplete();
     });
+
+
+             
 }
 
     
@@ -2739,10 +2750,23 @@ async function saveNewProject() {
     }
 
     
-    async function deleteProjectEntry(id) {
-    if(confirm('Delete this record permanently?')) { 
-        // 1. Local list se us ID wali entry ko hataya
-        projectDB[activeProject].records = projectDB[activeProject].records.filter(r => r.id !== id);
+        async function deleteProjectEntry(id) {
+        if(confirm('Delete this record permanently?')) { 
+            // 🔥 FIX: String lagaya taaki ID perfect match ho aur crash na ho
+            projectDB[activeProject].records = projectDB[activeProject].records.filter(r => String(r.id) !== String(id));
+            
+            // FIREBASE SE SIRF WOHI ENTRY HATAYI
+            if (currentUserUID) {
+                await appDataRef.child(`projectDB/${activeProject}/records/${id}`).remove();
+            }
+            
+            renderProjectRecords(); 
+            renderProjectsList(); // 🔥 FIX: Delete hone ke baad bahar wala "Records Logged" count update karega
+            showToast('Record Deleted!'); 
+        }
+    }
+
+
         
         // 2. 🔥 FIREBASE SE SIRF WOHI ENTRY HATAYI
         if (currentUserUID) {
