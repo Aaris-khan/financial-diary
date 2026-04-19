@@ -1514,16 +1514,20 @@
         let balances = {};
         const q = (document.getElementById('balance-search').value || '').toLowerCase();
 
-        // 1. Milk Calculation
+
+                // 1. Milk Calculation
         Object.keys(milkDB).forEach(name => {
             let c = milkDB[name];
             let total = 0;
-            filterByMonth(c.records || []).forEach(r => total += ((Number(r.morning)||0) + (Number(r.evening)||0)) * (c.rate || DEFAULT_RATE));
+            // 🔥 YAHAN FIX HAI: 'filterByMonth' hata diya! Ab Lifetime total aayega.
+            (c.records || []).forEach(r => total += ((Number(r.morning)||0) + (Number(r.evening)||0)) * (c.rate || DEFAULT_RATE));
             if (!balances[name]) balances[name] = 0;
             if (c.type === 'dene_wala') balances[name] -= total; 
             else balances[name] += total; 
         });
 
+
+        
         // 2. Udhar Calculation
         (udharDB || []).forEach(u => {
             if (!balances[u.name]) balances[u.name] = 0;
