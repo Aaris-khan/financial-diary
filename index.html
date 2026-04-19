@@ -1915,7 +1915,8 @@ async function addMilkCustomer() {
         const q = (document.getElementById('milk-search').value || '').toLowerCase();
         const html = Object.keys(milkDB).filter(n => n.toLowerCase().includes(q)).map((name, index) => {
             const c = milkDB[name];
-            let kg = 0; filterByMonth(c.records || []).forEach(r => kg += ((Number(r.morning)||0) + (Number(r.evening)||0)));
+            let kg = 0; (c.records || []).forEach(r => kg += ((Number(r.morning)||0) + (Number(r.evening)||0)));
+
             
             const isDeneWala = c.type === 'lene_wala';
             const colorClass = isDeneWala ? 'text-[#34C759]' : 'text-[#FF3B30]';
