@@ -2159,36 +2159,140 @@ async function shareDiaryBill(id) {
         }
     }
 
-    // ========================== EXCEL (CSV) EXPORT ==========================
+    // ========================== SMART EXCEL (CSV) EXPORT ==========================
     function downloadExcel() {
-        let csv = "Type,Name/Category,Date,Amount\n";
-        
-        Object.keys(milkDB).forEach(name => {
-            let label = milkDB[name].type === 'dene_wala' ? 'Milk (Expense)' : 'Milk (Income)';
-            (milkDB[name].records||[]).forEach(r => {
-                let total = ((Number(r.morning)||0) + (Number(r.evening)||0)) * (milkDB[name].rate||DEFAULT_RATE);
-                csv += `${label},${name},${r.date},${total}\n`;
-            });
-        });
-        
-        expenseDB.forEach(e => csv += `Expense,${e.category},${e.date},${e.amount}\n`);
-        udharDB.forEach(u => csv += `Credit (${u.type}),${u.name},${u.date},${u.amount}\n`);
-        
-        Object.keys(salaryDB).forEach(name => {
-            (salaryDB[name].records||[]).forEach(r => {
-                csv += `Salary (${salaryDB[name].type}),${name},${r.date},${r.amount}\n`;
-            });
-        });
+        // Dynamically create the Apple-style modal
+        const existingModal = document.getElementById('dynamic-download-modal');
+        if(existingModal) existingModal.remove();
 
-        const blob = new Blob([csv], { type: 'text/csv' });
+        const overlay = document.createElement('div');
+        overlay.id = 'dynamic-download-modal';
+        overlay.className = 'modal-overlay';
+        overlay.style.display = 'flex';
+        setTimeout(() => overlay.style.opacity = '1', 10); // Smooth animation
+        overlay.onclick = function(e) { if(e.target.id === 'dynamic-download-modal') { overlay.remove(); document.getElementById('main-app').classList.remove('app-scale-down'); } };
+
+        // Modal content in pure English (Tailwind classes intact)
+        overlay.innerHTML = `
+            <div class="modal-content" onclick="event.stopImmediatePropagation()">
+                <div class="w-12 h-1.5 bg-gray-300 dark:bg-gray-600 shrink-0 rounded-full mx-auto mb-6"></div>
+                <h2 class="text-2xl font-extrabold mb-2 text-center w-full">Export Data</h2>
+                <p class="text-[11px] text-center text-gray-500 mb-6 font-bold uppercase tracking-wider">Select the report you want to download</p>
+
+                <div class="grid grid-cols-2 gap-3 mb-6 w-full">
+                    <button onclick="haptic(); executeDownload('all')" class="btn-primary !bg-[#000] dark:!bg-[#FFF] dark:!text-[#000]"><i class="fa-solid fa-layer-group"></i> All Data</button>
+                    <button onclick="haptic(); executeDownload('milk')" class="btn-primary !bg-[#007AFF]"><i class="fa-solid fa-jug-detergent"></i> Milk Records</button>
+                    <button onclick="haptic(); executeDownload('expenses')" class="btn-primary !bg-[#FF3B30]"><i class="fa-solid fa-receipt"></i> Expenses</button>
+                    <button onclick="haptic(); executeDownload('udhar')" class="btn-primary !bg-[#F5A623]"><i class="fa-solid fa-handshake"></i> Credit Ledger</button>
+                    <button onclick="haptic(); executeDownload('salary')" class="btn-primary !bg-[#34C759]"><i class="fa-solid fa-sack-dollar"></i> Salary</button>
+                    <button onclick="haptic(); executeDownload('diary')" class="btn-primary !bg-[#8E8E93]"><i class="fa-solid fa-book"></i> Personal Diary</button>
+                </div>
+                
+                <div class="w-full mt-3">
+                    <button onclick="haptic(); executeDownload('projects')" class="btn-primary w-full" style="background: linear-gradient(90deg, #4285F4, #9b72cb); border:none;"><i class="fa-solid fa-briefcase"></i> Business Hub</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+        
+        // Push background back (3D effect)
+        document.getElementById('main-app').classList.add('app-scale-down');
+    }
+
+    // Function that executes the download based on the user's choice
+    function executeDownload(type) {
+        const modal = document.getElementById('dynamic-download-modal');
+        if (modal) modal.remove();
+        document.getElementById('main-app').classList.remove('app-scale-down'); // Revert 3D effect
+        
+        let csv = `"AARISH DAIRY PRO - ${type.toUpperCase()} REPORT"\n`;
+        csv += `"Generated On:","${formatDisplayDate(getTodayISO())}"\n\n`;
+
+        // 1. MILK EXCEL
+        if (type === 'all' || type === 'milk') {
+            if(type === 'all') csv += `\n"--- MILK RECORDS ---"\n`;
+            csv += `"Customer Type","Name","Date","Morning (KG)","Evening (KG)","Total (KG)","Amount (Rs)"\n`;
+            Object.keys(milkDB).forEach(name => {
+                let label = milkDB[name].type === 'dene_wala' ? 'Buyer (-)' : 'Seller (+)';
+                (milkDB[name].records || []).forEach(r => {
+                    let m = Number(r.morning) || 0; let ev = Number(r.evening) || 0; let t = m + ev;
+                    let amt = t * (milkDB[name].rate || DEFAULT_RATE);
+                    csv += `"${label}","${name}","${formatDisplayDate(r.date)}","${m}","${ev}","${t}","${amt}"\n`;
+                });
+            });
+        }
+
+        // 2. EXPENSE EXCEL
+        if (type === 'all' || type === 'expenses') {
+            if(type === 'all') csv += `\n"--- EXPENSE RECORDS ---"\n`;
+            csv += `"Date","Expense Category","Amount (Rs)"\n`;
+            (expenseDB || []).forEach(e => {
+                csv += `"${formatDisplayDate(e.date)}","${e.category}","${e.amount}"\n`;
+            });
+        }
+
+        // 3. UDHAR EXCEL
+        if (type === 'all' || type === 'udhar') {
+            if(type === 'all') csv += `\n"--- CREDIT / UDHAR RECORDS ---"\n`;
+            csv += `"Entry Type","Party Name","Date","Amount (Rs)"\n`;
+            (udharDB || []).forEach(u => {
+                let label = u.type === 'credit' ? 'Given (+)' : 'Taken (-)';
+                csv += `"${label}","${u.name}","${formatDisplayDate(u.date)}","${u.amount}"\n`;
+            });
+        }
+
+        // 4. SALARY EXCEL
+        if (type === 'all' || type === 'salary') {
+            if(type === 'all') csv += `\n"--- SALARY RECORDS ---"\n`;
+            csv += `"Salary Type","Employee Name","Date","Amount (Rs)"\n`;
+            Object.keys(salaryDB).forEach(name => {
+                let label = salaryDB[name].type === 'lene_wala' ? 'Paid to Employee' : 'Received';
+                (salaryDB[name].records || []).forEach(r => {
+                    csv += `"${label}","${name}","${formatDisplayDate(r.date)}","${r.amount}"\n`;
+                });
+            });
+        }
+        
+        // 5. DIARY EXCEL
+        if (type === 'all' || type === 'diary') {
+            if(type === 'all') csv += `\n"--- PERSONAL DIARY ---"\n`;
+            csv += `"Date","Title","Diary Content"\n`;
+            (diaryDB || []).forEach(d => {
+                let safeTitle = d.title ? d.title.replace(/"/g, '""') : '';
+                let safeContent = d.content ? d.content.replace(/"/g, '""').replace(/\n/g, " | ") : '';
+                csv += `"${formatDisplayDate(d.date)}","${safeTitle}","${safeContent}"\n`;
+            });
+        }
+
+        // 6. BUSINESS HUB EXCEL (Newly Added!)
+        if (type === 'all' || type === 'projects') {
+            if(type === 'all') csv += `\n"--- BUSINESS HUB RECORDS ---"\n`;
+            csv += `"Khata Name","Date","Entry Detail","Transaction Type","Amount (Rs)"\n`;
+            Object.keys(projectDB).forEach(name => {
+                (projectDB[name].records || []).forEach(r => {
+                    let safeTitle = r.title ? r.title.replace(/"/g, '""') : '';
+                    let transType = r.color ? r.color.toUpperCase() : 'UNKNOWN';
+                    csv += `"${name}","${formatDisplayDate(r.date)}","${safeTitle}","${transType}","${r.amount}"\n`;
+                });
+            });
+        }
+
+        // File generation
+        const blob = new Blob([new Uint8Array([0xEF, 0xBB, 0xBF]), csv], { type: 'text/csv;charset=utf-8;' });
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `AarishDairy_Export_${getTodayISO()}.csv`;
+        a.download = `Aarish_${type.toUpperCase()}_Report.csv`;
         a.click();
-        showToast("Export Downloaded!");
+        
+        showToast("Report Downloaded Successfully! 📊");
     }
 
+
+
+
+
+    
     // ========================== UDHAR ==========================
     function openUdharModal(name = null) {
         document.getElementById('udhar-date').value = getTodayISO();
