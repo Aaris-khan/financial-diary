@@ -1449,22 +1449,26 @@
 
        let udharOnlyLena = 0, udharOnlyDena = 0;
 
-        
                 Object.values(milkDB).forEach(c => {
             let monthTotal = 0;
+            let lifetimeTotal = 0; // 🔥 Naya variable: Shuru se aaj tak ka hisaab
+
+            // 1. Sirf is mahine ka total (Month Profit/Expense ke liye)
             filterByMonth(c.records || []).forEach(r => monthTotal += ((Number(r.morning)||0) + (Number(r.evening)||0)) * (c.rate || DEFAULT_RATE));
             
+            // 2. Shuru se aaj tak ka total (Lena/Dena ke liye)
+            (c.records || []).forEach(r => lifetimeTotal += ((Number(r.morning)||0) + (Number(r.evening)||0)) * (c.rate || DEFAULT_RATE));
+
             if (c.type === 'dene_wala') {
-                // Aap BUYER ho (Kharidne wale) -> Paisa dena padega (To Pay) aur ye Kharcha (Expense) hai
-                exp += monthTotal;
-                denaHai += monthTotal;
+                exp += monthTotal;           // Mahine ka Kharcha
+                denaHai += lifetimeTotal;    // 🔥 Total Dena Hai (Lifetime)
             } else {
-                // Aap SELLER ho (Bechne wale) -> Paisa aayega (To Receive) aur ye Profit (Revenue) hai
-                rev += monthTotal;
-                lenaHai += monthTotal;
+                rev += monthTotal;           // Mahine ka Profit
+                lenaHai += lifetimeTotal;    // 🔥 Total Lena Hai (Lifetime)
             }
         });
 
+                
         
         filterByMonth(expenseDB).forEach(e => exp += Number(e.amount||0));
         
