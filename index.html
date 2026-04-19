@@ -2280,14 +2280,34 @@ async function shareDiaryBill(id) {
         }, 800); 
     }
     function cancelUdharLongPress() { clearTimeout(udharPressTimer); }
-    async function deleteUdharPersonProfile(name) {
+
+
+         async function deleteUdharPersonProfile(name) {
         if (confirm(`Delete the credit profile for "${name}" and all their records?`)) {
+            
+            // 1. Pehle us insaan ki saari entries dhoondo
+            const entriesToDelete = udharDB.filter(u => u.name === name);
+            
+            // 2. Local app se unhe hatao
             udharDB = udharDB.filter(u => u.name !== name); 
-            await saveDB(); if(activeUdharPerson === name) activeUdharPerson = null; 
-            renderUdharList(); updateDashboard(); showToast('Profile Deleted!');
+            
+            // 3. 🔥 FIREBASE SE SIRF WAHI ENTRIES HATAO (Purana saveDB hata diya)
+            if (currentUserUID) {
+                for (let e of entriesToDelete) {
+                    await appDataRef.child(`udharDB/${e.id}`).remove();
+                }
+            }
+            
+            if (activeUdharPerson === name) activeUdharPerson = null; 
+            renderUdharList(); 
+            updateDashboard(); 
+            showToast('Profile Deleted!');
         }
     }
 
+
+    
+    
     function openUdharDetail(name) {
         if(isLongPress) { isLongPress = false; return; } // Touch conflict fix
         activeUdharPerson = name;
