@@ -1080,7 +1080,10 @@
     <div class="modal-content" onclick="event.stopImmediatePropagation()">
         <div class="w-12 h-1.5 bg-gray-300 dark:bg-gray-600 rounded-full mx-auto mb-8"></div>
         <h2 class="text-2xl font-extrabold mb-2 text-center">Activate AI Hub</h2>
-        <p class="text-xs text-center text-gray-500 mb-6 font-bold uppercase tracking-wider">Type Model Name & Paste Key</p>
+                <p class="text-xs text-center text-gray-500 mb-2 font-bold uppercase tracking-wider">Type Model Name & Paste Key</p>
+        <p class="text-[10px] text-red-500 bg-red-500/10 p-2 rounded-lg text-center mb-6 font-bold border border-red-500/20">⚠️ Key is saved locally in your browser. We never see it.</p>
+
+
         
         <input type="text" id="user-ai-model" class="input-box mb-4 w-full" placeholder="Model Name (e.g. gemini-2.5-flash ya gpt-4o)">
         <input type="text" id="user-gemini-key" class="input-box mb-6 w-full" placeholder="Paste your API key here">
@@ -1171,7 +1174,15 @@
     
     let selectedMonth = new Date().getMonth(), selectedYear = new Date().getFullYear();
     const DEFAULT_RATE = 55;
-    const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+    // 🔥 MASTER ANTI-HACKING FUNCTION (XSS Protection)
+    function sanitizeHTML(str) { 
+        if(!str) return ''; 
+        const temp = document.createElement('div'); 
+        temp.textContent = str; 
+        return temp.innerHTML; 
+    }
 
     // UI Helpers & The iOS Modal Push Animation
     function showLoader(text = "SYNCING DATA...") { document.getElementById('loader-text').textContent = text; document.getElementById('global-loader').classList.add('show'); }
@@ -1592,10 +1603,11 @@
    
 async function saveDiaryEntry() {
     const date = document.getElementById('diary-entry-date').value;
-    let title = document.getElementById('diary-entry-title').value.trim() || 'Untitled';
-    title = title.replace(/[<>]/g, ''); 
+        let title = document.getElementById('diary-entry-title').value.trim() || 'Untitled';
+    title = sanitizeHTML(title); // 🔥 Hacking Proof
     let content = document.getElementById('diary-entry-content').value.trim();
-    content = content.replace(/[<>]/g, ''); 
+    content = sanitizeHTML(content); // 🔥 Hacking Proof
+
     
     if(!date || !content) return showToast('Please write something!');
     
