@@ -2750,7 +2750,7 @@ async function saveNewProject() {
     }
 
     
-        async function deleteProjectEntry(id) {
+            async function deleteProjectEntry(id) {
         if(confirm('Delete this record permanently?')) { 
             // 🔥 FIX: String lagaya taaki ID perfect match ho aur crash na ho
             projectDB[activeProject].records = projectDB[activeProject].records.filter(r => String(r.id) !== String(id));
@@ -2761,7 +2761,7 @@ async function saveNewProject() {
             }
             
             renderProjectRecords(); 
-            renderProjectsList(); // 🔥 FIX: Delete hone ke baad bahar wala "Records Logged" count update karega
+            renderProjectsList(); // 🔥 FIX: Delete hone ke baad bahar wala count update karega
             showToast('Record Deleted!'); 
         }
     }
