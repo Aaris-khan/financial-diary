@@ -2768,15 +2768,7 @@ async function saveNewProject() {
 
 
         
-        // 2. 🔥 FIREBASE SE SIRF WOHI ENTRY HATAYI
-        if (currentUserUID) {
-            await appDataRef.child(`projectDB/${activeProject}/records/${id}`).remove();
-        }
         
-        renderProjectRecords(); 
-        showToast('Record Deleted!'); 
-    }
-}
 
     // ========================== PWA APP INSTALL LOGIC ==========================
     let deferredPrompt;
