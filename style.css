@@ -1352,3 +1352,493 @@ video {
   --tw-ring-color: rgb(255 255 255 / 0.05);
 }
 
+/* AARISH_V99_UI_CONSISTENCY_PREMIUM_DARK_MODE
+   UI-only design-system patch. No Firebase/outbox/auth mutation. */
+:root {
+  --aarish-v99-green: #34C759;
+  --aarish-v99-red: #FF3B30;
+  --aarish-v99-blue: #007AFF;
+  --aarish-v99-orange: #FF9500;
+  --aarish-v99-amber: #F5A623;
+  --aarish-v99-action-size: 40px;
+}
+
+.action-btn {
+  width: var(--aarish-v99-action-size) !important;
+  height: var(--aarish-v99-action-size) !important;
+  min-width: var(--aarish-v99-action-size) !important;
+  min-height: var(--aarish-v99-action-size) !important;
+  padding: 0 !important;
+  border-radius: 14px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-shrink: 0 !important;
+}
+
+.action-btn i {
+  font-size: 13px !important;
+  line-height: 1 !important;
+}
+
+.btn-ios-share,
+.btn-ios-add {
+  min-height: 40px !important;
+  padding: 8px 14px !important;
+  border-radius: 14px !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 7px !important;
+}
+
+.v99-sem-green { color: var(--aarish-v99-green) !important; }
+.v99-sem-red { color: var(--aarish-v99-red) !important; }
+.v99-sem-blue { color: var(--aarish-v99-blue) !important; }
+.v99-sem-orange { color: var(--aarish-v99-orange) !important; }
+.v99-sem-amber { color: var(--aarish-v99-amber) !important; }
+
+.v99-bg-green { background: rgba(52,199,89,0.10) !important; }
+.v99-bg-red { background: rgba(255,59,48,0.10) !important; }
+.v99-bg-blue { background: rgba(0,122,255,0.10) !important; }
+.v99-bg-orange { background: rgba(255,149,0,0.10) !important; }
+.v99-bg-amber { background: rgba(245,166,35,0.10) !important; }
+
+[data-v99-tone="positive"] { border-left-color: var(--aarish-v99-green) !important; }
+[data-v99-tone="negative"] { border-left-color: var(--aarish-v99-red) !important; }
+[data-v99-tone="neutral"] { border-left-color: var(--aarish-v99-blue) !important; }
+[data-v99-tone="expense"] { border-left-color: var(--aarish-v99-red) !important; }
+[data-v99-tone="diary"] { border-left-color: var(--aarish-v99-amber) !important; }
+
+.dark .v99-sem-green,
+.dark [class*="text-[#34C759]"],
+.dark [class*="text-[#10B981]"] {
+  text-shadow: 0 0 10px rgba(52,199,89,0.42), 0 0 22px rgba(52,199,89,0.16) !important;
+}
+
+.dark .v99-sem-red,
+.dark [class*="text-[#FF3B30]"],
+.dark [class*="text-[#FF4B4B]"] {
+  text-shadow: 0 0 10px rgba(255,59,48,0.42), 0 0 22px rgba(255,59,48,0.16) !important;
+}
+
+.dark .v99-sem-blue,
+.dark [class*="text-[#007AFF]"] {
+  text-shadow: 0 0 10px rgba(0,122,255,0.38), 0 0 22px rgba(0,122,255,0.14) !important;
+}
+
+.dark .v99-sem-orange {
+  text-shadow: 0 0 10px rgba(255,149,0,0.38), 0 0 22px rgba(255,149,0,0.14) !important;
+}
+
+.dark .v99-sem-amber,
+.dark .diary-card h4 {
+  text-shadow: 0 0 10px rgba(245,166,35,0.42), 0 0 22px rgba(245,166,35,0.16) !important;
+}
+
+.dark [data-v99-tone="positive"] {
+  box-shadow: -3px 0 16px rgba(52,199,89,0.25), 0 14px 38px rgba(0,0,0,0.50), inset 1px 0 0 rgba(52,199,89,0.48), inset 0 1px 0 rgba(255,255,255,0.10) !important;
+  border-top-color: rgba(52,199,89,0.16) !important;
+  border-right-color: rgba(52,199,89,0.10) !important;
+  border-bottom-color: rgba(52,199,89,0.10) !important;
+}
+
+.dark [data-v99-tone="negative"],
+.dark [data-v99-tone="expense"] {
+  box-shadow: -3px 0 16px rgba(255,59,48,0.25), 0 14px 38px rgba(0,0,0,0.50), inset 1px 0 0 rgba(255,59,48,0.48), inset 0 1px 0 rgba(255,255,255,0.10) !important;
+  border-top-color: rgba(255,59,48,0.16) !important;
+  border-right-color: rgba(255,59,48,0.10) !important;
+  border-bottom-color: rgba(255,59,48,0.10) !important;
+}
+
+.dark [data-v99-tone="neutral"] {
+  box-shadow: -3px 0 16px rgba(0,122,255,0.25), 0 14px 38px rgba(0,0,0,0.50), inset 1px 0 0 rgba(0,122,255,0.48), inset 0 1px 0 rgba(255,255,255,0.10) !important;
+  border-top-color: rgba(0,122,255,0.16) !important;
+  border-right-color: rgba(0,122,255,0.10) !important;
+  border-bottom-color: rgba(0,122,255,0.10) !important;
+}
+
+.dark [data-v99-tone="diary"] {
+  box-shadow: -3px 0 16px rgba(245,166,35,0.25), 0 14px 38px rgba(0,0,0,0.50), inset 1px 0 0 rgba(245,166,35,0.45), inset 0 1px 0 rgba(255,255,255,0.10) !important;
+}
+
+.dark .action-btn {
+  background: rgba(255,59,48,0.16) !important;
+  border: 1px solid rgba(255,59,48,0.30) !important;
+  box-shadow: 0 8px 22px rgba(255,59,48,0.16), inset 0 1px 0 rgba(255,255,255,0.08) !important;
+}
+
+.dark .btn-ios-share {
+  box-shadow: 0 8px 22px rgba(0,122,255,0.16), inset 0 1px 0 rgba(255,255,255,0.08) !important;
+}
+
+.dark .btn-ios-add {
+  box-shadow: 0 8px 22px rgba(52,199,89,0.16), inset 0 1px 0 rgba(255,255,255,0.08) !important;
+}
+
+/* AARISH_V100_ELITE_UX_POLISH_PATCH
+   UI-only semantic polish. Backend/sync/auth/outbox logic untouched.
+   Semantic contract preserved:
+   Green = Positive/Income/To Receive
+   Red = Negative/Expense/To Pay/Delete
+   Blue = Neutral/Info/Bank
+   Amber = Diary/Personal
+*/
+:root {
+  --aarish-v100-green: #34C759;
+  --aarish-v100-green-soft: rgba(52,199,89,0.105);
+  --aarish-v100-green-border: rgba(52,199,89,0.42);
+
+  --aarish-v100-red: #FF3B30;
+  --aarish-v100-red-soft: rgba(255,59,48,0.105);
+  --aarish-v100-red-border: rgba(255,59,48,0.42);
+
+  --aarish-v100-blue: #007AFF;
+  --aarish-v100-blue-soft: rgba(0,122,255,0.105);
+  --aarish-v100-blue-border: rgba(0,122,255,0.40);
+
+  --aarish-v100-orange: #FF9500;
+  --aarish-v100-orange-soft: rgba(255,149,0,0.105);
+  --aarish-v100-orange-border: rgba(255,149,0,0.40);
+
+  --aarish-v100-amber: #F5A623;
+  --aarish-v100-amber-soft: rgba(245,166,35,0.115);
+  --aarish-v100-amber-border: rgba(245,166,35,0.42);
+
+  --aarish-v100-action-size: 40px;
+}
+
+.dark {
+  --aarish-v100-green: #69F0A0;
+  --aarish-v100-green-title: #8CF2B1;
+  --aarish-v100-green-muted: rgba(140,242,177,0.78);
+  --aarish-v100-green-soft: rgba(52,199,89,0.115);
+  --aarish-v100-green-border: rgba(105,240,160,0.36);
+
+  --aarish-v100-red: #FF6B6B;
+  --aarish-v100-red-title: #FF8A8A;
+  --aarish-v100-red-muted: rgba(255,138,138,0.78);
+  --aarish-v100-red-soft: rgba(255,59,48,0.105);
+  --aarish-v100-red-border: rgba(255,107,107,0.34);
+
+  --aarish-v100-blue: #5EA8FF;
+  --aarish-v100-blue-title: #93C5FD;
+  --aarish-v100-blue-muted: rgba(147,197,253,0.80);
+  --aarish-v100-blue-soft: rgba(0,122,255,0.115);
+  --aarish-v100-blue-border: rgba(94,168,255,0.34);
+
+  --aarish-v100-orange: #FFB457;
+  --aarish-v100-orange-title: #FFD09A;
+  --aarish-v100-orange-muted: rgba(255,208,154,0.80);
+
+  --aarish-v100-amber: #F9C35D;
+  --aarish-v100-amber-title: #FFD88A;
+  --aarish-v100-amber-muted: rgba(255,216,138,0.80);
+}
+
+/* ---------- Button rhythm: one Apple-level icon size ---------- */
+.action-btn {
+  width: var(--aarish-v100-action-size) !important;
+  height: var(--aarish-v100-action-size) !important;
+  min-width: var(--aarish-v100-action-size) !important;
+  min-height: var(--aarish-v100-action-size) !important;
+  padding: 0 !important;
+  border-radius: 14px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.action-btn i {
+  font-size: 13px !important;
+  line-height: 1 !important;
+}
+
+.btn-ios-share,
+.btn-ios-add {
+  min-height: 40px !important;
+  padding: 8px 14px !important;
+  border-radius: 14px !important;
+  gap: 7px !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* ---------- Semantic utility layer ---------- */
+.v100-sem-green,
+.v99-sem-green,
+.dark .text-\[\#34C759\],
+.dark .text-\[\#10B981\] {
+  color: var(--aarish-v100-green) !important;
+}
+
+.v100-sem-red,
+.v99-sem-red,
+.dark .text-\[\#FF3B30\],
+.dark .text-\[\#FF4B4B\] {
+  color: var(--aarish-v100-red) !important;
+}
+
+.v100-sem-blue,
+.v99-sem-blue,
+.dark .text-\[\#007AFF\] {
+  color: var(--aarish-v100-blue) !important;
+}
+
+.v100-sem-orange {
+  color: var(--aarish-v100-orange) !important;
+}
+
+.v100-sem-amber,
+.v99-sem-amber,
+.dark .diary-card h4 {
+  color: var(--aarish-v100-amber) !important;
+}
+
+.v100-bg-green,
+.v99-bg-green { background: var(--aarish-v100-green-soft) !important; }
+
+.v100-bg-red,
+.v99-bg-red { background: var(--aarish-v100-red-soft) !important; }
+
+.v100-bg-blue,
+.v99-bg-blue { background: var(--aarish-v100-blue-soft) !important; }
+
+.v100-bg-orange { background: var(--aarish-v100-orange-soft) !important; }
+
+.v100-bg-amber,
+.v99-bg-amber { background: var(--aarish-v100-amber-soft) !important; }
+
+/* ---------- Premium hierarchy: not everything should scream ---------- */
+.dark [data-v99-tone="positive"] h4,
+.dark [data-v100-tone="positive"] h4 {
+  color: var(--aarish-v100-green-title) !important;
+}
+
+.dark [data-v99-tone="negative"] h4,
+.dark [data-v99-tone="expense"] h4,
+.dark [data-v100-tone="negative"] h4,
+.dark [data-v100-tone="expense"] h4 {
+  color: var(--aarish-v100-red-title) !important;
+}
+
+.dark [data-v99-tone="neutral"] h4,
+.dark [data-v100-tone="neutral"] h4,
+.dark [data-v100-tone="blue"] h4 {
+  color: var(--aarish-v100-blue-title) !important;
+}
+
+.dark [data-v99-tone="diary"] h4,
+.dark [data-v100-tone="diary"] h4 {
+  color: var(--aarish-v100-amber-title) !important;
+}
+
+.dark [data-v99-tone="positive"] p,
+.dark [data-v100-tone="positive"] p,
+.dark [data-v99-tone="positive"] td,
+.dark [data-v100-tone="positive"] td {
+  color: var(--aarish-v100-green-muted) !important;
+}
+
+.dark [data-v99-tone="negative"] p,
+.dark [data-v99-tone="expense"] p,
+.dark [data-v100-tone="negative"] p,
+.dark [data-v100-tone="expense"] p,
+.dark [data-v99-tone="negative"] td,
+.dark [data-v99-tone="expense"] td,
+.dark [data-v100-tone="negative"] td,
+.dark [data-v100-tone="expense"] td {
+  color: var(--aarish-v100-red-muted) !important;
+}
+
+.dark [data-v99-tone="neutral"] p,
+.dark [data-v100-tone="neutral"] p,
+.dark [data-v100-tone="blue"] p,
+.dark [data-v99-tone="neutral"] td,
+.dark [data-v100-tone="neutral"] td,
+.dark [data-v100-tone="blue"] td {
+  color: var(--aarish-v100-blue-muted) !important;
+}
+
+.dark [data-v100-tone="orange"] p,
+.dark [data-v100-tone="orange"] td {
+  color: var(--aarish-v100-orange-muted) !important;
+}
+
+.dark [data-v99-tone="diary"] p,
+.dark [data-v100-tone="diary"] p {
+  color: var(--aarish-v100-amber-muted) !important;
+}
+
+/* Amounts, badges, icons stay crisp and semantic */
+.dark [data-v99-tone] .font-extrabold,
+.dark [data-v100-tone] .font-extrabold,
+.dark [data-v99-tone] i.fa-chevron-right,
+.dark [data-v100-tone] i.fa-chevron-right {
+  opacity: 1 !important;
+}
+
+/* ---------- Premium card glow: semantic but controlled ---------- */
+.dark [data-v99-tone="positive"].glass-card,
+.dark [data-v100-tone="positive"].glass-card,
+.dark tr[data-v99-tone="positive"],
+.dark tr[data-v100-tone="positive"] {
+  border-left-color: var(--aarish-v100-green) !important;
+  box-shadow:
+    -3px 0 14px rgba(105,240,160,0.20),
+    0 14px 38px rgba(0,0,0,0.46),
+    inset 1px 0 0 rgba(105,240,160,0.34),
+    inset 0 1px 0 rgba(255,255,255,0.08) !important;
+}
+
+.dark [data-v99-tone="negative"].glass-card,
+.dark [data-v99-tone="expense"].glass-card,
+.dark [data-v100-tone="negative"].glass-card,
+.dark [data-v100-tone="expense"].glass-card,
+.dark tr[data-v99-tone="negative"],
+.dark tr[data-v99-tone="expense"],
+.dark tr[data-v100-tone="negative"],
+.dark tr[data-v100-tone="expense"] {
+  border-left-color: var(--aarish-v100-red) !important;
+  box-shadow:
+    -3px 0 14px rgba(255,107,107,0.18),
+    0 14px 38px rgba(0,0,0,0.46),
+    inset 1px 0 0 rgba(255,107,107,0.30),
+    inset 0 1px 0 rgba(255,255,255,0.08) !important;
+}
+
+.dark [data-v99-tone="neutral"].glass-card,
+.dark [data-v100-tone="neutral"].glass-card,
+.dark [data-v100-tone="blue"].glass-card,
+.dark tr[data-v99-tone="neutral"],
+.dark tr[data-v100-tone="neutral"],
+.dark tr[data-v100-tone="blue"] {
+  border-left-color: var(--aarish-v100-blue) !important;
+  box-shadow:
+    -3px 0 14px rgba(94,168,255,0.18),
+    0 14px 38px rgba(0,0,0,0.46),
+    inset 1px 0 0 rgba(94,168,255,0.30),
+    inset 0 1px 0 rgba(255,255,255,0.08) !important;
+}
+
+.dark [data-v99-tone="diary"].glass-card,
+.dark [data-v100-tone="diary"].glass-card {
+  border-left-color: var(--aarish-v100-amber) !important;
+  box-shadow:
+    -3px 0 14px rgba(249,195,93,0.18),
+    0 14px 38px rgba(0,0,0,0.46),
+    inset 1px 0 0 rgba(249,195,93,0.30),
+    inset 0 1px 0 rgba(255,255,255,0.08) !important;
+}
+
+.dark [data-v100-tone="orange"].glass-card,
+.dark tr[data-v100-tone="orange"] {
+  border-left-color: var(--aarish-v100-orange) !important;
+  box-shadow:
+    -3px 0 14px rgba(255,180,87,0.18),
+    0 14px 38px rgba(0,0,0,0.46),
+    inset 1px 0 0 rgba(255,180,87,0.30),
+    inset 0 1px 0 rgba(255,255,255,0.08) !important;
+}
+
+/* ---------- Total cards: replace harsh solid gradients with premium fintech glass gradients ---------- */
+.dark #milk-detail-screen .glass-card[data-v99-tone="positive"],
+.dark #salary-detail-screen .glass-card[data-v99-tone="positive"],
+.dark #udhar-detail-card[data-v99-tone="positive"],
+.dark #milk-detail-screen .glass-card[data-v100-tone="positive"],
+.dark #salary-detail-screen .glass-card[data-v100-tone="positive"],
+.dark #udhar-detail-card[data-v100-tone="positive"] {
+  background:
+    radial-gradient(circle at 14% 0%, rgba(105,240,160,0.22), transparent 42%),
+    linear-gradient(135deg, rgba(9,34,24,0.96), rgba(8,17,31,0.94)) !important;
+  border: 1px solid rgba(105,240,160,0.28) !important;
+}
+
+.dark #milk-detail-screen .glass-card[data-v99-tone="negative"],
+.dark #salary-detail-screen .glass-card[data-v99-tone="negative"],
+.dark #udhar-detail-card[data-v99-tone="negative"],
+.dark #milk-detail-screen .glass-card[data-v100-tone="negative"],
+.dark #salary-detail-screen .glass-card[data-v100-tone="negative"],
+.dark #udhar-detail-card[data-v100-tone="negative"] {
+  background:
+    radial-gradient(circle at 14% 0%, rgba(255,107,107,0.20), transparent 42%),
+    linear-gradient(135deg, rgba(44,14,18,0.96), rgba(12,16,30,0.94)) !important;
+  border: 1px solid rgba(255,107,107,0.26) !important;
+}
+
+.dark #project-dynamic-totals .glass-card[class*="from-[#34C759]"] {
+  background:
+    radial-gradient(circle at 14% 0%, rgba(105,240,160,0.22), transparent 42%),
+    linear-gradient(135deg, rgba(9,34,24,0.96), rgba(8,17,31,0.94)) !important;
+  border: 1px solid rgba(105,240,160,0.28) !important;
+}
+
+.dark #project-dynamic-totals .glass-card[class*="from-[#FF3B30]"] {
+  background:
+    radial-gradient(circle at 14% 0%, rgba(255,107,107,0.20), transparent 42%),
+    linear-gradient(135deg, rgba(44,14,18,0.96), rgba(12,16,30,0.94)) !important;
+  border: 1px solid rgba(255,107,107,0.26) !important;
+}
+
+.dark #project-dynamic-totals .glass-card[class*="from-[#007AFF]"] {
+  background:
+    radial-gradient(circle at 14% 0%, rgba(94,168,255,0.22), transparent 42%),
+    linear-gradient(135deg, rgba(8,28,52,0.96), rgba(8,17,31,0.94)) !important;
+  border: 1px solid rgba(94,168,255,0.26) !important;
+}
+
+.dark #project-dynamic-totals .glass-card[class*="from-[#FF9500]"] {
+  background:
+    radial-gradient(circle at 14% 0%, rgba(255,180,87,0.22), transparent 42%),
+    linear-gradient(135deg, rgba(48,28,8,0.96), rgba(10,17,31,0.94)) !important;
+  border: 1px solid rgba(255,180,87,0.26) !important;
+}
+
+/* ---------- Refined dark text glows ---------- */
+.dark .v100-sem-green,
+.dark .v99-sem-green,
+.dark [class*="text-[#34C759]"],
+.dark [class*="text-[#10B981]"] {
+  text-shadow: 0 0 9px rgba(105,240,160,0.34), 0 0 20px rgba(105,240,160,0.10) !important;
+}
+
+.dark .v100-sem-red,
+.dark .v99-sem-red,
+.dark [class*="text-[#FF3B30]"],
+.dark [class*="text-[#FF4B4B]"] {
+  text-shadow: 0 0 9px rgba(255,107,107,0.32), 0 0 20px rgba(255,107,107,0.10) !important;
+}
+
+.dark .v100-sem-blue,
+.dark .v99-sem-blue,
+.dark [class*="text-[#007AFF]"] {
+  text-shadow: 0 0 9px rgba(94,168,255,0.30), 0 0 20px rgba(94,168,255,0.10) !important;
+}
+
+.dark .v100-sem-orange {
+  text-shadow: 0 0 9px rgba(255,180,87,0.30), 0 0 20px rgba(255,180,87,0.10) !important;
+}
+
+.dark .v100-sem-amber,
+.dark .v99-sem-amber,
+.dark .diary-card h4 {
+  text-shadow: 0 0 9px rgba(249,195,93,0.32), 0 0 20px rgba(249,195,93,0.10) !important;
+}
+
+/* ---------- Delete remains red, but not crude ---------- */
+.dark .action-btn {
+  background: rgba(255,107,107,0.12) !important;
+  border: 1px solid rgba(255,107,107,0.24) !important;
+  box-shadow: 0 8px 22px rgba(255,107,107,0.12), inset 0 1px 0 rgba(255,255,255,0.07) !important;
+}
+
+.dark .btn-ios-share {
+  background: rgba(94,168,255,0.12) !important;
+  border-color: rgba(94,168,255,0.24) !important;
+  box-shadow: 0 8px 22px rgba(94,168,255,0.12), inset 0 1px 0 rgba(255,255,255,0.07) !important;
+}
+
+.dark .btn-ios-add {
+  background: rgba(105,240,160,0.12) !important;
+  border-color: rgba(105,240,160,0.24) !important;
+  box-shadow: 0 8px 22px rgba(105,240,160,0.12), inset 0 1px 0 rgba(255,255,255,0.07) !important;
+}
