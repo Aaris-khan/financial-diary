@@ -23,6 +23,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
     <style>
         /* Apple-like Typography & Base */
@@ -3035,6 +3036,257 @@ html.aarish-tab-switching-v31 .bottom-nav .nav-item.active {
     animation-duration: 80ms !important;
 }
 /* AARISH_MOTION_V32_LEGACY_SLIDE_CLASH_FIX_END */
+
+
+/* ==================== AARISH_EXPORT_CENTER_PREMIUM_PDF_CORE_V1_CSS_START ====================
+   Core export UI + PDF report styling.
+   Scope-only classes: no module UI/Firebase/Gemini/share receipt logic touched.
+*/
+.aarish-export-format-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  width: 100%;
+  margin: 12px 0 16px;
+  padding: 6px;
+  border-radius: 20px;
+  background: rgba(118,118,128,0.10);
+  border: 1px solid var(--surfaceHairline);
+}
+.aarish-export-format-btn {
+  min-height: 48px !important;
+  border-radius: 16px !important;
+  border: 1px solid transparent !important;
+  font-weight: 900 !important;
+  font-size: 13px !important;
+  letter-spacing: .2px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  background: transparent !important;
+  color: #8E8E93 !important;
+  box-shadow: none !important;
+  transition: transform .16s ease, background .16s ease, color .16s ease, box-shadow .16s ease !important;
+}
+.aarish-export-format-btn:active { transform: scale(.97) !important; }
+.aarish-export-format-btn[data-active="true"] {
+  background: linear-gradient(135deg, #007AFF, #5E5CE6) !important;
+  color: #FFFFFF !important;
+  border-color: rgba(255,255,255,.22) !important;
+  box-shadow: 0 10px 28px rgba(0,122,255,.24), inset 0 1px 0 rgba(255,255,255,.25) !important;
+}
+.dark .aarish-export-format-grid { background: rgba(255,255,255,0.075); }
+.aarish-export-format-help {
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.45;
+  color: #8E8E93;
+  text-align: center;
+  margin: -4px 0 14px;
+}
+.aarish-report-host {
+  position: fixed !important;
+  left: -12000px !important;
+  top: 0 !important;
+  width: 794px !important;
+  pointer-events: none !important;
+  opacity: 1 !important;
+  z-index: -1 !important;
+  contain: layout style paint !important;
+}
+.aarish-report-page {
+  width: 794px !important;
+  height: 1123px !important;
+  overflow: hidden !important;
+  padding: 28px !important;
+  box-sizing: border-box !important;
+  color: var(--reportText, #1C1C1E) !important;
+  background:
+    radial-gradient(circle at 0% -8%, var(--reportGlowSoft, rgba(52,199,89,.10)), transparent 34%),
+    radial-gradient(circle at 100% 108%, var(--reportToneSoft, rgba(0,122,255,.10)), transparent 40%),
+    var(--reportBg, #F5F5F7) !important;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+  page-break-after: always !important;
+}
+.aarish-report-page * {
+  box-sizing: border-box !important;
+  -webkit-font-smoothing: antialiased !important;
+  text-rendering: geometricPrecision !important;
+}
+.aarish-report-page .glass-card {
+  background: var(--reportCardBg, rgba(255,255,255,.86)) !important;
+  border: 1px solid var(--reportBorder, rgba(255,255,255,.62)) !important;
+  box-shadow: var(--reportShadow, 0 12px 38px rgba(15,23,42,.10), inset 0 1px 0 rgba(255,255,255,.70)) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  transform: none !important;
+}
+.aarish-report-hero {
+  position: relative !important;
+  padding: 22px 24px !important;
+  border-radius: 28px !important;
+  margin-bottom: 16px !important;
+  overflow: hidden !important;
+}
+.aarish-report-hero::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 7px;
+  background: linear-gradient(180deg, var(--reportTone, #007AFF), var(--reportTone2, #5E5CE6));
+  box-shadow: 0 0 22px var(--reportToneGlow, rgba(0,122,255,.32));
+}
+.aarish-report-title {
+  margin: 0 0 8px !important;
+  font-size: 25px !important;
+  line-height: 1.12 !important;
+  font-weight: 950 !important;
+  letter-spacing: -.04em !important;
+  color: var(--reportTone, #007AFF) !important;
+  text-shadow: 0 0 14px var(--reportToneGlow, rgba(0,122,255,.26)) !important;
+}
+.aarish-report-subtitle {
+  margin: 0 !important;
+  color: var(--reportMuted, #6B7280) !important;
+  font-size: 12px !important;
+  line-height: 1.45 !important;
+  font-weight: 800 !important;
+}
+.aarish-report-meta-grid {
+  display: grid !important;
+  grid-template-columns: repeat(4, 1fr) !important;
+  gap: 10px !important;
+  margin: 14px 0 0 !important;
+}
+.aarish-report-meta-pill {
+  min-height: 54px !important;
+  border-radius: 18px !important;
+  padding: 10px 12px !important;
+  background: var(--reportMiniBg, rgba(118,118,128,.09)) !important;
+  border: 1px solid var(--reportHairline, rgba(0,0,0,.055)) !important;
+}
+.aarish-report-meta-label {
+  display: block !important;
+  color: var(--reportMuted, #6B7280) !important;
+  font-size: 9px !important;
+  line-height: 1.1 !important;
+  font-weight: 950 !important;
+  text-transform: uppercase !important;
+  letter-spacing: .08em !important;
+  margin-bottom: 5px !important;
+}
+.aarish-report-meta-value {
+  color: var(--reportText, #1C1C1E) !important;
+  font-size: 13px !important;
+  line-height: 1.25 !important;
+  font-weight: 950 !important;
+}
+.aarish-report-section-card {
+  border-radius: 26px !important;
+  padding: 18px !important;
+  height: 861px !important;
+  overflow: hidden !important;
+}
+.aarish-report-section-head {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+  margin-bottom: 12px !important;
+  padding-bottom: 10px !important;
+  border-bottom: 1px solid var(--reportHairline, rgba(0,0,0,.060)) !important;
+}
+.aarish-report-section-name {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  min-width: 0 !important;
+  font-size: 17px !important;
+  font-weight: 950 !important;
+  line-height: 1.2 !important;
+  color: var(--reportTone, #007AFF) !important;
+  text-shadow: 0 0 12px var(--reportToneGlow, rgba(0,122,255,.22)) !important;
+}
+.aarish-report-section-badge {
+  white-space: nowrap !important;
+  color: var(--reportTone, #007AFF) !important;
+  background: var(--reportToneSoft, rgba(0,122,255,.10)) !important;
+  border: 1px solid var(--reportToneBorder, rgba(0,122,255,.24)) !important;
+  border-radius: 999px !important;
+  padding: 7px 12px !important;
+  font-size: 11px !important;
+  font-weight: 950 !important;
+}
+.aarish-report-table {
+  width: 100% !important;
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
+  table-layout: fixed !important;
+  margin: 0 !important;
+}
+.aarish-report-table th {
+  color: var(--reportTone, #007AFF) !important;
+  -webkit-text-fill-color: var(--reportTone, #007AFF) !important;
+  font-size: 10px !important;
+  line-height: 1.15 !important;
+  font-weight: 950 !important;
+  text-transform: uppercase !important;
+  letter-spacing: .04em !important;
+  padding: 10px 7px !important;
+  border-bottom: 1px solid var(--reportToneBorder, rgba(0,122,255,.22)) !important;
+  background: var(--reportToneSoft, rgba(0,122,255,.06)) !important;
+}
+.aarish-report-table th:first-child { border-radius: 12px 0 0 12px !important; }
+.aarish-report-table th:last-child { border-radius: 0 12px 12px 0 !important; }
+.aarish-report-table td {
+  color: var(--reportText, #1C1C1E) !important;
+  font-size: 11px !important;
+  line-height: 1.34 !important;
+  font-weight: 750 !important;
+  padding: 9px 7px !important;
+  vertical-align: top !important;
+  white-space: normal !important;
+  word-break: break-word !important;
+  border-bottom: 1px solid var(--reportHairline, rgba(0,0,0,.045)) !important;
+}
+.aarish-report-table tbody tr:nth-child(even) td {
+  background: var(--reportMiniBg, rgba(118,118,128,.045)) !important;
+}
+.aarish-report-empty {
+  height: 240px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+  color: var(--reportMuted, #6B7280) !important;
+  font-size: 16px !important;
+  font-weight: 900 !important;
+}
+.aarish-report-footer {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  margin-top: 12px !important;
+  padding: 0 4px !important;
+  color: var(--reportMuted, #6B7280) !important;
+  font-size: 10px !important;
+  font-weight: 850 !important;
+}
+.aarish-report-footer strong {
+  color: var(--reportTone, #007AFF) !important;
+}
+.dark .aarish-report-page,
+.aarish-report-page[data-dark="true"] {
+  --reportBg: #000000;
+  --reportText: #FFFFFF;
+  --reportMuted: #A1A1AA;
+  --reportCardBg: rgba(18,24,38,.92);
+  --reportBorder: rgba(255,255,255,.13);
+  --reportHairline: rgba(255,255,255,.10);
+  --reportMiniBg: rgba(255,255,255,.07);
+}
+/* AARISH_EXPORT_CENTER_PREMIUM_PDF_CORE_V1_CSS_END */
 </style>
 
      
@@ -4367,7 +4619,10 @@ function aarishCostIsLocalOnlyPathCoreV10(path) {
             .replace(/\/+$/, '');
         if (!p) return false;
         var first = String(p.split('/')[0] || '').trim();
-        return /^(aiChatMemory|aiPendingChunks|isAiPaginating|geminiChat|geminiMessages|geminiHistory|chatGPTMemory|llmChat|aiHub|_ai|gemini_user_api_key|user_ai_model|user_gemini_key)$/i.test(first);
+
+        /* AARISH_DELETE_BACKUP_FIREBASE_COST_GUARD_V1_LOCAL_ONLY
+           deleteBackups is local-only. It must never enter appData/outbox mega sync. */
+        return /^(deleteBackups|aiChatMemory|aiPendingChunks|isAiPaginating|geminiChat|geminiMessages|geminiHistory|chatGPTMemory|llmChat|aiHub|_ai|gemini_user_api_key|user_ai_model|user_gemini_key)$/i.test(first);
     } catch(e) { return false; }
 }
 /* AARISH_AI_FIREBASE_LOCAL_ONLY_COST_CORE_V10_END */
@@ -8547,120 +8802,469 @@ async function shareDiaryBill(id) {
     }
 
     // ========================== SMART EXCEL (CSV) EXPORT ==========================
-    function downloadExcel() {
-        // Dynamically create the Apple-style modal
-        const existingModal = document.getElementById('dynamic-download-modal');
-        if(existingModal) existingModal.remove();
+    /* AARISH_EXPORT_CENTER_PREMIUM_PDF_CORE_V1_START
+   Core-integrated Export Center.
+   Share receipt buttons stay untouched. CSV stays permanent backup.
+   Premium PDF uses live app CSS variables + hidden page-by-page report DOM.
+*/
+function aarishExportEscCoreV1(value) {
+    return String(value == null ? '' : value).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+}
+function aarishExportTextCoreV1(value, maxLen) {
+    let s = String(value == null ? '' : value).replace(/\s+/g, ' ').trim();
+    if (maxLen && s.length > maxLen) s = s.slice(0, Math.max(0, maxLen - 1)) + '…';
+    return s;
+}
+function aarishExportNumberCoreV1(value) {
+    const n = Number(value);
+    return Number.isFinite(n) ? n : 0;
+}
+function aarishExportMoneyCoreV1(value) {
+    return '₹' + Math.round(aarishExportNumberCoreV1(value)).toLocaleString('en-IN');
+}
+function aarishExportDisplayDateCoreV1(value) {
+    try {
+        if (typeof formatDisplayDate === 'function') return formatDisplayDate(value);
+    } catch(e) {}
+    return String(value || '');
+}
+function aarishExportTodayCoreV1() {
+    try {
+        if (typeof getTodayISO === 'function' && typeof formatDisplayDate === 'function') return formatDisplayDate(getTodayISO());
+    } catch(e) {}
+    try { return new Date().toLocaleDateString('en-IN'); } catch(e) { return ''; }
+}
+function aarishExportSafeFileNameCoreV1(value) {
+    return String(value || 'Aarish_Report')
+        .replace(/[\\/:*?"<>|]+/g, '_')
+        .replace(/\s+/g, '_')
+        .replace(/_+/g, '_')
+        .slice(0, 80);
+}
+function aarishExportMetaCoreV1(type) {
+    const map = {
+        all:      { id:'all',      title:'All Data',        icon:'fa-layer-group',     tone:'#0B0F19', tone2:'#5E5CE6' },
+        milk:     { id:'milk',     title:'Milk Records',    icon:'fa-jug-detergent',   tone:'#007AFF', tone2:'#0A84FF' },
+        expenses: { id:'expenses', title:'Expenses',        icon:'fa-receipt',         tone:'#FF3B30', tone2:'#FF2D55' },
+        udhar:    { id:'udhar',    title:'Credit Ledger',   icon:'fa-handshake',       tone:'#F5A623', tone2:'#FFB340' },
+        salary:   { id:'salary',   title:'Salary',          icon:'fa-sack-dollar',     tone:'#34C759', tone2:'#28A745' },
+        diary:    { id:'diary',    title:'Personal Diary',  icon:'fa-book',            tone:'#8E8E93', tone2:'#636366' },
+        projects: { id:'projects', title:'Business Hub',    icon:'fa-briefcase',       tone:'#4285F4', tone2:'#9B72CB' }
+    };
+    return map[type] || map.all;
+}
+function aarishExportRowsPerPageCoreV1(section) {
+    const cols = ((section && section.headers) || []).length;
+    const id = String((section && section.id) || '');
+    if (id === 'diary') return 13;
+    if (id === 'projects') return 18;
+    if (cols >= 7) return 19;
+    if (cols >= 5) return 23;
+    return 28;
+}
+function aarishBuildExportDatasetCoreV1(type) {
+    type = String(type || 'all');
+    const sections = [];
+    const include = id => type === 'all' || type === id;
 
-        const overlay = document.createElement('div');
-        overlay.id = 'dynamic-download-modal';
-        overlay.className = 'modal-overlay';
-        overlay.style.display = 'flex';
-        setTimeout(() => overlay.style.opacity = '1', 10); // Smooth animation
-        overlay.onclick = function(e) { if(e.target.id === 'dynamic-download-modal') { overlay.remove(); document.getElementById('main-app').classList.remove('app-scale-down'); } };
-
-        // Modal content in pure English (Tailwind classes intact)
-        overlay.innerHTML = `
-            <div class="modal-content" onclick="event.stopImmediatePropagation()">
-                <div class="w-12 h-1.5 bg-gray-300 dark:bg-gray-600 shrink-0 rounded-full mx-auto mb-6"></div>
-                <h2 class="text-2xl font-extrabold mb-2 text-center w-full">Export Data</h2>
-                <p class="text-[11px] text-center text-gray-500 mb-6 font-bold uppercase tracking-wider">Select the report you want to download</p>
-
-                <div class="grid grid-cols-2 gap-3 mb-6 w-full">
-                    <button onclick="haptic(); executeDownload('all')" class="btn-primary !bg-[#000] dark:!bg-[#FFF] dark:!text-[#000]"><i class="fa-solid fa-layer-group"></i> All Data</button>
-                    <button onclick="haptic(); executeDownload('milk')" class="btn-primary !bg-[#007AFF]"><i class="fa-solid fa-jug-detergent"></i> Milk Records</button>
-                    <button onclick="haptic(); executeDownload('expenses')" class="btn-primary !bg-[#FF3B30]"><i class="fa-solid fa-receipt"></i> Expenses</button>
-                    <button onclick="haptic(); executeDownload('udhar')" class="btn-primary !bg-[#F5A623]"><i class="fa-solid fa-handshake"></i> Credit Ledger</button>
-                    <button onclick="haptic(); executeDownload('salary')" class="btn-primary !bg-[#34C759]"><i class="fa-solid fa-sack-dollar"></i> Salary</button>
-                    <button onclick="haptic(); executeDownload('diary')" class="btn-primary !bg-[#8E8E93]"><i class="fa-solid fa-book"></i> Personal Diary</button>
-                </div>
-                
-                <div class="w-full mt-3">
-                    <button onclick="haptic(); executeDownload('projects')" class="btn-primary w-full" style="background: linear-gradient(90deg, #4285F4, #9b72cb); border:none;"><i class="fa-solid fa-briefcase"></i> Business Hub</button>
-                </div>
-            </div>
-        `;
-        document.body.appendChild(overlay);
-        
-        // Push background back (3D effect)
-        document.getElementById('main-app').classList.add('app-scale-down');
+    function pushSection(id, title, headers, rows) {
+        sections.push({ id, title, headers, rows: Array.isArray(rows) ? rows : [] });
     }
 
-    // Function that executes the download based on the user's choice
-    function executeDownload(type) {
-    const modal = document.getElementById('dynamic-download-modal');
-    if (modal) modal.remove();
-    document.getElementById('main-app').classList.remove('app-scale-down');
-
-    let csv = aarishCsvRowCoreV4([`AARISH DAIRY PRO - ${String(type || '').toUpperCase()} REPORT`]);
-    csv += aarishCsvRowCoreV4(['Generated On:', formatDisplayDate(getTodayISO())]) + '\n';
-
-    if (type === 'all' || type === 'milk') {
-        if (type === 'all') csv += '\n' + aarishCsvRowCoreV4(['--- MILK RECORDS ---']);
-        csv += aarishCsvRowCoreV4(['Customer Type','Name','Date','Morning (KG)','Evening (KG)','Total (KG)','Amount (Rs)']);
-        Object.keys(milkDB || {}).forEach(name => {
-            let label = milkDB[name].type === 'dene_wala' ? 'Buyer (-)' : 'Seller (+)';
-            (milkDB[name].records || []).forEach(r => {
-                let m = Number(r.morning) || 0;
-                let ev = Number(r.evening) || 0;
-                let t = m + ev;
-                let amt = t * (milkDB[name].rate || DEFAULT_RATE);
-                csv += aarishCsvRowCoreV4([label, name, formatDisplayDate(r.date), m, ev, t, amt]);
+    if (include('milk')) {
+        const rows = [];
+        Object.keys(milkDB || {}).sort((a,b) => String(a).localeCompare(String(b))).forEach(name => {
+            const profile = milkDB[name] || {};
+            const label = profile.type === 'dene_wala' ? 'Buyer (-)' : 'Seller (+)';
+            const rate = aarishExportNumberCoreV1(profile.rate || (typeof DEFAULT_RATE !== 'undefined' ? DEFAULT_RATE : 80));
+            ((profile.records) || []).forEach(r => {
+                const m = aarishExportNumberCoreV1(r && r.morning);
+                const ev = aarishExportNumberCoreV1(r && r.evening);
+                const kg = m + ev;
+                const amt = kg * rate;
+                rows.push([label, name, aarishExportDisplayDateCoreV1(r && r.date), m, ev, kg, amt]);
             });
         });
+        pushSection('milk', 'Milk Records', ['Type','Name','Date','Morning KG','Evening KG','Total KG','Amount'], rows);
     }
 
-    if (type === 'all' || type === 'expenses') {
-        if (type === 'all') csv += '\n' + aarishCsvRowCoreV4(['--- EXPENSE RECORDS ---']);
-        csv += aarishCsvRowCoreV4(['Date','Expense Category','Amount (Rs)']);
-        (expenseDB || []).forEach(e => csv += aarishCsvRowCoreV4([formatDisplayDate(e.date), e.category, e.amount]));
-    }
-
-    if (type === 'all' || type === 'udhar') {
-        if (type === 'all') csv += '\n' + aarishCsvRowCoreV4(['--- CREDIT / UDHAR RECORDS ---']);
-        csv += aarishCsvRowCoreV4(['Entry Type','Party Name','Date','Amount (Rs)']);
-        (udharDB || []).forEach(u => {
-            let label = u.type === 'credit' ? 'Given (+)' : 'Taken (-)';
-            csv += aarishCsvRowCoreV4([label, u.name, formatDisplayDate(u.date), u.amount]);
+    if (include('expenses')) {
+        const rows = [];
+        (Array.isArray(expenseDB) ? expenseDB : []).forEach(e => {
+            const amount = aarishExportNumberCoreV1(e && e.amount);
+            rows.push([aarishExportDisplayDateCoreV1(e && e.date), (e && e.category) || '', amount]);
         });
+        pushSection('expenses', 'Expenses', ['Date','Category','Amount'], rows);
     }
 
-    if (type === 'all' || type === 'salary') {
-        if (type === 'all') csv += '\n' + aarishCsvRowCoreV4(['--- SALARY RECORDS ---']);
-        csv += aarishCsvRowCoreV4(['Salary Type','Employee Name','Date','Amount (Rs)']);
-        Object.keys(salaryDB || {}).forEach(name => {
-            let label = salaryDB[name].type === 'lene_wala' ? 'Paid to Employee' : 'Received';
-            (salaryDB[name].records || []).forEach(r => csv += aarishCsvRowCoreV4([label, name, formatDisplayDate(r.date), r.amount]));
+    if (include('udhar')) {
+        const rows = [];
+        (Array.isArray(udharDB) ? udharDB : []).forEach(u => {
+            const label = (u && u.type) === 'credit' ? 'Given (+)' : 'Taken (-)';
+            rows.push([label, (u && u.name) || '', aarishExportDisplayDateCoreV1(u && u.date), aarishExportNumberCoreV1(u && u.amount)]);
         });
+        pushSection('udhar', 'Credit Ledger', ['Type','Party Name','Date','Amount'], rows);
     }
 
-    if (type === 'all' || type === 'diary') {
-        if (type === 'all') csv += '\n' + aarishCsvRowCoreV4(['--- PERSONAL DIARY ---']);
-        csv += aarishCsvRowCoreV4(['Date','Title','Diary Content']);
-        (diaryDB || []).forEach(d => csv += aarishCsvRowCoreV4([formatDisplayDate(d.date), d.title || '', d.content || '']));
-    }
-
-    if (type === 'all' || type === 'projects') {
-        if (type === 'all') csv += '\n' + aarishCsvRowCoreV4(['--- BUSINESS HUB RECORDS ---']);
-        csv += aarishCsvRowCoreV4(['Khata Name','Date','Entry Detail','Transaction Type','Amount (Rs)']);
-        Object.keys(projectDB || {}).forEach(name => {
-            ((projectDB[name] && projectDB[name].records) || []).forEach(r => {
-                let transType = r.color ? String(r.color).toUpperCase() : 'UNKNOWN';
-                csv += aarishCsvRowCoreV4([name, formatDisplayDate(r.date), r.title || '', transType, r.amount]);
+    if (include('salary')) {
+        const rows = [];
+        Object.keys(salaryDB || {}).sort((a,b) => String(a).localeCompare(String(b))).forEach(name => {
+            const profile = salaryDB[name] || {};
+            const label = profile.type === 'lene_wala' ? 'Paid to Employee' : 'Received';
+            ((profile.records) || []).forEach(r => {
+                rows.push([label, name, aarishExportDisplayDateCoreV1(r && r.date), aarishExportNumberCoreV1(r && r.amount)]);
             });
         });
+        pushSection('salary', 'Salary', ['Type','Employee Name','Date','Amount'], rows);
     }
 
-    const blob = new Blob([new Uint8Array([0xEF, 0xBB, 0xBF]), csv], { type: 'text/csv;charset=utf-8;' });
-    const url = window.URL.createObjectURL(blob);
+    if (include('diary')) {
+        const rows = [];
+        (Array.isArray(diaryDB) ? diaryDB : []).forEach(d => {
+            rows.push([aarishExportDisplayDateCoreV1(d && d.date), (d && d.title) || '', (d && d.content) || '']);
+        });
+        pushSection('diary', 'Personal Diary', ['Date','Title','Content'], rows);
+    }
+
+    if (include('projects')) {
+        const rows = [];
+        Object.keys(projectDB || {}).sort((a,b) => String(a).localeCompare(String(b))).forEach(name => {
+            const project = projectDB[name] || {};
+            ((project.records) || []).forEach(r => {
+                const transType = (r && r.color) ? String(r.color).toUpperCase() : 'UNKNOWN';
+                rows.push([name, aarishExportDisplayDateCoreV1(r && r.date), (r && r.title) || '', transType, aarishExportNumberCoreV1(r && r.amount)]);
+            });
+        });
+        pushSection('projects', 'Business Hub', ['Khata Name','Date','Entry Detail','Type','Amount'], rows);
+    }
+
+    const meta = aarishExportMetaCoreV1(type);
+    const rowCount = sections.reduce((sum, s) => sum + ((s.rows || []).length), 0);
+    return { type, meta, title: meta.title, generatedOn: aarishExportTodayCoreV1(), sections, rowCount };
+}
+function aarishBuildCsvFromDatasetCoreV1(dataset) {
+    let csv = '';
+    const title = `AARISH DAIRY PRO - ${String((dataset && dataset.title) || 'ALL DATA').toUpperCase()} REPORT`;
+    csv += aarishCsvRowCoreV4([title]);
+    csv += aarishCsvRowCoreV4(['Generated On', (dataset && dataset.generatedOn) || aarishExportTodayCoreV1()]);
+    csv += aarishCsvRowCoreV4(['Format', 'CSV Backup']);
+    csv += aarishCsvRowCoreV4(['Total Sections', ((dataset && dataset.sections) || []).length]);
+    csv += aarishCsvRowCoreV4(['Total Rows', (dataset && dataset.rowCount) || 0]);
+    csv += '\n';
+    ((dataset && dataset.sections) || []).forEach(section => {
+        csv += aarishCsvRowCoreV4(['============================================================']);
+        csv += aarishCsvRowCoreV4([String(section.title || '').toUpperCase()]);
+        csv += aarishCsvRowCoreV4(['Rows', (section.rows || []).length]);
+        csv += aarishCsvRowCoreV4(['------------------------------------------------------------']);
+        csv += aarishCsvRowCoreV4(section.headers || []);
+        (section.rows || []).forEach(row => csv += aarishCsvRowCoreV4(row));
+        csv += '\n';
+    });
+    return csv;
+}
+async function aarishShareOrDownloadFileCoreV1(file, toastText) {
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file], title: 'Aarish Dairy Pro', text: toastText || 'Aarish Dairy Pro Report' });
+        return;
+    }
+    const url = URL.createObjectURL(file);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `Aarish_${String(type || 'all').toUpperCase()}_Report.csv`;
+    a.download = file.name;
+    document.body.appendChild(a);
     a.click();
-    setTimeout(() => { try { window.URL.revokeObjectURL(url); } catch(e) {} }, 1000);
-
-    showToast('Report Downloaded Successfully! 📊');
+    a.remove();
+    setTimeout(() => { try { URL.revokeObjectURL(url); } catch(e) {} }, 1500);
 }
+function aarishSnapshotReportThemeCoreV1(type) {
+    const meta = aarishExportMetaCoreV1(type);
+    const screenMap = { all:'dashboard-screen', milk:'milk-screen', expenses:'expenses-screen', udhar:'udhar-screen', salary:'salary-screen', diary:'diary-screen', projects:'projects-screen' };
+    const ref = document.getElementById(screenMap[type]) || document.querySelector('.screen.active') || document.body;
+    const bodyStyle = getComputedStyle(document.body);
+    const refStyle = getComputedStyle(ref);
+    const card = (ref && ref.querySelector && ref.querySelector('.glass-card')) || document.querySelector('.glass-card') || document.body;
+    const cardStyle = getComputedStyle(card);
+
+    function cssVar(name, fallback) {
+        let v = '';
+        try { v = refStyle.getPropertyValue(name).trim() || bodyStyle.getPropertyValue(name).trim(); } catch(e) {}
+        return v || fallback || '';
+    }
+    const tone =
+        cssVar('--moduleTone') || cssVar('--creditTone') || cssVar('--expenseTone') ||
+        cssVar('--salaryTone') || cssVar('--diaryTone') || cssVar('--businessTone') ||
+        meta.tone;
+    const tone2 =
+        cssVar('--moduleTone2') || cssVar('--creditTone2') || cssVar('--expenseTone2') ||
+        cssVar('--salaryTone2') || cssVar('--diaryTone2') || cssVar('--businessTone2') ||
+        meta.tone2;
+    const dark = document.documentElement.classList.contains('dark') || document.body.classList.contains('dark');
+    return {
+        dark,
+        tone,
+        tone2,
+        bg: dark ? '#000000' : (bodyStyle.backgroundColor || '#F5F5F7'),
+        text: dark ? '#FFFFFF' : (bodyStyle.color || '#1C1C1E'),
+        muted: dark ? '#A1A1AA' : '#6B7280',
+        cardBg: cssVar('--surfaceGlass') || cardStyle.backgroundColor || (dark ? 'rgba(18,24,38,.92)' : 'rgba(255,255,255,.86)'),
+        border: cssVar('--surfaceBorder') || cardStyle.borderColor || (dark ? 'rgba(255,255,255,.13)' : 'rgba(255,255,255,.62)'),
+        shadow: cssVar('--surfaceShadow') || cardStyle.boxShadow || (dark ? '0 16px 48px rgba(0,0,0,.55)' : '0 12px 38px rgba(15,23,42,.10)')
+    };
+}
+function aarishRgbaFromColorCoreV1(color, alpha) {
+    const fallback = 'rgba(0,122,255,' + alpha + ')';
+    let c = String(color || '').trim();
+    try {
+        if (/^#([0-9a-f]{3})$/i.test(c)) {
+            const h = c.slice(1);
+            const r = parseInt(h[0] + h[0], 16), g = parseInt(h[1] + h[1], 16), b = parseInt(h[2] + h[2], 16);
+            return `rgba(${r},${g},${b},${alpha})`;
+        }
+        if (/^#([0-9a-f]{6})$/i.test(c)) {
+            const h = c.slice(1);
+            const r = parseInt(h.slice(0,2), 16), g = parseInt(h.slice(2,4), 16), b = parseInt(h.slice(4,6), 16);
+            return `rgba(${r},${g},${b},${alpha})`;
+        }
+        const m = c.match(/rgba?\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)(?:\s*,\s*[\d.]+)?\s*\)/i);
+        if (m) return `rgba(${Math.round(Number(m[1]))},${Math.round(Number(m[2]))},${Math.round(Number(m[3]))},${alpha})`;
+    } catch(e) {}
+    return fallback;
+}
+function aarishApplyReportThemeCoreV1(el, theme) {
+    el.dataset.dark = theme.dark ? 'true' : 'false';
+    el.style.setProperty('--reportTone', theme.tone);
+    el.style.setProperty('--reportTone2', theme.tone2);
+    el.style.setProperty('--reportBg', theme.bg);
+    el.style.setProperty('--reportText', theme.text);
+    el.style.setProperty('--reportMuted', theme.muted);
+    el.style.setProperty('--reportCardBg', theme.cardBg);
+    el.style.setProperty('--reportBorder', theme.border);
+    el.style.setProperty('--reportShadow', theme.shadow);
+    el.style.setProperty('--reportToneSoft', aarishRgbaFromColorCoreV1(theme.tone, 0.12));
+    el.style.setProperty('--reportToneBorder', aarishRgbaFromColorCoreV1(theme.tone, 0.28));
+    el.style.setProperty('--reportToneGlow', aarishRgbaFromColorCoreV1(theme.tone, 0.34));
+    el.style.setProperty('--reportGlowSoft', theme.dark ? 'rgba(52,199,89,.14)' : 'rgba(52,199,89,.08)');
+}
+function aarishPdfCellCoreV1(value, sectionId) {
+    const max = sectionId === 'diary' ? 220 : 90;
+    return aarishExportEscCoreV1(aarishExportTextCoreV1(value, max));
+}
+function aarishCreateReportPageCoreV1(dataset, section, rows, pageNo, totalPages, theme) {
+    const page = document.createElement('div');
+    page.className = 'aarish-report-page';
+    aarishApplyReportThemeCoreV1(page, theme);
+
+    const meta = (dataset && dataset.meta) || aarishExportMetaCoreV1('all');
+    const headers = section.headers || [];
+    const colgroup = headers.map(() => '<col>').join('');
+    const bodyRows = (rows || []).map(row => {
+        return '<tr>' + headers.map((h, i) => {
+            const raw = Array.isArray(row) ? row[i] : '';
+            const val = (String(h || '').toLowerCase().includes('amount')) ? aarishExportMoneyCoreV1(raw) : raw;
+            return '<td>' + aarishPdfCellCoreV1(val, section.id) + '</td>';
+        }).join('') + '</tr>';
+    }).join('');
+
+    page.innerHTML = `
+        <div class="aarish-report-hero glass-card">
+            <h1 class="aarish-report-title"><i class="fa-solid ${aarishExportEscCoreV1(meta.icon)}"></i> ${aarishExportEscCoreV1((dataset && dataset.title) || 'Report')}</h1>
+            <p class="aarish-report-subtitle">Premium PDF • Aarish Dairy Pro • Generated ${aarishExportEscCoreV1((dataset && dataset.generatedOn) || '')}</p>
+            <div class="aarish-report-meta-grid">
+                <div class="aarish-report-meta-pill"><span class="aarish-report-meta-label">Section</span><span class="aarish-report-meta-value">${aarishExportEscCoreV1(section.title || '')}</span></div>
+                <div class="aarish-report-meta-pill"><span class="aarish-report-meta-label">Rows</span><span class="aarish-report-meta-value">${(section.rows || []).length}</span></div>
+                <div class="aarish-report-meta-pill"><span class="aarish-report-meta-label">Page</span><span class="aarish-report-meta-value">${pageNo}/${totalPages}</span></div>
+                <div class="aarish-report-meta-pill"><span class="aarish-report-meta-label">Mode</span><span class="aarish-report-meta-value">${theme.dark ? 'Dark' : 'Light'}</span></div>
+            </div>
+        </div>
+        <div class="aarish-report-section-card glass-card">
+            <div class="aarish-report-section-head">
+                <div class="aarish-report-section-name"><i class="fa-solid ${aarishExportEscCoreV1(aarishExportMetaCoreV1(section.id).icon)}"></i><span>${aarishExportEscCoreV1(section.title || '')}</span></div>
+                <div class="aarish-report-section-badge">${rows.length ? rows.length + ' shown' : 'No rows'}</div>
+            </div>
+            ${rows.length ? `
+                <table class="table-custom aarish-report-table">
+                    <colgroup>${colgroup}</colgroup>
+                    <thead><tr>${headers.map(h => '<th>' + aarishExportEscCoreV1(h) + '</th>').join('')}</tr></thead>
+                    <tbody>${bodyRows}</tbody>
+                </table>
+            ` : `<div class="aarish-report-empty">No records found for this section.</div>`}
+        </div>
+        <div class="aarish-report-footer">
+            <span><strong>Aarish Dairy Pro</strong> • WYSIWYG Export Engine</span>
+            <span>Page ${pageNo} of ${totalPages}</span>
+        </div>
+    `;
+    return page;
+}
+function aarishBuildReportPagesCoreV1(dataset, theme) {
+    const pages = [];
+    ((dataset && dataset.sections) || []).forEach(section => {
+        const rows = section.rows || [];
+        const perPage = aarishExportRowsPerPageCoreV1(section);
+        if (!rows.length) {
+            pages.push({ section, rows: [] });
+            return;
+        }
+        for (let i = 0; i < rows.length; i += perPage) {
+            pages.push({ section, rows: rows.slice(i, i + perPage) });
+        }
+    });
+    if (!pages.length) {
+        pages.push({ section: { id:'all', title:'No Data', headers:['Message'], rows:[] }, rows: [] });
+    }
+    return pages.map((p, index) => aarishCreateReportPageCoreV1(dataset, p.section, p.rows, index + 1, pages.length, theme));
+}
+async function aarishExportPremiumPdfCoreV1(type, dataset) {
+    showLoader('Premium PDF बन रही है...');
+    await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+
+    if (!window.jspdf || !window.jspdf.jsPDF) {
+        hideLoader();
+        showToast('PDF library loading. Please try again.');
+        return;
+    }
+
+    const theme = aarishSnapshotReportThemeCoreV1(type);
+    const host = document.createElement('div');
+    host.className = 'aarish-report-host';
+    document.body.appendChild(host);
+
+    try {
+        const pages = aarishBuildReportPagesCoreV1(dataset, theme);
+        pages.forEach(page => host.appendChild(page));
+        await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+
+        const pdf = new window.jspdf.jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4', compress: true });
+        for (let i = 0; i < pages.length; i++) {
+            const canvas = await html2canvas(pages[i], {
+                scale: 2,
+                backgroundColor: theme.bg || null,
+                useCORS: true,
+                logging: false,
+                windowWidth: 794,
+                windowHeight: 1123,
+                scrollX: 0,
+                scrollY: 0
+            });
+            const img = canvas.toDataURL('image/jpeg', 0.96);
+            if (i > 0) pdf.addPage('a4', 'portrait');
+            pdf.addImage(img, 'JPEG', 0, 0, 210, 297, undefined, 'FAST');
+        }
+
+        const fileName = 'Aarish_' + aarishExportSafeFileNameCoreV1(type || 'all') + '_Premium_Report.pdf';
+        const blob = pdf.output('blob');
+        const file = new File([blob], fileName, { type: 'application/pdf' });
+
+        hideLoader();
+        await aarishShareOrDownloadFileCoreV1(file, 'Premium PDF Report');
+        showToast('Premium PDF Ready ✅');
+    } catch (err) {
+        hideLoader();
+        console.error('Aarish Premium PDF error:', err);
+        showToast('PDF generation failed.');
+    } finally {
+        try { host.remove(); } catch(e) {}
+    }
+}
+async function aarishExportCsvBackupCoreV1(type, dataset) {
+    showLoader('CSV Backup बन रहा है...');
+    try {
+        const csv = aarishBuildCsvFromDatasetCoreV1(dataset);
+        const safeType = aarishExportSafeFileNameCoreV1(type || 'all');
+        const blob = new Blob([new Uint8Array([0xEF, 0xBB, 0xBF]), csv], { type: 'text/csv;charset=utf-8;' });
+        const file = new File([blob], `Aarish_${safeType.toUpperCase()}_CSV_Backup.csv`, { type: 'text/csv;charset=utf-8;' });
+        hideLoader();
+        await aarishShareOrDownloadFileCoreV1(file, 'CSV Backup Report');
+        showToast('CSV Backup Ready ✅');
+    } catch(err) {
+        hideLoader();
+        console.error('Aarish CSV export error:', err);
+        showToast('CSV export failed.');
+    }
+}
+function aarishCloseExportCenterCoreV1() {
+    const modal = document.getElementById('dynamic-download-modal');
+    if (modal) modal.remove();
+    const app = document.getElementById('main-app');
+    if (app) app.classList.remove('app-scale-down');
+}
+function aarishSetExportFormatCoreV1(format) {
+    window.__aarishExportFormatCoreV1 = (format === 'csv') ? 'csv' : 'pdf';
+    const modal = document.getElementById('dynamic-download-modal');
+    if (!modal) return;
+    modal.setAttribute('data-export-format', window.__aarishExportFormatCoreV1);
+    modal.querySelectorAll('.aarish-export-format-btn').forEach(btn => {
+        btn.dataset.active = (btn.getAttribute('data-format') === window.__aarishExportFormatCoreV1) ? 'true' : 'false';
+    });
+    const help = modal.querySelector('[data-aarish-export-help]');
+    if (help) {
+        help.textContent = window.__aarishExportFormatCoreV1 === 'pdf'
+            ? 'Premium PDF app ke current colors, borders, cards aur dark/light mode se banegi.'
+            : 'CSV Backup raw data ke liye permanent safe file hai. Excel/Sheets me open ho jayegi.';
+    }
+}
+function aarishExportButtonHtmlCoreV1(type) {
+    const meta = aarishExportMetaCoreV1(type);
+    const bg = type === 'all'
+        ? 'background:#000;'
+        : `background:linear-gradient(135deg, ${meta.tone}, ${meta.tone2});`;
+    return `<button onclick="haptic(); executeDownload('${meta.id}')" class="btn-primary" style="${bg} border:none;"><i class="fa-solid ${meta.icon}"></i> ${meta.title}</button>`;
+}
+function downloadExcel() {
+    const existingModal = document.getElementById('dynamic-download-modal');
+    if (existingModal) existingModal.remove();
+
+    const overlay = document.createElement('div');
+    overlay.id = 'dynamic-download-modal';
+    overlay.className = 'modal-overlay';
+    overlay.style.display = 'flex';
+    overlay.style.opacity = '0';
+    overlay.onclick = function(e) { if (e.target && e.target.id === 'dynamic-download-modal') aarishCloseExportCenterCoreV1(); };
+
+    overlay.innerHTML = `
+        <div class="modal-content" onclick="event.stopImmediatePropagation()">
+            <div class="w-12 h-1.5 bg-gray-300 dark:bg-gray-600 shrink-0 rounded-full mx-auto mb-6"></div>
+            <h2 class="text-2xl font-extrabold mb-2 text-center w-full">Export Center</h2>
+            <p class="text-[11px] text-center text-gray-500 mb-4 font-bold uppercase tracking-wider">Choose format, then select report</p>
+
+            <div class="aarish-export-format-grid">
+                <button type="button" class="aarish-export-format-btn" data-format="pdf" onclick="haptic(); aarishSetExportFormatCoreV1('pdf')"><i class="fa-solid fa-file-pdf"></i> Premium PDF</button>
+                <button type="button" class="aarish-export-format-btn" data-format="csv" onclick="haptic(); aarishSetExportFormatCoreV1('csv')"><i class="fa-solid fa-table"></i> CSV Backup</button>
+            </div>
+            <div class="aarish-export-format-help" data-aarish-export-help></div>
+
+            <div class="grid grid-cols-2 gap-3 mb-4 w-full">
+                ${aarishExportButtonHtmlCoreV1('all')}
+                ${aarishExportButtonHtmlCoreV1('milk')}
+                ${aarishExportButtonHtmlCoreV1('expenses')}
+                ${aarishExportButtonHtmlCoreV1('udhar')}
+                ${aarishExportButtonHtmlCoreV1('salary')}
+                ${aarishExportButtonHtmlCoreV1('diary')}
+            </div>
+            <div class="w-full mt-3">
+                ${aarishExportButtonHtmlCoreV1('projects')}
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(overlay);
+    setTimeout(() => { try { overlay.style.opacity = '1'; } catch(e) {} }, 10);
+    const app = document.getElementById('main-app');
+    if (app) app.classList.add('app-scale-down');
+    aarishSetExportFormatCoreV1(window.__aarishExportFormatCoreV1 || 'pdf');
+}
+async function executeDownload(type) {
+    aarishCloseExportCenterCoreV1();
+    const format = (window.__aarishExportFormatCoreV1 === 'csv') ? 'csv' : 'pdf';
+    const safeType = String(type || 'all');
+    const dataset = aarishBuildExportDatasetCoreV1(safeType);
+    if (format === 'csv') {
+        await aarishExportCsvBackupCoreV1(safeType, dataset);
+    } else {
+        await aarishExportPremiumPdfCoreV1(safeType, dataset);
+    }
+}
+/* AARISH_EXPORT_CENTER_PREMIUM_PDF_CORE_V1_END */
 
     // ========================== UDHAR ==========================
     
@@ -11208,15 +11812,49 @@ function aarishSaveRollingDeleteBackupCoreV4(namespace, backup, maxPerNamespace)
         return true;
     } catch(e) { return false; }
 }
+/* AARISH_DELETE_BACKUP_FIREBASE_COST_GUARD_V1_START
+   Firebase cost fix:
+   - Old code wrote every delete backup to:
+       users/{uid}/deleteBackups/{namespace}/{Date.now()}
+     with no cap/TTL, causing unbounded RTDB storage growth.
+   - Callers already save a capped local rolling backup before calling this function.
+   - This core function now becomes a cloud no-op for new backups.
+   - It also schedules one best-effort one-time purge of old cloud deleteBackups per uid/device.
+   - Delete flow stays unchanged because callers still await this same core function.
+*/
 async function aarishSaveCloudDeleteBackupCoreV4(namespace, backup) {
     try {
-        const uid = currentUserUID || (firebase && firebase.auth && firebase.auth().currentUser && firebase.auth().currentUser.uid);
-        if (!uid || !database) return false;
-        const safeNs = String(namespace || 'general').replace(/[^A-Za-z0-9_-]/g, '_').slice(0, 40) || 'general';
-        await database.ref('users/' + uid + '/deleteBackups/' + safeNs + '/' + Date.now()).set(backup);
+        var uid = '';
+        try { uid = currentUserUID || ''; } catch(e) {}
+        try {
+            if (!uid && typeof firebase !== 'undefined' && firebase.auth && firebase.auth().currentUser) {
+                uid = firebase.auth().currentUser.uid || '';
+            }
+        } catch(e) {}
+
+        // New rule: never upload delete backup payloads to Firebase.
+        // Local rolling backup is already capped by aarishSaveRollingDeleteBackupCoreV4().
+        try {
+            if (uid && typeof database !== 'undefined' && database) {
+                var safeUid = String(uid).replace(/[^A-Za-z0-9:_\-.]/g, '_').slice(0, 160);
+                var purgeFlag = 'AARISH_DELETE_BACKUPS_CLOUD_PURGED_V1::' + safeUid;
+
+                if (localStorage.getItem(purgeFlag) !== '1') {
+                    // Fire-and-forget: do not block the actual delete action.
+                    database.ref('users/' + uid + '/deleteBackups').remove()
+                        .then(function(){ try { localStorage.setItem(purgeFlag, '1'); } catch(e) {} })
+                        .catch(function(){});
+                }
+            }
+        } catch(e) {}
+
         return true;
-    } catch(e) { return false; }
+    } catch(e) {
+        // Never break salary/credit/expense/business delete flow because backup cloud save failed.
+        return true;
+    }
 }
+/* AARISH_DELETE_BACKUP_FIREBASE_COST_GUARD_V1_END */
 function aarishResetAiSessionCoreV4(reason) {
     try { window.aiChatMemory = []; } catch(e) {}
     try { window.aiPendingChunks = []; } catch(e) {}
