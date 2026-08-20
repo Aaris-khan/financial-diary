@@ -3115,7 +3115,9 @@ html.aarish-tab-switching-v31 .bottom-nav .nav-item.active {
 
 /* ==================== AARISH_EXPORT_CENTER_PREMIUM_PDF_CORE_V1_CSS_START ====================
    Core export UI + PDF report styling.
-   Scope-only classes: no module UI/Firebase/Gemini/share receipt logic touched.
+   PDF-only visual contract: BLACK background + BLUE text.
+   Layout contract: no paint containment on the report host, no fixed-height clipping,
+   aggressive wrapping for long content, and deterministic A4-width rendering.
 */
 .aarish-export-format-grid {
   display: grid;
@@ -3146,7 +3148,7 @@ html.aarish-tab-switching-v31 .bottom-nav .nav-item.active {
 }
 .aarish-export-format-btn:active { transform: scale(.97) !important; }
 .aarish-export-format-btn[data-active="true"] {
-  background: linear-gradient(135deg, #007AFF, #5E5CE6) !important;
+  background: linear-gradient(135deg, #007AFF, #0A84FF) !important;
   color: #FFFFFF !important;
   border-color: rgba(255,255,255,.22) !important;
   box-shadow: 0 10px 28px rgba(0,122,255,.24), inset 0 1px 0 rgba(255,255,255,.25) !important;
@@ -3160,39 +3162,59 @@ html.aarish-tab-switching-v31 .bottom-nav .nav-item.active {
   text-align: center;
   margin: -4px 0 14px;
 }
+
+/* PDF rendering surface. Never use contain:paint here: it can clip descendants. */
 .aarish-report-host {
-  position: fixed !important;
-  left: -12000px !important;
+  position: absolute !important;
+  left: -20000px !important;
   top: 0 !important;
   width: 794px !important;
+  height: auto !important;
+  min-height: 0 !important;
   pointer-events: none !important;
   opacity: 1 !important;
   z-index: -1 !important;
-  contain: layout style paint !important;
+  overflow: visible !important;
+  contain: layout style !important;
 }
 .aarish-report-page {
   width: 794px !important;
-  height: 1123px !important;
-  overflow: hidden !important;
+  min-height: 1123px !important;
+  height: auto !important;
+  overflow: visible !important;
   padding: 28px !important;
   box-sizing: border-box !important;
-  color: var(--reportText, #1C1C1E) !important;
-  background:
-    radial-gradient(circle at 0% -8%, var(--reportGlowSoft, rgba(52,199,89,.10)), transparent 34%),
-    radial-gradient(circle at 100% 108%, var(--reportToneSoft, rgba(0,122,255,.10)), transparent 40%),
-    var(--reportBg, #F5F5F7) !important;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
   page-break-after: always !important;
+  break-after: page !important;
+
+  --reportBg: #000000;
+  --reportText: #58A6FF;
+  --reportMuted: rgba(88,166,255,.68);
+  --reportCardBg: #050505;
+  --reportBorder: rgba(88,166,255,.28);
+  --reportHairline: rgba(88,166,255,.16);
+  --reportMiniBg: rgba(0,122,255,.08);
+  --reportTone: #58A6FF;
+  --reportTone2: #0A84FF;
+  --reportToneSoft: rgba(0,122,255,.12);
+  --reportToneBorder: rgba(88,166,255,.34);
+  --reportToneGlow: rgba(0,122,255,.34);
+
+  color: var(--reportText) !important;
+  background: #000000 !important;
+  background-image:
+    radial-gradient(circle at 0% -8%, rgba(0,122,255,.16), transparent 34%),
+    radial-gradient(circle at 100% 108%, rgba(88,166,255,.10), transparent 40%) !important;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
 }
 .aarish-report-page * {
   box-sizing: border-box !important;
   -webkit-font-smoothing: antialiased !important;
-  text-rendering: geometricPrecision !important;
 }
 .aarish-report-page .glass-card {
-  background: var(--reportCardBg, rgba(255,255,255,.86)) !important;
-  border: 1px solid var(--reportBorder, rgba(255,255,255,.62)) !important;
-  box-shadow: var(--reportShadow, 0 12px 38px rgba(15,23,42,.10), inset 0 1px 0 rgba(255,255,255,.70)) !important;
+  background: #050505 !important;
+  border: 1px solid var(--reportBorder) !important;
+  box-shadow: 0 12px 38px rgba(0,0,0,.60), inset 0 1px 0 rgba(88,166,255,.06) !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
   transform: none !important;
@@ -3202,15 +3224,17 @@ html.aarish-tab-switching-v31 .bottom-nav .nav-item.active {
   padding: 22px 24px !important;
   border-radius: 28px !important;
   margin-bottom: 16px !important;
-  overflow: hidden !important;
+  overflow: visible !important;
+  background: linear-gradient(145deg, rgba(0,122,255,.08), #000000) !important;
 }
 .aarish-report-hero::before {
-  content: "";
+  content: '';
   position: absolute;
   left: 0; top: 0; bottom: 0;
   width: 7px;
-  background: linear-gradient(180deg, var(--reportTone, #007AFF), var(--reportTone2, #5E5CE6));
-  box-shadow: 0 0 22px var(--reportToneGlow, rgba(0,122,255,.32));
+  border-radius: 6px;
+  background: linear-gradient(180deg, #58A6FF, #0A84FF);
+  box-shadow: 0 0 22px rgba(0,122,255,.30);
 }
 .aarish-report-title {
   margin: 0 0 8px !important;
@@ -3218,12 +3242,13 @@ html.aarish-tab-switching-v31 .bottom-nav .nav-item.active {
   line-height: 1.12 !important;
   font-weight: 950 !important;
   letter-spacing: -.04em !important;
-  color: var(--reportTone, #007AFF) !important;
-  text-shadow: 0 0 14px var(--reportToneGlow, rgba(0,122,255,.26)) !important;
+  color: #58A6FF !important;
+  -webkit-text-fill-color: #58A6FF !important;
+  text-shadow: 0 0 14px rgba(0,122,255,.28) !important;
 }
 .aarish-report-subtitle {
   margin: 0 !important;
-  color: var(--reportMuted, #6B7280) !important;
+  color: rgba(88,166,255,.68) !important;
   font-size: 12px !important;
   line-height: 1.45 !important;
   font-weight: 800 !important;
@@ -3238,12 +3263,12 @@ html.aarish-tab-switching-v31 .bottom-nav .nav-item.active {
   min-height: 54px !important;
   border-radius: 18px !important;
   padding: 10px 12px !important;
-  background: var(--reportMiniBg, rgba(118,118,128,.09)) !important;
-  border: 1px solid var(--reportHairline, rgba(0,0,0,.055)) !important;
+  background: rgba(0,122,255,.06) !important;
+  border: 1px solid rgba(88,166,255,.15) !important;
 }
 .aarish-report-meta-label {
   display: block !important;
-  color: var(--reportMuted, #6B7280) !important;
+  color: rgba(88,166,255,.64) !important;
   font-size: 9px !important;
   line-height: 1.1 !important;
   font-weight: 950 !important;
@@ -3252,7 +3277,8 @@ html.aarish-tab-switching-v31 .bottom-nav .nav-item.active {
   margin-bottom: 5px !important;
 }
 .aarish-report-meta-value {
-  color: var(--reportText, #1C1C1E) !important;
+  color: #58A6FF !important;
+  -webkit-text-fill-color: #58A6FF !important;
   font-size: 13px !important;
   line-height: 1.25 !important;
   font-weight: 950 !important;
@@ -3260,8 +3286,9 @@ html.aarish-tab-switching-v31 .bottom-nav .nav-item.active {
 .aarish-report-section-card {
   border-radius: 26px !important;
   padding: 18px !important;
-  height: 861px !important;
-  overflow: hidden !important;
+  min-height: 0 !important;
+  height: auto !important;
+  overflow: visible !important;
 }
 .aarish-report-section-head {
   display: flex !important;
@@ -3270,7 +3297,7 @@ html.aarish-tab-switching-v31 .bottom-nav .nav-item.active {
   gap: 12px !important;
   margin-bottom: 12px !important;
   padding-bottom: 10px !important;
-  border-bottom: 1px solid var(--reportHairline, rgba(0,0,0,.060)) !important;
+  border-bottom: 1px solid rgba(88,166,255,.16) !important;
 }
 .aarish-report-section-name {
   display: flex !important;
@@ -3280,14 +3307,15 @@ html.aarish-tab-switching-v31 .bottom-nav .nav-item.active {
   font-size: 17px !important;
   font-weight: 950 !important;
   line-height: 1.2 !important;
-  color: var(--reportTone, #007AFF) !important;
-  text-shadow: 0 0 12px var(--reportToneGlow, rgba(0,122,255,.22)) !important;
+  color: #58A6FF !important;
+  -webkit-text-fill-color: #58A6FF !important;
 }
 .aarish-report-section-badge {
   white-space: nowrap !important;
-  color: var(--reportTone, #007AFF) !important;
-  background: var(--reportToneSoft, rgba(0,122,255,.10)) !important;
-  border: 1px solid var(--reportToneBorder, rgba(0,122,255,.24)) !important;
+  color: #000000 !important;
+  -webkit-text-fill-color: #000000 !important;
+  background: #58A6FF !important;
+  border: 1px solid rgba(88,166,255,.34) !important;
   border-radius: 999px !important;
   padding: 7px 12px !important;
   font-size: 11px !important;
@@ -3301,40 +3329,43 @@ html.aarish-tab-switching-v31 .bottom-nav .nav-item.active {
   margin: 0 !important;
 }
 .aarish-report-table th {
-  color: var(--reportTone, #007AFF) !important;
-  -webkit-text-fill-color: var(--reportTone, #007AFF) !important;
+  color: #58A6FF !important;
+  -webkit-text-fill-color: #58A6FF !important;
   font-size: 10px !important;
   line-height: 1.15 !important;
   font-weight: 950 !important;
   text-transform: uppercase !important;
   letter-spacing: .04em !important;
   padding: 10px 7px !important;
-  border-bottom: 1px solid var(--reportToneBorder, rgba(0,122,255,.22)) !important;
-  background: var(--reportToneSoft, rgba(0,122,255,.06)) !important;
+  border-bottom: 1px solid rgba(88,166,255,.30) !important;
+  background: rgba(0,122,255,.10) !important;
+  vertical-align: bottom !important;
 }
 .aarish-report-table th:first-child { border-radius: 12px 0 0 12px !important; }
 .aarish-report-table th:last-child { border-radius: 0 12px 12px 0 !important; }
 .aarish-report-table td {
-  color: var(--reportText, #1C1C1E) !important;
+  color: #58A6FF !important;
+  -webkit-text-fill-color: #58A6FF !important;
   font-size: 11px !important;
-  line-height: 1.34 !important;
-  font-weight: 750 !important;
+  line-height: 1.42 !important;
+  font-weight: 650 !important;
   padding: 9px 7px !important;
   vertical-align: top !important;
-  white-space: normal !important;
+  white-space: pre-wrap !important;
+  overflow-wrap: anywhere !important;
   word-break: break-word !important;
-  border-bottom: 1px solid var(--reportHairline, rgba(0,0,0,.045)) !important;
+  hyphens: auto !important;
+  border-bottom: 1px solid rgba(88,166,255,.14) !important;
 }
-.aarish-report-table tbody tr:nth-child(even) td {
-  background: var(--reportMiniBg, rgba(118,118,128,.045)) !important;
-}
+.aarish-report-table tbody tr { break-inside: avoid !important; }
+.aarish-report-table tbody tr:nth-child(even) td { background: rgba(0,122,255,.045) !important; }
 .aarish-report-empty {
-  height: 240px !important;
+  min-height: 240px !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
   text-align: center !important;
-  color: var(--reportMuted, #6B7280) !important;
+  color: rgba(88,166,255,.68) !important;
   font-size: 16px !important;
   font-weight: 900 !important;
 }
@@ -3342,24 +3373,46 @@ html.aarish-tab-switching-v31 .bottom-nav .nav-item.active {
   display: flex !important;
   align-items: center !important;
   justify-content: space-between !important;
+  gap: 12px !important;
   margin-top: 12px !important;
   padding: 0 4px !important;
-  color: var(--reportMuted, #6B7280) !important;
+  color: rgba(88,166,255,.60) !important;
   font-size: 10px !important;
   font-weight: 850 !important;
 }
 .aarish-report-footer strong {
-  color: var(--reportTone, #007AFF) !important;
+  color: #58A6FF !important;
+  -webkit-text-fill-color: #58A6FF !important;
+}
+.aarish-report-page .table-custom th,
+.aarish-report-page .table-custom td,
+.aarish-report-page .aarish-report-title,
+.aarish-report-page .aarish-report-subtitle,
+.aarish-report-page .aarish-report-section-name,
+.aarish-report-page .aarish-report-meta-label,
+.aarish-report-page .aarish-report-meta-value,
+.aarish-report-page .aarish-report-footer,
+.aarish-report-page .aarish-report-footer strong {
+  color: inherit !important;
+}
+.aarish-report-page .aarish-report-table th,
+.aarish-report-page .aarish-report-table td,
+.aarish-report-page .aarish-report-title,
+.aarish-report-page .aarish-report-section-name,
+.aarish-report-page .aarish-report-meta-value,
+.aarish-report-page .aarish-report-footer strong {
+  color: #58A6FF !important;
+  -webkit-text-fill-color: #58A6FF !important;
 }
 .dark .aarish-report-page,
 .aarish-report-page[data-dark="true"] {
   --reportBg: #000000;
-  --reportText: #FFFFFF;
-  --reportMuted: #A1A1AA;
-  --reportCardBg: rgba(18,24,38,.92);
-  --reportBorder: rgba(255,255,255,.13);
-  --reportHairline: rgba(255,255,255,.10);
-  --reportMiniBg: rgba(255,255,255,.07);
+  --reportText: #58A6FF;
+  --reportMuted: rgba(88,166,255,.68);
+  --reportCardBg: #050505;
+  --reportBorder: rgba(88,166,255,.28);
+  --reportHairline: rgba(88,166,255,.16);
+  --reportMiniBg: rgba(0,122,255,.08);
 }
 /* AARISH_EXPORT_CENTER_PREMIUM_PDF_CORE_V1_CSS_END */
 
@@ -9293,16 +9346,17 @@ async function shareDiaryBill(id) {
     // ========================== SMART EXCEL (CSV) EXPORT ==========================
     /* AARISH_EXPORT_CENTER_PREMIUM_PDF_CORE_V1_START
    Core-integrated Export Center.
-   Share receipt buttons stay untouched. CSV stays permanent backup.
-   Premium PDF uses live app CSS variables + hidden page-by-page report DOM.
+   Share receipt buttons stay untouched. CSV stays the raw-data backup.
+   Premium PDF uses canonical live DB rows, full text, measured pagination,
+   and an isolated black/blue report renderer.
 */
 function aarishExportEscCoreV1(value) {
     return String(value == null ? '' : value).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 }
-function aarishExportTextCoreV1(value, maxLen) {
-    let s = String(value == null ? '' : value).replace(/\s+/g, ' ').trim();
-    if (maxLen && s.length > maxLen) s = s.slice(0, Math.max(0, maxLen - 1)) + '…';
-    return s;
+function aarishExportTextCoreV1(value) {
+    let s = String(value == null ? '' : value).replace(/\r\n?/g, '\n');
+    s = s.replace(/\u00A0/g, ' ');
+    return s.trim();
 }
 function aarishExportNumberCoreV1(value) {
     const n = Number(value);
@@ -9332,24 +9386,24 @@ function aarishExportSafeFileNameCoreV1(value) {
 }
 function aarishExportMetaCoreV1(type) {
     const map = {
-        all:      { id:'all',      title:'All Data',        icon:'fa-layer-group',     tone:'#0B0F19', tone2:'#5E5CE6' },
-        milk:     { id:'milk',     title:'Milk Records',    icon:'fa-jug-detergent',   tone:'#007AFF', tone2:'#0A84FF' },
-        expenses: { id:'expenses', title:'Expenses',        icon:'fa-receipt',         tone:'#FF3B30', tone2:'#FF2D55' },
-        udhar:    { id:'udhar',    title:'Credit Ledger',   icon:'fa-handshake',       tone:'#F5A623', tone2:'#FFB340' },
-        salary:   { id:'salary',   title:'Salary',          icon:'fa-sack-dollar',     tone:'#34C759', tone2:'#28A745' },
-        diary:    { id:'diary',    title:'Personal Diary',  icon:'fa-book',            tone:'#8E8E93', tone2:'#636366' },
-        projects: { id:'projects', title:'Business Hub',    icon:'fa-briefcase',       tone:'#4285F4', tone2:'#9B72CB' }
+        all:      { id:'all',      title:'All Data',        icon:'fa-layer-group',   tone:'#58A6FF', tone2:'#0A84FF' },
+        milk:     { id:'milk',     title:'Milk Records',    icon:'fa-jug-detergent', tone:'#58A6FF', tone2:'#0A84FF' },
+        expenses: { id:'expenses', title:'Expenses',        icon:'fa-receipt',       tone:'#58A6FF', tone2:'#0A84FF' },
+        udhar:    { id:'udhar',    title:'Credit Ledger',   icon:'fa-handshake',     tone:'#58A6FF', tone2:'#0A84FF' },
+        salary:   { id:'salary',   title:'Salary',          icon:'fa-sack-dollar',   tone:'#58A6FF', tone2:'#0A84FF' },
+        diary:    { id:'diary',    title:'Personal Diary',  icon:'fa-book',          tone:'#58A6FF', tone2:'#0A84FF' },
+        projects: { id:'projects', title:'Business Hub',    icon:'fa-briefcase',     tone:'#58A6FF', tone2:'#0A84FF' }
     };
     return map[type] || map.all;
 }
 function aarishExportRowsPerPageCoreV1(section) {
     const cols = ((section && section.headers) || []).length;
     const id = String((section && section.id) || '');
-    if (id === 'diary') return 13;
-    if (id === 'projects') return 18;
-    if (cols >= 7) return 19;
-    if (cols >= 5) return 23;
-    return 28;
+    if (id === 'diary') return 4;
+    if (id === 'projects') return 12;
+    if (cols >= 7) return 14;
+    if (cols >= 5) return 18;
+    return 22;
 }
 function aarishBuildExportDatasetCoreV1(type) {
     type = String(type || 'all');
@@ -9366,7 +9420,7 @@ function aarishBuildExportDatasetCoreV1(type) {
             const profile = milkDB[name] || {};
             const label = profile.type === 'dene_wala' ? 'Buyer (-)' : 'Seller (+)';
             const rate = aarishExportNumberCoreV1(profile.rate || (typeof DEFAULT_RATE !== 'undefined' ? DEFAULT_RATE : 80));
-            ((profile.records) || []).forEach(r => {
+            (profile.records || []).forEach(r => {
                 const m = aarishExportNumberCoreV1(r && r.morning);
                 const ev = aarishExportNumberCoreV1(r && r.evening);
                 const kg = m + ev;
@@ -9380,8 +9434,7 @@ function aarishBuildExportDatasetCoreV1(type) {
     if (include('expenses')) {
         const rows = [];
         (Array.isArray(expenseDB) ? expenseDB : []).forEach(e => {
-            const amount = aarishExportNumberCoreV1(e && e.amount);
-            rows.push([aarishExportDisplayDateCoreV1(e && e.date), (e && e.category) || '', amount]);
+            rows.push([aarishExportDisplayDateCoreV1(e && e.date), (e && e.category) || '', aarishExportNumberCoreV1(e && e.amount)]);
         });
         pushSection('expenses', 'Expenses', ['Date','Category','Amount'], rows);
     }
@@ -9400,7 +9453,7 @@ function aarishBuildExportDatasetCoreV1(type) {
         Object.keys(salaryDB || {}).sort((a,b) => String(a).localeCompare(String(b))).forEach(name => {
             const profile = salaryDB[name] || {};
             const label = profile.type === 'lene_wala' ? 'Paid to Employee' : 'Received';
-            ((profile.records) || []).forEach(r => {
+            (profile.records || []).forEach(r => {
                 rows.push([label, name, aarishExportDisplayDateCoreV1(r && r.date), aarishExportNumberCoreV1(r && r.amount)]);
             });
         });
@@ -9419,7 +9472,7 @@ function aarishBuildExportDatasetCoreV1(type) {
         const rows = [];
         Object.keys(projectDB || {}).sort((a,b) => String(a).localeCompare(String(b))).forEach(name => {
             const project = projectDB[name] || {};
-            ((project.records) || []).forEach(r => {
+            (project.records || []).forEach(r => {
                 const transType = (r && r.color) ? String(r.color).toUpperCase() : 'UNKNOWN';
                 rows.push([name, aarishExportDisplayDateCoreV1(r && r.date), (r && r.title) || '', transType, aarishExportNumberCoreV1(r && r.amount)]);
             });
@@ -9467,37 +9520,16 @@ async function aarishShareOrDownloadFileCoreV1(file, toastText) {
 }
 function aarishSnapshotReportThemeCoreV1(type) {
     const meta = aarishExportMetaCoreV1(type);
-    const screenMap = { all:'dashboard-screen', milk:'milk-screen', expenses:'expenses-screen', udhar:'udhar-screen', salary:'salary-screen', diary:'diary-screen', projects:'projects-screen' };
-    const ref = document.getElementById(screenMap[type]) || document.querySelector('.screen.active') || document.body;
-    const bodyStyle = getComputedStyle(document.body);
-    const refStyle = getComputedStyle(ref);
-    const card = (ref && ref.querySelector && ref.querySelector('.glass-card')) || document.querySelector('.glass-card') || document.body;
-    const cardStyle = getComputedStyle(card);
-
-    function cssVar(name, fallback) {
-        let v = '';
-        try { v = refStyle.getPropertyValue(name).trim() || bodyStyle.getPropertyValue(name).trim(); } catch(e) {}
-        return v || fallback || '';
-    }
-    const tone =
-        cssVar('--moduleTone') || cssVar('--creditTone') || cssVar('--expenseTone') ||
-        cssVar('--salaryTone') || cssVar('--diaryTone') || cssVar('--businessTone') ||
-        meta.tone;
-    const tone2 =
-        cssVar('--moduleTone2') || cssVar('--creditTone2') || cssVar('--expenseTone2') ||
-        cssVar('--salaryTone2') || cssVar('--diaryTone2') || cssVar('--businessTone2') ||
-        meta.tone2;
-    const dark = document.documentElement.classList.contains('dark') || document.body.classList.contains('dark');
     return {
-        dark,
-        tone,
-        tone2,
-        bg: dark ? '#000000' : (bodyStyle.backgroundColor || '#F5F5F7'),
-        text: dark ? '#FFFFFF' : (bodyStyle.color || '#1C1C1E'),
-        muted: dark ? '#A1A1AA' : '#6B7280',
-        cardBg: cssVar('--surfaceGlass') || cardStyle.backgroundColor || (dark ? 'rgba(18,24,38,.92)' : 'rgba(255,255,255,.86)'),
-        border: cssVar('--surfaceBorder') || cardStyle.borderColor || (dark ? 'rgba(255,255,255,.13)' : 'rgba(255,255,255,.62)'),
-        shadow: cssVar('--surfaceShadow') || cardStyle.boxShadow || (dark ? '0 16px 48px rgba(0,0,0,.55)' : '0 12px 38px rgba(15,23,42,.10)')
+        dark: true,
+        tone: '#58A6FF',
+        tone2: '#0A84FF',
+        bg: '#000000',
+        text: '#58A6FF',
+        muted: 'rgba(88,166,255,.68)',
+        cardBg: '#050505',
+        border: 'rgba(88,166,255,.28)',
+        shadow: '0 16px 48px rgba(0,0,0,.60)'
     };
 }
 function aarishRgbaFromColorCoreV1(color, alpha) {
@@ -9520,23 +9552,22 @@ function aarishRgbaFromColorCoreV1(color, alpha) {
     return fallback;
 }
 function aarishApplyReportThemeCoreV1(el, theme) {
-    el.dataset.dark = theme.dark ? 'true' : 'false';
-    el.style.setProperty('--reportTone', theme.tone);
-    el.style.setProperty('--reportTone2', theme.tone2);
-    el.style.setProperty('--reportBg', theme.bg);
-    el.style.setProperty('--reportText', theme.text);
-    el.style.setProperty('--reportMuted', theme.muted);
-    el.style.setProperty('--reportCardBg', theme.cardBg);
-    el.style.setProperty('--reportBorder', theme.border);
-    el.style.setProperty('--reportShadow', theme.shadow);
-    el.style.setProperty('--reportToneSoft', aarishRgbaFromColorCoreV1(theme.tone, 0.12));
-    el.style.setProperty('--reportToneBorder', aarishRgbaFromColorCoreV1(theme.tone, 0.28));
-    el.style.setProperty('--reportToneGlow', aarishRgbaFromColorCoreV1(theme.tone, 0.34));
-    el.style.setProperty('--reportGlowSoft', theme.dark ? 'rgba(52,199,89,.14)' : 'rgba(52,199,89,.08)');
+    el.dataset.dark = 'true';
+    el.style.setProperty('--reportTone', '#58A6FF');
+    el.style.setProperty('--reportTone2', '#0A84FF');
+    el.style.setProperty('--reportBg', '#000000');
+    el.style.setProperty('--reportText', '#58A6FF');
+    el.style.setProperty('--reportMuted', 'rgba(88,166,255,.68)');
+    el.style.setProperty('--reportCardBg', '#050505');
+    el.style.setProperty('--reportBorder', 'rgba(88,166,255,.28)');
+    el.style.setProperty('--reportShadow', '0 16px 48px rgba(0,0,0,.60)');
+    el.style.setProperty('--reportToneSoft', 'rgba(0,122,255,.12)');
+    el.style.setProperty('--reportToneBorder', 'rgba(88,166,255,.34)');
+    el.style.setProperty('--reportToneGlow', 'rgba(0,122,255,.34)');
+    el.style.setProperty('--reportGlowSoft', 'rgba(0,122,255,.12)');
 }
-function aarishPdfCellCoreV1(value, sectionId) {
-    const max = sectionId === 'diary' ? 220 : 90;
-    return aarishExportEscCoreV1(aarishExportTextCoreV1(value, max));
+function aarishPdfCellCoreV1(value) {
+    return aarishExportEscCoreV1(aarishExportTextCoreV1(value));
 }
 function aarishCreateReportPageCoreV1(dataset, section, rows, pageNo, totalPages, theme) {
     const page = document.createElement('div');
@@ -9550,7 +9581,7 @@ function aarishCreateReportPageCoreV1(dataset, section, rows, pageNo, totalPages
         return '<tr>' + headers.map((h, i) => {
             const raw = Array.isArray(row) ? row[i] : '';
             const val = (String(h || '').toLowerCase().includes('amount')) ? aarishExportMoneyCoreV1(raw) : raw;
-            return '<td>' + aarishPdfCellCoreV1(val, section.id) + '</td>';
+            return '<td>' + aarishPdfCellCoreV1(val) + '</td>';
         }).join('') + '</tr>';
     }).join('');
 
@@ -9562,7 +9593,7 @@ function aarishCreateReportPageCoreV1(dataset, section, rows, pageNo, totalPages
                 <div class="aarish-report-meta-pill"><span class="aarish-report-meta-label">Section</span><span class="aarish-report-meta-value">${aarishExportEscCoreV1(section.title || '')}</span></div>
                 <div class="aarish-report-meta-pill"><span class="aarish-report-meta-label">Rows</span><span class="aarish-report-meta-value">${(section.rows || []).length}</span></div>
                 <div class="aarish-report-meta-pill"><span class="aarish-report-meta-label">Page</span><span class="aarish-report-meta-value">${pageNo}/${totalPages}</span></div>
-                <div class="aarish-report-meta-pill"><span class="aarish-report-meta-label">Mode</span><span class="aarish-report-meta-value">${theme.dark ? 'Dark' : 'Light'}</span></div>
+                <div class="aarish-report-meta-pill"><span class="aarish-report-meta-label">Mode</span><span class="aarish-report-meta-value">Black / Blue</span></div>
             </div>
         </div>
         <div class="aarish-report-section-card glass-card">
@@ -9585,128 +9616,147 @@ function aarishCreateReportPageCoreV1(dataset, section, rows, pageNo, totalPages
     `;
     return page;
 }
-function aarishBuildReportPagesCoreV1(section) {
-    // Paginates a single section's rows using the column/type-aware page size
-    // aarishExportRowsPerPageCoreV1 already defines for this section.
+function aarishBuildReportPagesCoreV1(section, theme) {
     const rows = (section && section.rows) || [];
-    const perPage = Math.max(1, aarishExportRowsPerPageCoreV1(section));
+    if (rows.length === 0) return [{ section, rows: [] }];
+
+    const maxHeight = 1060;
+    const minRows = 1;
     const pages = [];
-    if (rows.length === 0) {
-        pages.push({ section, rows: [] }); // still render one page so an empty section is visible
-        return pages;
+    const probeHost = document.createElement('div');
+    probeHost.className = 'aarish-report-host';
+    probeHost.style.cssText = 'position:absolute;left:-20000px;top:0;width:794px;contain:layout style;visibility:hidden;pointer-events:none;';
+    document.body.appendChild(probeHost);
+
+    try {
+        let chunk = [];
+        const hardCap = Math.max(1, aarishExportRowsPerPageCoreV1(section));
+        for (let i = 0; i < rows.length; i++) {
+            const candidate = chunk.concat([rows[i]]);
+            const probe = aarishCreateReportPageCoreV1({ title: 'Report', generatedOn: '', meta: aarishExportMetaCoreV1(section.id) }, section, candidate, 1, 1, theme);
+            probeHost.appendChild(probe);
+            const measured = Math.max(probe.scrollHeight || 0, probe.getBoundingClientRect().height || 0);
+            probe.remove();
+
+            const tooTall = measured > maxHeight;
+            const overHardCap = candidate.length > hardCap;
+            if (chunk.length >= minRows && (tooTall || overHardCap)) {
+                pages.push({ section, rows: chunk });
+                chunk = [rows[i]];
+            } else {
+                chunk = candidate;
+            }
+        }
+        if (chunk.length) pages.push({ section, rows: chunk });
+    } finally {
+        probeHost.remove();
     }
-    for (let i = 0; i < rows.length; i += perPage) {
-        pages.push({ section, rows: rows.slice(i, i + perPage) });
-    }
+
     return pages;
 }
 async function aarishExportPremiumPdfCoreV1(type, dataset) {
     if (!dataset || !dataset.sections || !dataset.rowCount) {
-        return (typeof showToast === 'function') && showToast("No data to export.");
+        return (typeof showToast === 'function') && showToast('No data to export.');
     }
-    // पीडीएफ इंजन चेक (अगर फाइल लोड नहीं हुई तो अलर्ट दें)
-    if (typeof html2canvas !== "function" || !window.jspdf || typeof window.jspdf.jsPDF !== "function") {
-        return (typeof showToast === "function") && showToast("पीडीएफ (PDF) इंजन लोड नहीं हुआ — इंटरनेट चेक करके ऐप दोबारा खोलें।");
+    if (typeof html2canvas !== 'function' || !window.jspdf || typeof window.jspdf.jsPDF !== 'function') {
+        return (typeof showToast === 'function') && showToast('PDF इंजन लोड नहीं हुआ — इंटरनेट चेक करें।');
     }
-    if (typeof showLoader === 'function') showLoader("Preparing PDF Engine...");
+    if (typeof showLoader === 'function') showLoader('Preparing PDF Engine...');
 
     let host = null;
-
     try {
         const { jsPDF } = window.jspdf;
-        // Compression is automatically handled, but we force orientation & format
-        const pdf = new jsPDF('p', 'pt', 'a4');
+        const pdf = new jsPDF('p', 'pt', 'a4', true);
         const pdfWidth = pdf.internal.pageSize.getWidth();
-
-        // Snapshot the LIVE app theme (colors, dark/light mode) exactly once so every
-        // rendered page matches the current UI. This is the object whose missing
-        // '.dark' property was the direct cause of the export crash.
+        const pdfHeight = pdf.internal.pageSize.getHeight();
         const theme = aarishSnapshotReportThemeCoreV1(type);
 
-        // Flatten every section's paginated rows into one ordered list so page
-        // numbers run continuously across the whole document, not per-section.
         const descriptors = [];
-        dataset.sections.forEach(section => {
-            aarishBuildReportPagesCoreV1(section).forEach(pageChunk => descriptors.push(pageChunk));
+        (dataset.sections || []).forEach(section => {
+            aarishBuildReportPagesCoreV1(section, theme).forEach(pageChunk => descriptors.push(pageChunk));
         });
+
+        if (!descriptors.length) {
+            throw new Error('No report pages were created.');
+        }
 
         host = document.getElementById('aarish-pdf-host-v2');
         if (!host) {
             host = document.createElement('div');
             host.id = 'aarish-pdf-host-v2';
-            host.className = 'aarish-report-host';
-            host.style.cssText = 'position:fixed; left:-12000px; top:0; width:794px; z-index:-1; contain: layout style paint;';
             document.body.appendChild(host);
         }
+        host.className = 'aarish-report-host';
+        host.style.cssText = 'position:absolute;left:-20000px;top:0;width:794px;z-index:-1;contain:layout style;overflow:visible;';
         host.innerHTML = '';
 
-        const bgColor = theme.dark ? '#000000' : '#F5F5F7';
         const totalPages = descriptors.length;
+        const bgColor = '#000000';
 
         for (let i = 0; i < descriptors.length; i++) {
-            if (typeof showLoader === 'function') showLoader(`Rendering Page ${i + 1} of ${totalPages}...\n(Do not close app)`);
+            if (typeof showLoader === 'function') showLoader(`Rendering Page ${i + 1} of ${totalPages}...`);
             const desc = descriptors[i];
-
-            // 1. Create Node
-            let pageNode = aarishCreateReportPageCoreV1(dataset, desc.section, desc.rows, i + 1, totalPages, theme);
+            const pageNode = aarishCreateReportPageCoreV1(dataset, desc.section, desc.rows, i + 1, totalPages, theme);
             host.appendChild(pageNode);
 
-            // Let DOM Paint
-            await new Promise(r => setTimeout(r, 60));
+            await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
 
-            // 2. Render Canvas (With strict internal cleanup)
-            let canvas = await html2canvas(pageNode, {
+            const rect = pageNode.getBoundingClientRect();
+            const renderHeight = Math.max(1123, Math.ceil(rect.height || pageNode.scrollHeight || 1123));
+            const canvas = await html2canvas(pageNode, {
                 scale: 2,
+                backgroundColor: bgColor,
                 useCORS: true,
                 logging: false,
-                backgroundColor: bgColor,
+                width: 794,
+                height: renderHeight,
                 windowWidth: 794,
-                removeContainer: true // SMART LOGIC: Force html2canvas to delete its clones
+                windowHeight: renderHeight,
+                scrollX: 0,
+                scrollY: 0,
+                removeContainer: true
             });
 
-            // 3. Compress Data (0.75 cuts RAM weight by 40% vs 0.85)
-            let imgData = canvas.toDataURL('image/jpeg', 0.75);
+            if (!canvas || !canvas.width || !canvas.height) {
+                throw new Error(`Blank canvas on PDF page ${i + 1}.`);
+            }
 
+            const imgData = canvas.toDataURL('image/jpeg', 0.92);
             if (i > 0) pdf.addPage();
 
             const imgProps = pdf.getImageProperties(imgData);
-            const fitHeight = pdfWidth / (imgProps.width / imgProps.height);
+            let fitWidth = pdfWidth;
+            let fitHeight = pdfWidth / (imgProps.width / imgProps.height);
+            if (fitHeight > pdfHeight) {
+                const ratio = pdfHeight / fitHeight;
+                fitHeight = pdfHeight;
+                fitWidth = pdfWidth * ratio;
+            }
+            const xOffset = (pdfWidth - fitWidth) / 2;
+            const yOffset = fitHeight < pdfHeight ? 0 : 0;
+            pdf.addImage(imgData, 'JPEG', xOffset, yOffset, fitWidth, fitHeight, undefined, 'FAST');
 
-            // Use 'FAST' compression alias
-            pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, fitHeight, undefined, 'FAST');
-
-            // 🚨 4. ULTIMATE GC CLEANUP (SMART LOGIC) 🚨
-            host.removeChild(pageNode);
-            canvas.width = 0;
-            canvas.height = 0;
-
-            // Kill references so Garbage Collector eats them instantly
-            pageNode = null;
-            canvas = null;
-            imgData = null;
-
-            // 5. Breathing Room for RAM (Event Loop Yielding)
-            if (i < descriptors.length - 1) {
-                if (typeof showLoader === 'function') showLoader(`Optimizing Memory...\n(${i + 1}/${totalPages})`);
-                await new Promise(r => setTimeout(r, 280)); // 280ms GC sweep
+            pageNode.remove();
+            canvas.width = 1;
+            canvas.height = 1;
+            if (i < descriptors.length - 1 && typeof showLoader === 'function') {
+                showLoader(`Optimizing... (${i + 1}/${totalPages})`);
+                await new Promise(resolve => setTimeout(resolve, 40));
             }
         }
 
-        if (typeof showLoader === 'function') showLoader("Saving File...");
-        if (host && host.parentNode) host.parentNode.removeChild(host);
-        host = null; // Kill host reference
+        if (typeof showLoader === 'function') showLoader('Saving File...');
+        host.remove();
+        host = null;
 
-        const safeTitle = String(dataset.title || 'Report').replace(/[^a-zA-Z0-9]/g, '_');
+        const safeTitle = aarishExportSafeFileNameCoreV1(dataset.title || 'Report');
         pdf.save(`${safeTitle}_Aarish_Pro.pdf`);
-
-        if (typeof showToast === 'function') showToast("PDF Exported Successfully!");
-
+        if (typeof showToast === 'function') showToast('PDF Exported Successfully!');
     } catch (e) {
-        console.error("PDF Export OOM/Error:", e);
-        // स्क्रीन पर असली एरर (Real Error) दिखाना
-        const reason = (e && e.message) ? e.message : "अज्ञात त्रुटि (Unknown error)";
-        if (typeof showToast === "function") showToast("पीडीएफ (PDF) जनरेट होने में त्रुटि: " + reason);
-        if (host && host.parentNode) host.parentNode.removeChild(host);
+        console.error('PDF Export Error:', e);
+        const reason = (e && e.message) ? e.message : 'Unknown error';
+        if (typeof showToast === 'function') showToast('PDF जनरेट होने में त्रुटि: ' + reason);
+        if (host && host.parentNode) host.remove();
     } finally {
         if (typeof hideLoader === 'function') hideLoader();
     }
@@ -9744,15 +9794,13 @@ function aarishSetExportFormatCoreV1(format) {
     const help = modal.querySelector('[data-aarish-export-help]');
     if (help) {
         help.textContent = window.__aarishExportFormatCoreV1 === 'pdf'
-            ? 'Premium PDF app ke current colors, borders, cards aur dark/light mode se banegi.'
+            ? 'Premium PDF: black background + blue text, full data, adaptive pagination.'
             : 'CSV Backup raw data ke liye permanent safe file hai. Excel/Sheets me open ho jayegi.';
     }
 }
 function aarishExportButtonHtmlCoreV1(type) {
     const meta = aarishExportMetaCoreV1(type);
-    const bg = type === 'all'
-        ? 'background:#000;'
-        : `background:linear-gradient(135deg, ${meta.tone}, ${meta.tone2});`;
+    const bg = 'background:linear-gradient(135deg,#007AFF,#0A84FF);';
     return `<button onclick="haptic(); executeDownload('${meta.id}')" class="btn-primary" style="${bg} border:none;"><i class="fa-solid ${meta.icon}"></i> ${meta.title}</button>`;
 }
 function downloadExcel() {
@@ -9771,13 +9819,11 @@ function downloadExcel() {
             <div class="w-12 h-1.5 bg-gray-300 dark:bg-gray-600 shrink-0 rounded-full mx-auto mb-6"></div>
             <h2 class="text-2xl font-extrabold mb-2 text-center w-full">Export Center</h2>
             <p class="text-[11px] text-center text-gray-500 mb-4 font-bold uppercase tracking-wider">Choose format, then select report</p>
-
             <div class="aarish-export-format-grid">
                 <button type="button" class="aarish-export-format-btn" data-format="pdf" onclick="haptic(); aarishSetExportFormatCoreV1('pdf')"><i class="fa-solid fa-file-pdf"></i> Premium PDF</button>
                 <button type="button" class="aarish-export-format-btn" data-format="csv" onclick="haptic(); aarishSetExportFormatCoreV1('csv')"><i class="fa-solid fa-table"></i> CSV Backup</button>
             </div>
             <div class="aarish-export-format-help" data-aarish-export-help></div>
-
             <div class="grid grid-cols-2 gap-3 mb-4 w-full">
                 ${aarishExportButtonHtmlCoreV1('all')}
                 ${aarishExportButtonHtmlCoreV1('milk')}
