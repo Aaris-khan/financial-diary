@@ -4233,6 +4233,16 @@ window.__AARISH_BACKEND_TITANIUM_CORE_V11 = true;
 // ========================== PHANTOM PEN DRIVE BOOTLOADER & ENGINE ==========================
 window.__PHANTOM_ACTIVE = false;
 
+// व्हाट्सएप यूआरएल के लिए सुरक्षित बेस64 फंक्शन्स (स्पेस और प्लस सिंबल फिक्स)
+function aarishBase64UrlEncodeCoreV1(str) {
+    return btoa(encodeURIComponent(str)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+function aarishBase64UrlDecodeCoreV1(str) {
+    let b64 = String(str || "").replace(/-/g, "+").replace(/_/g, "/");
+    while (b64.length % 4) b64 += "=";
+    return decodeURIComponent(atob(b64));
+}
+
 function initPhantomBootloader() {
     const params = new URLSearchParams(window.location.search);
     const pType = params.get('phantom');
@@ -4245,7 +4255,7 @@ function initPhantomBootloader() {
         window.__PHANTOM_ACTIVE = true;
         
         try {
-            const decodedStr = decodeURIComponent(atob(pData));
+            const decodedStr = aarishBase64UrlDecodeCoreV1(pData);
             const parsedData = JSON.parse(decodedStr);
 
             const executePhantomJail = () => {
@@ -4489,7 +4499,7 @@ window.aarishGeneratePenDriveSnapshotLink = function(type, name) {
 
     try {
         const minified = JSON.stringify(dataToShare);
-        const encoded = btoa(encodeURIComponent(minified));
+        const encoded = aarishBase64UrlEncodeCoreV1(minified);
         
         // WhatsApp URL Length limitation warning handled gracefully
         if (encoded.length > 5000) {
@@ -9590,7 +9600,11 @@ function aarishBuildReportPagesCoreV1(records, title, type) {
 }
 async function aarishExportPremiumPdfCoreV1(records, title, type) {
     if (!records || !records.length) return (typeof showToast === 'function') && showToast("No data to export.");
-    if (typeof showLoader === 'function') showLoader("Preparing PDF Engine...");
+        // पीडीएफ इंजन चेक (अगर फाइल लोड नहीं हुई तो अलर्ट दें)
+    if (typeof html2canvas !== "function" || !window.jspdf || typeof window.jspdf.jsPDF !== "function") {
+        return (typeof showToast === "function") && showToast("पीडीएफ (PDF) इंजन लोड नहीं हुआ — इंटरनेट चेक करके ऐप दोबारा खोलें।");
+    }
+if (typeof showLoader === 'function') showLoader("Preparing PDF Engine...");
     
     let host = null;
     
@@ -9675,7 +9689,9 @@ async function aarishExportPremiumPdfCoreV1(records, title, type) {
 
     } catch (e) {
         console.error("PDF Export OOM/Error:", e);
-        if (typeof showToast === 'function') showToast("PDF generation failed due to strict memory limits.");
+        // स्क्रीन पर असली एरर (Real Error) दिखाना
+        const reason = (e && e.message) ? e.message : "अज्ञात त्रुटि (Unknown error)";
+        if (typeof showToast === "function") showToast("पीडीएफ (PDF) जनरेट होने में त्रुटि: " + reason);
         if (host && host.parentNode) host.parentNode.removeChild(host);
     } finally {
         if (typeof hideLoader === 'function') hideLoader();
