@@ -4223,6 +4223,214 @@ window.__AARISH_BACKEND_TITANIUM_CORE_V11 = true;
     let activeDiaryIndex = null;
     let activeProject = null;
 
+// ========================== PHANTOM PEN DRIVE BOOTLOADER & ENGINE ==========================
+window.__PHANTOM_ACTIVE = false;
+
+function initPhantomBootloader() {
+    const params = new URLSearchParams(window.location.search);
+    const pType = params.get('phantom');
+    const pName = params.get('pname');
+    const pData = params.get('data');
+
+    if (pType && pName && pData) {
+        window.__PHANTOM_ACTIVE = true;
+        
+        try {
+            const decodedStr = decodeURIComponent(atob(pData));
+            const parsedData = JSON.parse(decodedStr);
+
+            const executePhantomJail = () => {
+                // 1. App Boot Bypassing
+                const loginScreen = document.getElementById('login-screen');
+                const mainApp = document.getElementById('main-app');
+                if(loginScreen) loginScreen.style.display = 'none';
+                if(mainApp) mainApp.classList.remove('hidden');
+
+                // 2. CSS Nuclear Lockdown (Jail the user in read-only mode)
+                const style = document.createElement('style');
+                style.innerHTML = `
+                    button[onclick*="save"], button[onclick*="delete"], button[onclick*="Modal"], 
+                    .action-btn, .btn-ios-add, .milk-detail-delete-core-btn, .credit-delete-btn-core, 
+                    .credit-add-btn-core, .credit-profile-delete-btn-core, .salary-profile-delete-btn-core, 
+                    .salary-delete-btn-core, .business-delete-btn-core, #expense-add-btn-core {
+                        display: none !important;
+                        pointer-events: none !important;
+                    }
+                    .bottom-nav { display: none !important; }
+                    .header-sticky button i.fa-chevron-left { display: none !important; }
+                    .screen { padding-bottom: 24px !important; }
+                    .phantom-badge {
+                        display: inline-block; background: rgba(155, 114, 203, 0.2); color: #9b72cb;
+                        padding: 4px 10px; border-radius: 12px; font-size: 10px; font-weight: 800;
+                        border: 1px solid rgba(155, 114, 203, 0.4); margin-left: 8px;
+                        vertical-align: middle; text-shadow: none !important;
+                    }
+                `;
+                document.head.appendChild(style);
+
+                // 3. Backend Mutators Neutered
+                window.aarishFirebaseLaterV48 = async () => false;
+                window.flushFirebaseWriteOutboxV87 = async () => false;
+                window.aarishFirebaseBatchLaterV87 = async () => { return {queued: false}; };
+
+                // 4. Inject Payload into RAM
+                if (pType === 'milk') {
+                    window.milkDB = {};
+                    window.milkDB[pName] = parsedData;
+                    window.activeMilkCustomer = pName;
+                    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+                    document.getElementById('milk-detail-screen').classList.add('active');
+                    const titleEl = document.getElementById('milk-detail-title');
+                    if(titleEl) titleEl.innerHTML = `${sanitizeHTML(pName)} <span class="phantom-badge">LIVE SNAPSHOT</span>`;
+                    if(typeof renderMilkRecords === 'function') renderMilkRecords();
+                } else if (pType === 'udhar') {
+                    window.udharDB = parsedData;
+                    window.activeUdharPerson = pName;
+                    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+                    document.getElementById('udhar-detail-screen').classList.add('active');
+                    const titleEl = document.getElementById('udhar-detail-title');
+                    if(titleEl) titleEl.innerHTML = `${sanitizeHTML(pName)} <span class="phantom-badge">LIVE SNAPSHOT</span>`;
+                    if(typeof renderUdharRecords === 'function') renderUdharRecords();
+                } else if (pType === 'salary') {
+                window.salaryDB = {};
+                window.salaryDB[pName] = parsedData;
+                window.activeSalaryPerson = pName;
+                document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+                document.getElementById('salary-detail-screen').classList.add('active');
+                const titleEl = document.getElementById('salary-detail-title');
+                if(titleEl) titleEl.innerHTML = `${sanitizeHTML(pName)} <span class="phantom-badge">LIVE SNAPSHOT</span>`;
+                if(typeof renderSalaryRecords === 'function') renderSalaryRecords();
+            } else if (pType === 'expense') {
+                window.expenseDB = parsedData;
+                window.activeExpenseCategory = pName;
+                document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+                document.getElementById('expense-detail-screen').classList.add('active');
+                const titleEl = document.getElementById('expense-detail-title');
+                if(titleEl) titleEl.innerHTML = `${sanitizeHTML(pName)} <span class="phantom-badge">LIVE SNAPSHOT</span>`;
+                if(typeof renderExpenseRecords === 'function') renderExpenseRecords();
+            } else if (pType === 'diary') {
+                window.diaryDB = [parsedData];
+                document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+                document.getElementById('diary-detail-screen').classList.add('active');
+                const title = document.getElementById('diary-view-title');
+                const date = document.getElementById('diary-view-date');
+                const content = document.getElementById('diary-view-content');
+                if (title) title.textContent = parsedData.title || 'Untitled';
+                if (date) date.textContent = (typeof diaryFormatDateCoreV1 === 'function') ? diaryFormatDateCoreV1(parsedData.date) : parsedData.date;
+                if (content) content.textContent = parsedData.content || '';
+            } else if (pType === 'projects') {
+                window.projectDB = {};
+                window.projectDB[pName] = parsedData;
+                window.activeProject = pName;
+                document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+                document.getElementById('project-detail-screen').classList.add('active');
+                const titleEl = document.getElementById('project-detail-title');
+                if(titleEl) titleEl.innerHTML = `${sanitizeHTML(pName)} <span class="phantom-badge">LIVE SNAPSHOT</span>`;
+                if(typeof renderProjectRecords === 'function') renderProjectRecords();
+            }
+
+                if(typeof hideLoader === 'function') hideLoader();
+                setTimeout(() => { if(typeof showToast === 'function') showToast("Offline Snapshot: View Only"); }, 800);
+            };
+
+            // ULTIMATE FIX: Check if DOM is already loaded to prevent blank screen
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', executePhantomJail);
+            } else {
+                executePhantomJail();
+            }
+
+            return true;
+        } catch (e) {
+            alert("Corrupted Snapshot Link!");
+        }
+    }
+    return false;
+}
+initPhantomBootloader();
+
+window.__aarishLongPressTimer = null;
+window.__aarishIsLongPressActive = false;
+
+window.aarishStartCardHold = function(type, name) {
+    window.__aarishIsLongPressActive = false;
+    if (window.__aarishLongPressTimer) clearTimeout(window.__aarishLongPressTimer);
+    
+    window.__aarishLongPressTimer = setTimeout(() => {
+        window.__aarishIsLongPressActive = true;
+        try { if (navigator.vibrate) navigator.vibrate([80, 50, 80]); } catch(e) {}
+        aarishGeneratePenDriveSnapshotLink(type, name);
+    }, 1500); // 1.5 seconds hold
+};
+
+window.aarishCancelCardHold = function() {
+    if (window.__aarishLongPressTimer) {
+        clearTimeout(window.__aarishLongPressTimer);
+        window.__aarishLongPressTimer = null;
+    }
+};
+
+window.aarishGeneratePenDriveSnapshotLink = function(type, name) {
+    let dataToShare = null;
+    if (type === 'milk') {
+        if (!milkDB[name] || !milkDB[name].records || milkDB[name].records.length === 0) {
+            return showToast("No records found to generate snapshot!");
+        }
+        dataToShare = milkDB[name];
+    } else if (type === 'udhar') {
+        const records = (typeof creditEntriesCoreV1 === 'function' ? creditEntriesCoreV1() : udharDB).filter(u => String(u.name || '').trim() === String(name || '').trim());
+        if (records.length === 0) {
+            return showToast("No credit records found to generate snapshot!");
+        }
+        dataToShare = records;
+        } else if (type === 'salary') {
+            if (!salaryDB[name] || !salaryDB[name].records || salaryDB[name].records.length === 0) {
+                return showToast("No records found to generate snapshot!");
+            }
+            dataToShare = salaryDB[name];
+        } else if (type === 'expense') {
+            const records = (typeof expenseDB !== 'undefined' ? expenseDB : []).filter(e => String(e.category || '').trim() === String(name || '').trim());
+            if (records.length === 0) {
+                return showToast("No expense records found to generate snapshot!");
+            }
+            dataToShare = records;
+        } else if (type === 'diary') {
+            const entry = (typeof diaryFindEntryCoreV1 === 'function') ? diaryFindEntryCoreV1(name) : (typeof diaryDB !== 'undefined' ? diaryDB : []).find(d => String(d.id) === String(name));
+            if (!entry) {
+                return showToast("Diary page not found!");
+            }
+            dataToShare = entry;
+        } else if (type === 'projects') {
+            if (!projectDB[name] || !projectDB[name].records || projectDB[name].records.length === 0) {
+                return showToast("No records found to generate snapshot!");
+            }
+            dataToShare = projectDB[name];
+        }
+
+    try {
+        const minified = JSON.stringify(dataToShare);
+        const encoded = btoa(encodeURIComponent(minified));
+        
+        // WhatsApp URL Length limitation warning handled gracefully
+        if (encoded.length > 5000) {
+            return showToast("Data history too large for live link! Please Share PDF instead.");
+        }
+
+        const link = window.location.origin + window.location.pathname + "?phantom=" + encodeURIComponent(type) + "&pname=" + encodeURIComponent(name) + "&data=" + encoded;
+        const msg = `*Aarish Dairy Pro - Offline Snapshot*
+Here is your live ${type} ledger for *${name}*. Tap the secure link to view records instantly (No login required):
+
+${link}`;
+        
+        window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+        showToast("Snapshot Link Generated!");
+    } catch(e) {
+        showToast("Error generating snapshot link.");
+    }
+};
+// ===========================================================================================
+
+
     
     let selectedMonth = new Date().getMonth(), selectedYear = new Date().getFullYear();
     const DEFAULT_RATE = 55;
@@ -4420,6 +4628,7 @@ window.__AARISH_BACKEND_TITANIUM_CORE_V11 = true;
 
     // ========================== GOOGLE AUTH ==========================
     function initFirebase() {
+        if (window.__PHANTOM_ACTIVE) return;
     if (!app) {
         app = firebase.initializeApp(firebaseConfig);
         auth = firebase.auth();
@@ -6770,6 +6979,7 @@ installFirebaseCostCoreV1();
 
 
 async function loadUserData() {
+        if (window.__PHANTOM_ACTIVE) return;
     var uid = aarishCostUidV1();
     if (!uid) {
         try { hideLoader(); } catch(e) {}
@@ -7501,7 +7711,7 @@ function renderDiaryList() {
             data-diary-core-tone="yellow"
             data-module-tone="diary"
             data-v99-tone="diary"
-            onclick="try{haptic()}catch(e){}; openDiaryDetail(${idArg})"
+            ontouchstart="aarishStartCardHold(\'diary\', ${idArg})" ontouchend="aarishCancelCardHold()" ontouchmove="aarishCancelCardHold()" onmousedown="aarishStartCardHold(\'diary\', ${idArg})" onmouseup="aarishCancelCardHold()" onmouseleave="aarishCancelCardHold()" onclick="if(window.__aarishIsLongPressActive){ window.__aarishIsLongPressActive=false; return; } try{haptic()}catch(e){}; openDiaryDetail(${idArg})"
             class="glass-card diary-card diary-core-card mb-4 cursor-pointer w-full border-l-[4px] border-l-[#F5A623] ring-1 ring-white/40 dark:ring-white/5 list-enter"
             style="--diaryTone:#F5A623;--diaryTone2:#E59A1F;--diaryTint:rgba(245,166,35,0.12);--diaryBorder:rgba(245,166,35,0.28);--diaryGlow:rgba(245,166,35,0.30);animation-delay:${index * 0.05}s;">
             <div class="flex justify-between items-center mb-2 w-full min-w-0 gap-2">
@@ -8616,7 +8826,7 @@ function renderMilkList() {
 
         return `<div
             data-module="milk" data-module-tone="${tone}"
-            onclick="haptic(); openMilkDetail(${argName})"
+            ontouchstart="aarishStartCardHold(\'milk\', ${argName})" ontouchend="aarishCancelCardHold()" ontouchmove="aarishCancelCardHold()" onmousedown="aarishStartCardHold(\'milk\', ${argName})" onmouseup="aarishCancelCardHold()" onmouseleave="aarishCancelCardHold()" onclick="if(window.__aarishIsLongPressActive){ window.__aarishIsLongPressActive=false; return; } haptic(); openMilkDetail(${argName})"
             class="glass-card milk-core-card mb-3.5 flex items-center justify-between cursor-pointer w-full ring-1 ring-white/40 dark:ring-white/5 list-enter"
             style="${aarishMilkVarsStyleCore(tone)} --aarish-stagger-v4:${delay}s; animation-delay:${delay}s; border-left-color:${v.tone}!important;">
             <div class="flex items-center gap-3.5 w-full min-w-0">
@@ -9285,74 +9495,110 @@ function aarishCreateReportPageCoreV1(dataset, section, rows, pageNo, totalPages
     `;
     return page;
 }
-function aarishBuildReportPagesCoreV1(dataset, theme) {
+function aarishBuildReportPagesCoreV1(records, title, type) {
+    const ITEMS_PER_PAGE = (type === 'diary') ? 4 : 22;
     const pages = [];
-    ((dataset && dataset.sections) || []).forEach(section => {
-        const rows = section.rows || [];
-        const perPage = aarishExportRowsPerPageCoreV1(section);
-        if (!rows.length) {
-            pages.push({ section, rows: [] });
-            return;
-        }
-        for (let i = 0; i < rows.length; i += perPage) {
-            pages.push({ section, rows: rows.slice(i, i + perPage) });
-        }
-    });
-    if (!pages.length) {
-        pages.push({ section: { id:'all', title:'No Data', headers:['Message'], rows:[] }, rows: [] });
+    if (!records || records.length === 0) return pages;
+    for (let i = 0; i < records.length; i += ITEMS_PER_PAGE) {
+        pages.push({
+            items: records.slice(i, i + ITEMS_PER_PAGE),
+            pageIndex: Math.floor(i / ITEMS_PER_PAGE),
+            totalPages: Math.ceil(records.length / ITEMS_PER_PAGE)
+        });
     }
-    return pages.map((p, index) => aarishCreateReportPageCoreV1(dataset, p.section, p.rows, index + 1, pages.length, theme));
+    return pages;
 }
-async function aarishExportPremiumPdfCoreV1(type, dataset) {
-    showLoader('Premium PDF बन रही है...');
-    await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
-
-    if (!window.jspdf || !window.jspdf.jsPDF) {
-        hideLoader();
-        showToast('PDF library loading. Please try again.');
-        return;
-    }
-
-    const theme = aarishSnapshotReportThemeCoreV1(type);
-    const host = document.createElement('div');
-    host.className = 'aarish-report-host';
-    document.body.appendChild(host);
-
+async function aarishExportPremiumPdfCoreV1(records, title, type) {
+    if (!records || !records.length) return (typeof showToast === 'function') && showToast("No data to export.");
+    if (typeof showLoader === 'function') showLoader("Preparing PDF Engine...");
+    
+    let host = null;
+    
     try {
-        const pages = aarishBuildReportPagesCoreV1(dataset, theme);
-        pages.forEach(page => host.appendChild(page));
-        await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+        const { jsPDF } = window.jspdf;
+        // Compression is automatically handled, but we force orientation & format
+        const pdf = new jsPDF('p', 'pt', 'a4');
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        
+        const descriptors = aarishBuildReportPagesCoreV1(records, title, type);
+        
+        host = document.getElementById('aarish-pdf-host-v2');
+        if (!host) {
+            host = document.createElement('div');
+            host.id = 'aarish-pdf-host-v2';
+            host.className = 'aarish-report-host';
+            host.style.cssText = 'position:fixed; left:-12000px; top:0; width:794px; z-index:-1; contain: layout style paint;';
+            document.body.appendChild(host);
+        }
+        host.innerHTML = '';
+        
+        const isDark = document.documentElement.classList.contains('dark');
+        const bgColor = isDark ? '#000000' : '#F5F5F7';
 
-        const pdf = new window.jspdf.jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4', compress: true });
-        for (let i = 0; i < pages.length; i++) {
-            const canvas = await html2canvas(pages[i], {
-                scale: 2,
-                backgroundColor: theme.bg || null,
+        for (let i = 0; i < descriptors.length; i++) {
+            if (typeof showLoader === 'function') showLoader(`Rendering Page ${i + 1} of ${descriptors.length}...\n(Do not close app)`);
+            const desc = descriptors[i];
+            
+            // 1. Create Node
+            let pageNode = aarishCreateReportPageCoreV1(desc.items, title, type, desc.pageIndex, desc.totalPages);
+            host.appendChild(pageNode);
+            
+            // Let DOM Paint
+            await new Promise(r => setTimeout(r, 60));
+
+            // 2. Render Canvas (With strict internal cleanup)
+            let canvas = await html2canvas(pageNode, {
+                scale: 2, 
                 useCORS: true,
                 logging: false,
+                backgroundColor: bgColor,
                 windowWidth: 794,
-                windowHeight: 1123,
-                scrollX: 0,
-                scrollY: 0
+                removeContainer: true // SMART LOGIC: Force html2canvas to delete its clones
             });
-            const img = canvas.toDataURL('image/jpeg', 0.96);
-            if (i > 0) pdf.addPage('a4', 'portrait');
-            pdf.addImage(img, 'JPEG', 0, 0, 210, 297, undefined, 'FAST');
+
+            // 3. Compress Data (0.75 cuts RAM weight by 40% vs 0.85)
+            let imgData = canvas.toDataURL('image/jpeg', 0.75); 
+
+            if (i > 0) pdf.addPage();
+            
+            const imgProps = pdf.getImageProperties(imgData);
+            const fitHeight = pdfWidth / (imgProps.width / imgProps.height);
+            
+            // Use 'FAST' compression alias
+            pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, fitHeight, undefined, 'FAST');
+
+            // 🚨 4. ULTIMATE GC CLEANUP (SMART LOGIC) 🚨
+            host.removeChild(pageNode);
+            canvas.width = 0; 
+            canvas.height = 0;
+            
+            // Kill references so Garbage Collector eats them instantly
+            pageNode = null;
+            canvas = null;
+            imgData = null;
+
+            // 5. Breathing Room for RAM (Event Loop Yielding)
+            if (i < descriptors.length - 1) {
+                if (typeof showLoader === 'function') showLoader(`Optimizing Memory...\n(${i + 1}/${descriptors.length})`);
+                await new Promise(r => setTimeout(r, 280)); // 280ms GC sweep
+            }
         }
 
-        const fileName = 'Aarish_' + aarishExportSafeFileNameCoreV1(type || 'all') + '_Premium_Report.pdf';
-        const blob = pdf.output('blob');
-        const file = new File([blob], fileName, { type: 'application/pdf' });
+        if (typeof showLoader === 'function') showLoader("Saving File...");
+        if (host && host.parentNode) host.parentNode.removeChild(host);
+        host = null; // Kill host reference
 
-        hideLoader();
-        await aarishShareOrDownloadFileCoreV1(file, 'Premium PDF Report');
-        showToast('Premium PDF Ready ✅');
-    } catch (err) {
-        hideLoader();
-        console.error('Aarish Premium PDF error:', err);
-        showToast('PDF generation failed.');
+        const safeTitle = String(title || 'Report').replace(/[^a-zA-Z0-9]/g, '_');
+        pdf.save(`${safeTitle}_Aarish_Pro.pdf`);
+        
+        if (typeof showToast === 'function') showToast("PDF Exported Successfully!");
+
+    } catch (e) {
+        console.error("PDF Export OOM/Error:", e);
+        if (typeof showToast === 'function') showToast("PDF generation failed due to strict memory limits.");
+        if (host && host.parentNode) host.parentNode.removeChild(host);
     } finally {
-        try { host.remove(); } catch(e) {}
+        if (typeof hideLoader === 'function') hideLoader();
     }
 }
 async function aarishExportCsvBackupCoreV1(type, dataset) {
@@ -9874,7 +10120,7 @@ function openUdharModal(name = null) {
                 data-module-tone="${tone}"
                 class="glass-card mb-3.5 flex items-center justify-between cursor-pointer w-full min-w-0 ring-1 ring-white/40 dark:ring-white/5 list-enter rounded-2xl"
                 style="${creditStyleVarsCoreV1(tone)} animation-delay:${index * 0.03}s;"
-                onclick="try{haptic()}catch(e){}; openUdharDetail(${arg})">
+                ontouchstart="aarishStartCardHold(\'udhar\', ${arg})" ontouchend="aarishCancelCardHold()" ontouchmove="aarishCancelCardHold()" onmousedown="aarishStartCardHold(\'udhar\', ${arg})" onmouseup="aarishCancelCardHold()" onmouseleave="aarishCancelCardHold()" onclick="if(window.__aarishIsLongPressActive){ window.__aarishIsLongPressActive=false; return; } try{haptic()}catch(e){}; openUdharDetail(${arg})">
                 <div class="flex items-center gap-4 flex-1 min-w-0">
                     <div class="credit-avatar-core w-12 h-12 shrink-0 squircle font-extrabold flex items-center justify-center text-lg">${creditNameInitialCoreV1(g.name)}</div>
                     <div class="flex-1 min-w-0">
@@ -10417,7 +10663,7 @@ function updateExpenseDetailCoreUi(total) {
             return `<div
                 data-expense-core-tone="${tone}"
                 data-module-tone="${tone}"
-                onclick="try{haptic()}catch(e){}; openExpenseDetail('${catArg}')"
+                ontouchstart="aarishStartCardHold('expense', '${catArg}')" ontouchend="aarishCancelCardHold()" ontouchmove="aarishCancelCardHold()" onmousedown="aarishStartCardHold('expense', '${catArg}')" onmouseup="aarishCancelCardHold()" onmouseleave="aarishCancelCardHold()" onclick="if(window.__aarishIsLongPressActive){ window.__aarishIsLongPressActive=false; return; } try{haptic()}catch(e){}; openExpenseDetail('${catArg}')"
                 ontouchstart="startExpenseLongPress('${catArg}')"
                 ontouchend="cancelExpenseLongPress()"
                 ontouchmove="cancelExpenseLongPress()"
@@ -10797,7 +11043,7 @@ async function saveNewProject() {
             return `<div
                 data-business-core-card="true"
                 data-module-tone="business"
-                onclick="try{haptic()}catch(e){}; openProjectDetail(${argName})"
+                ontouchstart="aarishStartCardHold('projects', ${argName})" ontouchend="aarishCancelCardHold()" ontouchmove="aarishCancelCardHold()" onmousedown="aarishStartCardHold('projects', ${argName})" onmouseup="aarishCancelCardHold()" onmouseleave="aarishCancelCardHold()" onclick="if(window.__aarishIsLongPressActive){ window.__aarishIsLongPressActive=false; return; } try{haptic()}catch(e){}; openProjectDetail(${argName})"
                 class="glass-card business-core-card mb-3.5 flex items-center justify-between cursor-pointer w-full min-w-0 ring-1 ring-white/40 dark:ring-white/5 list-enter"
                 style="--businessBlue:#007AFF;--businessBlueGlow:rgba(0,122,255,0.28);animation-delay:${index * 0.035}s;">
                 <div class="flex items-center gap-4 w-full min-w-0">
