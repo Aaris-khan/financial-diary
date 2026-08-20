@@ -9585,37 +9585,51 @@ function aarishCreateReportPageCoreV1(dataset, section, rows, pageNo, totalPages
     `;
     return page;
 }
-function aarishBuildReportPagesCoreV1(records, title, type) {
-    const ITEMS_PER_PAGE = (type === 'diary') ? 4 : 22;
+function aarishBuildReportPagesCoreV1(section) {
+    // Paginates a single section's rows using the column/type-aware page size
+    // aarishExportRowsPerPageCoreV1 already defines for this section.
+    const rows = (section && section.rows) || [];
+    const perPage = Math.max(1, aarishExportRowsPerPageCoreV1(section));
     const pages = [];
-    if (!records || records.length === 0) return pages;
-    for (let i = 0; i < records.length; i += ITEMS_PER_PAGE) {
-        pages.push({
-            items: records.slice(i, i + ITEMS_PER_PAGE),
-            pageIndex: Math.floor(i / ITEMS_PER_PAGE),
-            totalPages: Math.ceil(records.length / ITEMS_PER_PAGE)
-        });
+    if (rows.length === 0) {
+        pages.push({ section, rows: [] }); // still render one page so an empty section is visible
+        return pages;
+    }
+    for (let i = 0; i < rows.length; i += perPage) {
+        pages.push({ section, rows: rows.slice(i, i + perPage) });
     }
     return pages;
 }
-async function aarishExportPremiumPdfCoreV1(records, title, type) {
-    if (!records || !records.length) return (typeof showToast === 'function') && showToast("No data to export.");
-        // पीडीएफ इंजन चेक (अगर फाइल लोड नहीं हुई तो अलर्ट दें)
+async function aarishExportPremiumPdfCoreV1(type, dataset) {
+    if (!dataset || !dataset.sections || !dataset.rowCount) {
+        return (typeof showToast === 'function') && showToast("No data to export.");
+    }
+    // पीडीएफ इंजन चेक (अगर फाइल लोड नहीं हुई तो अलर्ट दें)
     if (typeof html2canvas !== "function" || !window.jspdf || typeof window.jspdf.jsPDF !== "function") {
         return (typeof showToast === "function") && showToast("पीडीएफ (PDF) इंजन लोड नहीं हुआ — इंटरनेट चेक करके ऐप दोबारा खोलें।");
     }
-if (typeof showLoader === 'function') showLoader("Preparing PDF Engine...");
-    
+    if (typeof showLoader === 'function') showLoader("Preparing PDF Engine...");
+
     let host = null;
-    
+
     try {
         const { jsPDF } = window.jspdf;
         // Compression is automatically handled, but we force orientation & format
         const pdf = new jsPDF('p', 'pt', 'a4');
         const pdfWidth = pdf.internal.pageSize.getWidth();
-        
-        const descriptors = aarishBuildReportPagesCoreV1(records, title, type);
-        
+
+        // Snapshot the LIVE app theme (colors, dark/light mode) exactly once so every
+        // rendered page matches the current UI. This is the object whose missing
+        // '.dark' property was the direct cause of the export crash.
+        const theme = aarishSnapshotReportThemeCoreV1(type);
+
+        // Flatten every section's paginated rows into one ordered list so page
+        // numbers run continuously across the whole document, not per-section.
+        const descriptors = [];
+        dataset.sections.forEach(section => {
+            aarishBuildReportPagesCoreV1(section).forEach(pageChunk => descriptors.push(pageChunk));
+        });
+
         host = document.getElementById('aarish-pdf-host-v2');
         if (!host) {
             host = document.createElement('div');
@@ -9625,24 +9639,24 @@ if (typeof showLoader === 'function') showLoader("Preparing PDF Engine...");
             document.body.appendChild(host);
         }
         host.innerHTML = '';
-        
-        const isDark = document.documentElement.classList.contains('dark');
-        const bgColor = isDark ? '#000000' : '#F5F5F7';
+
+        const bgColor = theme.dark ? '#000000' : '#F5F5F7';
+        const totalPages = descriptors.length;
 
         for (let i = 0; i < descriptors.length; i++) {
-            if (typeof showLoader === 'function') showLoader(`Rendering Page ${i + 1} of ${descriptors.length}...\n(Do not close app)`);
+            if (typeof showLoader === 'function') showLoader(`Rendering Page ${i + 1} of ${totalPages}...\n(Do not close app)`);
             const desc = descriptors[i];
-            
+
             // 1. Create Node
-            let pageNode = aarishCreateReportPageCoreV1(desc.items, title, type, desc.pageIndex, desc.totalPages);
+            let pageNode = aarishCreateReportPageCoreV1(dataset, desc.section, desc.rows, i + 1, totalPages, theme);
             host.appendChild(pageNode);
-            
+
             // Let DOM Paint
             await new Promise(r => setTimeout(r, 60));
 
             // 2. Render Canvas (With strict internal cleanup)
             let canvas = await html2canvas(pageNode, {
-                scale: 2, 
+                scale: 2,
                 useCORS: true,
                 logging: false,
                 backgroundColor: bgColor,
@@ -9651,21 +9665,21 @@ if (typeof showLoader === 'function') showLoader("Preparing PDF Engine...");
             });
 
             // 3. Compress Data (0.75 cuts RAM weight by 40% vs 0.85)
-            let imgData = canvas.toDataURL('image/jpeg', 0.75); 
+            let imgData = canvas.toDataURL('image/jpeg', 0.75);
 
             if (i > 0) pdf.addPage();
-            
+
             const imgProps = pdf.getImageProperties(imgData);
             const fitHeight = pdfWidth / (imgProps.width / imgProps.height);
-            
+
             // Use 'FAST' compression alias
             pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, fitHeight, undefined, 'FAST');
 
             // 🚨 4. ULTIMATE GC CLEANUP (SMART LOGIC) 🚨
             host.removeChild(pageNode);
-            canvas.width = 0; 
+            canvas.width = 0;
             canvas.height = 0;
-            
+
             // Kill references so Garbage Collector eats them instantly
             pageNode = null;
             canvas = null;
@@ -9673,7 +9687,7 @@ if (typeof showLoader === 'function') showLoader("Preparing PDF Engine...");
 
             // 5. Breathing Room for RAM (Event Loop Yielding)
             if (i < descriptors.length - 1) {
-                if (typeof showLoader === 'function') showLoader(`Optimizing Memory...\n(${i + 1}/${descriptors.length})`);
+                if (typeof showLoader === 'function') showLoader(`Optimizing Memory...\n(${i + 1}/${totalPages})`);
                 await new Promise(r => setTimeout(r, 280)); // 280ms GC sweep
             }
         }
@@ -9682,9 +9696,9 @@ if (typeof showLoader === 'function') showLoader("Preparing PDF Engine...");
         if (host && host.parentNode) host.parentNode.removeChild(host);
         host = null; // Kill host reference
 
-        const safeTitle = String(title || 'Report').replace(/[^a-zA-Z0-9]/g, '_');
+        const safeTitle = String(dataset.title || 'Report').replace(/[^a-zA-Z0-9]/g, '_');
         pdf.save(`${safeTitle}_Aarish_Pro.pdf`);
-        
+
         if (typeof showToast === 'function') showToast("PDF Exported Successfully!");
 
     } catch (e) {
