@@ -9363,7 +9363,8 @@ function aarishExportNumberCoreV1(value) {
     return Number.isFinite(n) ? n : 0;
 }
 function aarishExportMoneyCoreV1(value) {
-    return '₹' + Math.round(aarishExportNumberCoreV1(value)).toLocaleString('en-IN');
+    const n = aarishExportNumberCoreV1(value);
+    return (n < 0 ? '-' : '') + '₹' + Math.abs(Math.round(n)).toLocaleString('en-IN');
 }
 function aarishExportDisplayDateCoreV1(value) {
     try {
@@ -9399,11 +9400,11 @@ function aarishExportMetaCoreV1(type) {
 function aarishExportRowsPerPageCoreV1(section) {
     const cols = ((section && section.headers) || []).length;
     const id = String((section && section.id) || '');
-    if (id === 'diary') return 4;
-    if (id === 'projects') return 12;
-    if (cols >= 7) return 14;
-    if (cols >= 5) return 18;
-    return 22;
+    if (id === 'diary') return 5;
+    if (id === 'projects') return 18;
+    if (cols >= 7) return 20;
+    if (cols >= 5) return 24;
+    return 28;
 }
 function aarishBuildExportDatasetCoreV1(type) {
     type = String(type || 'all');
@@ -9420,30 +9421,62 @@ function aarishBuildExportDatasetCoreV1(type) {
             const profile = milkDB[name] || {};
             const label = profile.type === 'dene_wala' ? 'Buyer (-)' : 'Seller (+)';
             const rate = aarishExportNumberCoreV1(profile.rate || (typeof DEFAULT_RATE !== 'undefined' ? DEFAULT_RATE : 80));
+            let pKg = 0, pAmt = 0;
+            const pRows = [];
+            
             (profile.records || []).forEach(r => {
                 const m = aarishExportNumberCoreV1(r && r.morning);
                 const ev = aarishExportNumberCoreV1(r && r.evening);
                 const kg = m + ev;
                 const amt = kg * rate;
-                rows.push([label, name, aarishExportDisplayDateCoreV1(r && r.date), m, ev, kg, amt]);
+                pKg += kg; pAmt += amt;
+                pRows.push([label, name, aarishExportDisplayDateCoreV1(r && r.date), m, ev, kg, amt]);
             });
+            
+            if (pRows.length > 0) {
+                rows.push(...pRows);
+                rows.push(['TOTAL', name, '—', '—', '—', pKg + ' KG', pAmt]);
+            }
         });
         pushSection('milk', 'Milk Records', ['Type','Name','Date','Morning KG','Evening KG','Total KG','Amount'], rows);
     }
 
     if (include('expenses')) {
         const rows = [];
+        let totalExp = 0;
         (Array.isArray(expenseDB) ? expenseDB : []).forEach(e => {
-            rows.push([aarishExportDisplayDateCoreV1(e && e.date), (e && e.category) || '', aarishExportNumberCoreV1(e && e.amount)]);
+            const amt = aarishExportNumberCoreV1(e && e.amount);
+            totalExp += amt;
+            rows.push([aarishExportDisplayDateCoreV1(e && e.date), (e && e.category) || '', amt]);
         });
+        if (rows.length > 0) {
+            rows.push(['TOTAL', 'All Expenses', totalExp]);
+        }
         pushSection('expenses', 'Expenses', ['Date','Category','Amount'], rows);
     }
 
     if (include('udhar')) {
         const rows = [];
+        const grouped = {};
         (Array.isArray(udharDB) ? udharDB : []).forEach(u => {
-            const label = (u && u.type) === 'credit' ? 'Given (+)' : 'Taken (-)';
-            rows.push([label, (u && u.name) || '', aarishExportDisplayDateCoreV1(u && u.date), aarishExportNumberCoreV1(u && u.amount)]);
+            const name = (u && u.name) || 'Unknown';
+            if (!grouped[name]) grouped[name] = [];
+            grouped[name].push(u);
+        });
+        Object.keys(grouped).sort().forEach(name => {
+            let pNet = 0;
+            const pRows = [];
+            grouped[name].forEach(u => {
+                const isCr = (u && u.type) === 'credit';
+                const label = isCr ? 'Given (+)' : 'Taken (-)';
+                const amt = aarishExportNumberCoreV1(u && u.amount);
+                pNet += isCr ? amt : -amt;
+                pRows.push([label, name, aarishExportDisplayDateCoreV1(u && u.date), amt]);
+            });
+            if (pRows.length > 0) {
+                rows.push(...pRows);
+                rows.push(['NET BAL', name, '—', pNet]);
+            }
         });
         pushSection('udhar', 'Credit Ledger', ['Type','Party Name','Date','Amount'], rows);
     }
@@ -9453,9 +9486,17 @@ function aarishBuildExportDatasetCoreV1(type) {
         Object.keys(salaryDB || {}).sort((a,b) => String(a).localeCompare(String(b))).forEach(name => {
             const profile = salaryDB[name] || {};
             const label = profile.type === 'lene_wala' ? 'Paid to Employee' : 'Received';
+            let pTot = 0;
+            const pRows = [];
             (profile.records || []).forEach(r => {
-                rows.push([label, name, aarishExportDisplayDateCoreV1(r && r.date), aarishExportNumberCoreV1(r && r.amount)]);
+                const amt = aarishExportNumberCoreV1(r && r.amount);
+                pTot += amt;
+                pRows.push([label, name, aarishExportDisplayDateCoreV1(r && r.date), amt]);
             });
+            if (pRows.length > 0) {
+                rows.push(...pRows);
+                rows.push(['TOTAL', name, '—', pTot]);
+            }
         });
         pushSection('salary', 'Salary', ['Type','Employee Name','Date','Amount'], rows);
     }
@@ -9472,10 +9513,19 @@ function aarishBuildExportDatasetCoreV1(type) {
         const rows = [];
         Object.keys(projectDB || {}).sort((a,b) => String(a).localeCompare(String(b))).forEach(name => {
             const project = projectDB[name] || {};
+            let inc = 0, exp = 0;
+            const pRows = [];
             (project.records || []).forEach(r => {
-                const transType = (r && r.color) ? String(r.color).toUpperCase() : 'UNKNOWN';
-                rows.push([name, aarishExportDisplayDateCoreV1(r && r.date), (r && r.title) || '', transType, aarishExportNumberCoreV1(r && r.amount)]);
+                const tType = (r && r.color) ? String(r.color).toUpperCase() : 'UNKNOWN';
+                const amt = aarishExportNumberCoreV1(r && r.amount);
+                if (tType === 'GREEN') inc += amt;
+                if (tType === 'RED') exp += amt;
+                pRows.push([name, aarishExportDisplayDateCoreV1(r && r.date), (r && r.title) || '', tType, amt]);
             });
+            if (pRows.length > 0) {
+                rows.push(...pRows);
+                rows.push(['NET BAL', name, 'Income - Expense', '—', inc - exp]);
+            }
         });
         pushSection('projects', 'Business Hub', ['Khata Name','Date','Entry Detail','Type','Amount'], rows);
     }
@@ -9577,11 +9627,17 @@ function aarishCreateReportPageCoreV1(dataset, section, rows, pageNo, totalPages
     const meta = (dataset && dataset.meta) || aarishExportMetaCoreV1('all');
     const headers = section.headers || [];
     const colgroup = headers.map(() => '<col>').join('');
+    
     const bodyRows = (rows || []).map(row => {
+        const isTotal = String(row[0] || '').toUpperCase() === 'TOTAL' || String(row[0] || '').toUpperCase() === 'NET BAL';
         return '<tr>' + headers.map((h, i) => {
             const raw = Array.isArray(row) ? row[i] : '';
             const val = (String(h || '').toLowerCase().includes('amount')) ? aarishExportMoneyCoreV1(raw) : raw;
-            return '<td>' + aarishPdfCellCoreV1(val) + '</td>';
+            const content = aarishPdfCellCoreV1(val);
+            if (isTotal) {
+                return `<td style="font-weight:900; background:rgba(88,166,255,0.15); color:#ffffff !important; text-transform:uppercase; text-shadow:0 0 10px rgba(0,122,255,0.5);">${content}</td>`;
+            }
+            return `<td>${content}</td>`;
         }).join('') + '</tr>';
     }).join('');
 
@@ -9620,36 +9676,15 @@ function aarishBuildReportPagesCoreV1(section, theme) {
     const rows = (section && section.rows) || [];
     if (rows.length === 0) return [{ section, rows: [] }];
 
-    const maxHeight = 1060;
-    const minRows = 1;
     const pages = [];
-    const probeHost = document.createElement('div');
-    probeHost.className = 'aarish-report-host';
-    probeHost.style.cssText = 'position:absolute;left:-20000px;top:0;width:794px;contain:layout style;visibility:hidden;pointer-events:none;';
-    document.body.appendChild(probeHost);
-
-    try {
-        let chunk = [];
-        const hardCap = Math.max(1, aarishExportRowsPerPageCoreV1(section));
-        for (let i = 0; i < rows.length; i++) {
-            const candidate = chunk.concat([rows[i]]);
-            const probe = aarishCreateReportPageCoreV1({ title: 'Report', generatedOn: '', meta: aarishExportMetaCoreV1(section.id) }, section, candidate, 1, 1, theme);
-            probeHost.appendChild(probe);
-            const measured = Math.max(probe.scrollHeight || 0, probe.getBoundingClientRect().height || 0);
-            probe.remove();
-
-            const tooTall = measured > maxHeight;
-            const overHardCap = candidate.length > hardCap;
-            if (chunk.length >= minRows && (tooTall || overHardCap)) {
-                pages.push({ section, rows: chunk });
-                chunk = [rows[i]];
-            } else {
-                chunk = candidate;
-            }
-        }
-        if (chunk.length) pages.push({ section, rows: chunk });
-    } finally {
-        probeHost.remove();
+    const hardCap = Math.max(1, aarishExportRowsPerPageCoreV1(section));
+    
+    // 🔥 OMNI-ARCHITECT FIX: Pure Array Slicing! No slow, buggy DOM height probing.
+    for (let i = 0; i < rows.length; i += hardCap) {
+        pages.push({
+            section: section,
+            rows: rows.slice(i, i + hardCap)
+        });
     }
 
     return pages;
