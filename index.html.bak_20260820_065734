@@ -84,18 +84,11 @@
     
         
 
-    <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
     
     <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
-    <!-- AARISH_TAILWIND_RUNTIME_CORE_V1: restore Tailwind utility classes on cold/client-only loads -->
-    <script>
-        window.tailwind = window.tailwind || {};
-        window.tailwind.config = Object.assign({}, window.tailwind.config || {}, { darkMode: "class" });
-    </script>
-    <script src="https://cdn.tailwindcss.com"></script>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -4238,8 +4231,6 @@ function initPhantomBootloader() {
     const pType = params.get('phantom');
     const pName = params.get('pname');
     const pData = params.get('data');
-    const pMonth = params.get('pmonth');
-    const pYear = params.get('pyear');
 
     if (pType && pName && pData) {
         window.__PHANTOM_ACTIVE = true;
@@ -4277,147 +4268,76 @@ function initPhantomBootloader() {
                 `;
                 document.head.appendChild(style);
 
-                
-                // AARISH_PHANTOM_FILTER_CONTEXT_CORE_V1
-                const requestedMonth = Number.parseInt(pMonth, 10);
-                const requestedYear = Number.parseInt(pYear, 10);
-                if (Number.isInteger(requestedMonth) && requestedMonth >= 0 && requestedMonth <= 11 && Number.isInteger(requestedYear) && requestedYear >= 2000 && requestedYear <= 2100) {
-                    selectedMonth = requestedMonth;
-                    selectedYear = requestedYear;
-                } else {
-                    const snapshotRecords = Array.isArray(parsedData) ? parsedData : (parsedData && Array.isArray(parsedData.records) ? parsedData.records : (parsedData && parsedData.date ? [parsedData] : []));
-                    let latestSnapshotDate = null;
-                    snapshotRecords.forEach(record => {
-                        const raw = String(record && record.date || '').trim();
-                        const match = raw.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
-                        if (!match) return;
-                        const year = Number(match[1]);
-                        const month = Number(match[2]) - 1;
-                        const day = Number(match[3]);
-                        if (!Number.isInteger(year) || year < 2000 || year > 2100 || !Number.isInteger(month) || month < 0 || month > 11 || !Number.isInteger(day) || day < 1 || day > 31) return;
-                        const score = year * 1000000 + (month + 1) * 10000 + day;
-                        if (!latestSnapshotDate || score > latestSnapshotDate.score) {
-                            latestSnapshotDate = { score, month, year };
-                        }
-                    });
-                    if (latestSnapshotDate) {
-                        selectedMonth = latestSnapshotDate.month;
-                        selectedYear = latestSnapshotDate.year;
-                    }
-                }
-                [['filter-month-milk', 'filter-year-milk'], ['filter-month-exp', 'filter-year-exp'], ['filter-month-salary', 'filter-year-salary']].forEach(([monthId, yearId]) => {
-                    const monthEl = document.getElementById(monthId);
-                    const yearEl = document.getElementById(yearId);
-                    if (monthEl) monthEl.value = String(selectedMonth);
-                    if (yearEl) yearEl.value = String(selectedYear);
-                });
-
-// 3. Backend Mutators Neutered
+                // 3. Backend Mutators Neutered
                 window.aarishFirebaseLaterV48 = async () => false;
                 window.flushFirebaseWriteOutboxV87 = async () => false;
                 window.aarishFirebaseBatchLaterV87 = async () => { return {queued: false}; };
 
-                // OMNI-ARCHITECT: Auto-sync Date Filters with Snapshot Data
-                let snapMonth = new Date().getMonth();
-                let snapYear = new Date().getFullYear();
-                try {
-                    let recs = [];
-                    if (pType === 'milk' && parsedData.records) recs = parsedData.records;
-                    else if (pType === 'udhar') recs = parsedData;
-                    else if (pType === 'salary' && parsedData.records) recs = parsedData.records;
-                    else if (pType === 'expense') recs = parsedData;
-                    else if (pType === 'projects' && parsedData.records) recs = parsedData.records;
-
-                    if (recs && recs.length > 0) {
-                        const latest = recs.reduce((max, r) => (!max || r.date > max) ? r.date : max, null);
-                        if (latest) {
-                            const d = new Date(latest);
-                            if (!isNaN(d.getTime())) {
-                                snapMonth = d.getMonth();
-                                snapYear = d.getFullYear();
-                            }
-                        }
-                    }
-                } catch(e) {}
-
-                const applyFilters = () => {
-                    window.selectedMonth = snapMonth;
-                    window.selectedYear = snapYear;
-                    ['filter-month-milk', 'filter-month-exp', 'filter-month-salary'].forEach(id => { 
-                        const el = document.getElementById(id); if (el) el.value = window.selectedMonth; 
-                    });
-                    ['filter-year-milk', 'filter-year-exp', 'filter-year-salary'].forEach(id => { 
-                        const el = document.getElementById(id); if (el) el.value = window.selectedYear; 
-                    });
-                };
-                
-                applyFilters();
-
                 // 4. Inject Payload into RAM
                 if (pType === 'milk') {
-                    window.milkDB = {}; window.milkDB[pName] = parsedData; window.activeMilkCustomer = pName;
+                    window.milkDB = {};
+                    window.milkDB[pName] = parsedData;
+                    window.activeMilkCustomer = pName;
                     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
                     document.getElementById('milk-detail-screen').classList.add('active');
                     const titleEl = document.getElementById('milk-detail-title');
-                    if(titleEl) titleEl.innerHTML = `${sanitizeHTML(pName)} <span class="phantom-badge">LIVE SNAPSHOT</span>`;
+                    if(titleEl) titleEl.innerHTML = `${pName} <span class="phantom-badge">LIVE SNAPSHOT</span>`;
                     if(typeof renderMilkRecords === 'function') renderMilkRecords();
                 } else if (pType === 'udhar') {
-                    window.udharDB = parsedData; window.activeUdharPerson = pName;
+                    window.udharDB = parsedData;
+                    window.activeUdharPerson = pName;
                     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
                     document.getElementById('udhar-detail-screen').classList.add('active');
                     const titleEl = document.getElementById('udhar-detail-title');
-                    if(titleEl) titleEl.innerHTML = `${sanitizeHTML(pName)} <span class="phantom-badge">LIVE SNAPSHOT</span>`;
+                    if(titleEl) titleEl.innerHTML = `${pName} <span class="phantom-badge">LIVE SNAPSHOT</span>`;
                     if(typeof renderUdharRecords === 'function') renderUdharRecords();
                 } else if (pType === 'salary') {
-                    window.salaryDB = {}; window.salaryDB[pName] = parsedData; window.activeSalaryPerson = pName;
-                    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-                    document.getElementById('salary-detail-screen').classList.add('active');
-                    const titleEl = document.getElementById('salary-detail-title');
-                    if(titleEl) titleEl.innerHTML = `${sanitizeHTML(pName)} <span class="phantom-badge">LIVE SNAPSHOT</span>`;
-                    if(typeof renderSalaryRecords === 'function') renderSalaryRecords();
-                } else if (pType === 'expense') {
-                    window.expenseDB = parsedData; window.activeExpenseCategory = pName;
-                    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-                    document.getElementById('expense-detail-screen').classList.add('active');
-                    const titleEl = document.getElementById('expense-detail-title');
-                    if(titleEl) titleEl.innerHTML = `${sanitizeHTML(pName)} <span class="phantom-badge">LIVE SNAPSHOT</span>`;
-                    if(typeof renderExpenseRecords === 'function') renderExpenseRecords();
-                } else if (pType === 'diary') {
-                    window.diaryDB = [parsedData];
-                    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-                    document.getElementById('diary-detail-screen').classList.add('active');
-                    const title = document.getElementById('diary-view-title');
-                    const date = document.getElementById('diary-view-date');
-                    const content = document.getElementById('diary-view-content');
-                    if (title) title.textContent = parsedData.title || 'Untitled';
-                    if (date) date.textContent = (typeof diaryFormatDateCoreV1 === 'function') ? diaryFormatDateCoreV1(parsedData.date) : parsedData.date;
-                    if (content) content.textContent = parsedData.content || '';
-                } else if (pType === 'projects') {
-                    window.projectDB = {}; window.projectDB[pName] = parsedData; window.activeProject = pName;
-                    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-                    document.getElementById('project-detail-screen').classList.add('active');
-                    const titleEl = document.getElementById('project-detail-title');
-                    if(titleEl) titleEl.innerHTML = `${sanitizeHTML(pName)} <span class="phantom-badge">LIVE SNAPSHOT</span>`;
-                    if(typeof renderProjectRecords === 'function') renderProjectRecords();
-                }
-
-                // Force overriding late-running background app logic
-                setTimeout(() => {
-                    applyFilters();
-                    if(pType === 'milk' && typeof renderMilkRecords === 'function') renderMilkRecords();
-                    else if(pType === 'salary' && typeof renderSalaryRecords === 'function') renderSalaryRecords();
-                    else if(pType === 'expense' && typeof renderExpenseRecords === 'function') renderExpenseRecords();
-                    else if(pType === 'projects' && typeof renderProjectRecords === 'function') renderProjectRecords();
-                }, 250);
+                window.salaryDB = {};
+                window.salaryDB[pName] = parsedData;
+                window.activeSalaryPerson = pName;
+                document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+                document.getElementById('salary-detail-screen').classList.add('active');
+                const titleEl = document.getElementById('salary-detail-title');
+                if(titleEl) titleEl.innerHTML = `${pName} <span class="phantom-badge">LIVE SNAPSHOT</span>`;
+                if(typeof renderSalaryRecords === 'function') renderSalaryRecords();
+            } else if (pType === 'expense') {
+                window.expenseDB = parsedData;
+                window.activeExpenseCategory = pName;
+                document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+                document.getElementById('expense-detail-screen').classList.add('active');
+                const titleEl = document.getElementById('expense-detail-title');
+                if(titleEl) titleEl.innerHTML = `${pName} <span class="phantom-badge">LIVE SNAPSHOT</span>`;
+                if(typeof renderExpenseRecords === 'function') renderExpenseRecords();
+            } else if (pType === 'diary') {
+                window.diaryDB = [parsedData];
+                document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+                document.getElementById('diary-detail-screen').classList.add('active');
+                const title = document.getElementById('diary-view-title');
+                const date = document.getElementById('diary-view-date');
+                const content = document.getElementById('diary-view-content');
+                if (title) title.textContent = parsedData.title || 'Untitled';
+                if (date) date.textContent = (typeof diaryFormatDateCoreV1 === 'function') ? diaryFormatDateCoreV1(parsedData.date) : parsedData.date;
+                if (content) content.textContent = parsedData.content || '';
+            } else if (pType === 'projects') {
+                window.projectDB = {};
+                window.projectDB[pName] = parsedData;
+                window.activeProject = pName;
+                document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+                document.getElementById('project-detail-screen').classList.add('active');
+                const titleEl = document.getElementById('project-detail-title');
+                if(titleEl) titleEl.innerHTML = `${pName} <span class="phantom-badge">LIVE SNAPSHOT</span>`;
+                if(typeof renderProjectRecords === 'function') renderProjectRecords();
+            
 
                 if(typeof hideLoader === 'function') hideLoader();
                 setTimeout(() => { if(typeof showToast === 'function') showToast("Offline Snapshot: View Only"); }, 800);
             };
 
+            // ULTIMATE FIX: Check if DOM is already loaded to prevent blank screen
             if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', executePhantomJail, { once: true });
+                document.addEventListener('DOMContentLoaded', executePhantomJail);
             } else {
-                setTimeout(executePhantomJail, 0);
+                executePhantomJail();
             }
 
             return true;
@@ -4485,7 +4405,7 @@ window.aarishGeneratePenDriveSnapshotLink = function(type, name) {
                 return showToast("No records found to generate snapshot!");
             }
             dataToShare = projectDB[name];
-        }
+        
 
     try {
         const minified = JSON.stringify(dataToShare);
@@ -4496,7 +4416,7 @@ window.aarishGeneratePenDriveSnapshotLink = function(type, name) {
             return showToast("Data history too large for live link! Please Share PDF instead.");
         }
 
-        const link = window.location.origin + window.location.pathname + "?phantom=" + encodeURIComponent(type) + "&pname=" + encodeURIComponent(name) + "&pmonth=" + encodeURIComponent(String(selectedMonth)) + "&pyear=" + encodeURIComponent(String(selectedYear)) + "&data=" + encoded;
+        const link = window.location.origin + window.location.pathname + "?phantom=" + encodeURIComponent(type) + "&pname=" + encodeURIComponent(name) + "&data=" + encoded;
         const msg = `*Aarish Dairy Pro - Offline Snapshot*
 Here is your live ${type} ledger for *${name}*. Tap the secure link to view records instantly (No login required):
 

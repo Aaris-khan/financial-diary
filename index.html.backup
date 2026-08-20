@@ -90,12 +90,6 @@
     <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
-    <!-- AARISH_TAILWIND_RUNTIME_CORE_V1: restore Tailwind utility classes on cold/client-only loads -->
-    <script>
-        window.tailwind = window.tailwind || {};
-        window.tailwind.config = Object.assign({}, window.tailwind.config || {}, { darkMode: "class" });
-    </script>
-    <script src="https://cdn.tailwindcss.com"></script>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -4238,8 +4232,6 @@ function initPhantomBootloader() {
     const pType = params.get('phantom');
     const pName = params.get('pname');
     const pData = params.get('data');
-    const pMonth = params.get('pmonth');
-    const pYear = params.get('pyear');
 
     if (pType && pName && pData) {
         window.__PHANTOM_ACTIVE = true;
@@ -4277,42 +4269,7 @@ function initPhantomBootloader() {
                 `;
                 document.head.appendChild(style);
 
-                
-                // AARISH_PHANTOM_FILTER_CONTEXT_CORE_V1
-                const requestedMonth = Number.parseInt(pMonth, 10);
-                const requestedYear = Number.parseInt(pYear, 10);
-                if (Number.isInteger(requestedMonth) && requestedMonth >= 0 && requestedMonth <= 11 && Number.isInteger(requestedYear) && requestedYear >= 2000 && requestedYear <= 2100) {
-                    selectedMonth = requestedMonth;
-                    selectedYear = requestedYear;
-                } else {
-                    const snapshotRecords = Array.isArray(parsedData) ? parsedData : (parsedData && Array.isArray(parsedData.records) ? parsedData.records : (parsedData && parsedData.date ? [parsedData] : []));
-                    let latestSnapshotDate = null;
-                    snapshotRecords.forEach(record => {
-                        const raw = String(record && record.date || '').trim();
-                        const match = raw.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
-                        if (!match) return;
-                        const year = Number(match[1]);
-                        const month = Number(match[2]) - 1;
-                        const day = Number(match[3]);
-                        if (!Number.isInteger(year) || year < 2000 || year > 2100 || !Number.isInteger(month) || month < 0 || month > 11 || !Number.isInteger(day) || day < 1 || day > 31) return;
-                        const score = year * 1000000 + (month + 1) * 10000 + day;
-                        if (!latestSnapshotDate || score > latestSnapshotDate.score) {
-                            latestSnapshotDate = { score, month, year };
-                        }
-                    });
-                    if (latestSnapshotDate) {
-                        selectedMonth = latestSnapshotDate.month;
-                        selectedYear = latestSnapshotDate.year;
-                    }
-                }
-                [['filter-month-milk', 'filter-year-milk'], ['filter-month-exp', 'filter-year-exp'], ['filter-month-salary', 'filter-year-salary']].forEach(([monthId, yearId]) => {
-                    const monthEl = document.getElementById(monthId);
-                    const yearEl = document.getElementById(yearId);
-                    if (monthEl) monthEl.value = String(selectedMonth);
-                    if (yearEl) yearEl.value = String(selectedYear);
-                });
-
-// 3. Backend Mutators Neutered
+                // 3. Backend Mutators Neutered
                 window.aarishFirebaseLaterV48 = async () => false;
                 window.flushFirebaseWriteOutboxV87 = async () => false;
                 window.aarishFirebaseBatchLaterV87 = async () => { return {queued: false}; };
@@ -4415,9 +4372,9 @@ function initPhantomBootloader() {
             };
 
             if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', executePhantomJail, { once: true });
+                document.addEventListener('DOMContentLoaded', executePhantomJail);
             } else {
-                setTimeout(executePhantomJail, 0);
+                executePhantomJail();
             }
 
             return true;
@@ -4496,7 +4453,7 @@ window.aarishGeneratePenDriveSnapshotLink = function(type, name) {
             return showToast("Data history too large for live link! Please Share PDF instead.");
         }
 
-        const link = window.location.origin + window.location.pathname + "?phantom=" + encodeURIComponent(type) + "&pname=" + encodeURIComponent(name) + "&pmonth=" + encodeURIComponent(String(selectedMonth)) + "&pyear=" + encodeURIComponent(String(selectedYear)) + "&data=" + encoded;
+        const link = window.location.origin + window.location.pathname + "?phantom=" + encodeURIComponent(type) + "&pname=" + encodeURIComponent(name) + "&data=" + encoded;
         const msg = `*Aarish Dairy Pro - Offline Snapshot*
 Here is your live ${type} ledger for *${name}*. Tap the secure link to view records instantly (No login required):
 
