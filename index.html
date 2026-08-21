@@ -13061,5 +13061,154 @@ function aarishCsvRowCoreV4(values) {
 </script>
 
 
-</body>
+
+<!-- ============================================================================ -->
+<!-- AARISH OMNI-ARCHITECT EXPORT ENGINE V2.0 (ZERO-REGRESSION, MULTI-PAGE FIX) -->
+<!-- ============================================================================ -->
+<script>
+(function() {
+    // 1. UNIVERSAL CSV EXPORTER (Fixes CSV Crash & Blank Files)
+    window.downloadExcel = function() {
+        try {
+            if(typeof showLoader === 'function') showLoader("EXPORTING CSV...");
+            let csvContent = "data:text/csv;charset=utf-8,Type,Name/Category,Date,Amount,Detail\n";
+
+            if (window.milkDB) Object.keys(window.milkDB).forEach(name => {
+                (window.milkDB[name].records || []).forEach(r => {
+                    const kg = (Number(r.morning)||0) + (Number(r.evening)||0);
+                    csvContent += `Milk,${name},${r.date},${kg * (Number(window.milkDB[name].rate)||55)},${kg} KG\n`;
+                });
+            });
+            if (window.udharDB) window.udharDB.forEach(u => csvContent += `Credit,${u.name},${u.date},${u.amount},${u.type}\n`);
+            if (window.expenseDB) window.expenseDB.forEach(e => csvContent += `Expense,${e.category},${e.date},${e.amount},-\n`);
+            if (window.salaryDB) Object.keys(window.salaryDB).forEach(name => {
+                (window.salaryDB[name].records || []).forEach(r => csvContent += `Salary,${name},${r.date},${r.amount},-\n`);
+            });
+            if (window.projectDB) Object.keys(window.projectDB).forEach(name => {
+                (window.projectDB[name].records || []).forEach(r => csvContent += `Business,${name},${r.date},${r.amount},${r.color}\n`);
+            });
+
+            const link = document.createElement("a");
+            link.href = encodeURI(csvContent);
+            link.download = `Aarish_Dairy_Export_${new Date().toISOString().split('T')[0]}.csv`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            if(typeof hideLoader === 'function') hideLoader();
+            if(typeof showToast === 'function') showToast("CSV Exported!");
+        } catch(e) {
+            if(typeof hideLoader === 'function') hideLoader();
+            alert("CSV Error: " + e.message);
+        }
+    };
+
+    // 2. THE MASTER PDF GENERATOR (Bypasses CSS Page-Break Bug)
+    window.aarishMasterPDF = async function(title, recordsHTML, totalAmount) {
+        if(typeof showLoader === 'function') showLoader("GENERATING PDF...");
+        try {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('p', 'mm', 'a4');
+            const pageWidth = doc.internal.pageSize.getWidth();
+            const pageHeight = doc.internal.pageSize.getHeight();
+
+            const renderDiv = document.createElement('div');
+            renderDiv.style.cssText = 'position:absolute; left:-9999px; top:0; width:800px; background:#fff; color:#000; padding:40px; font-family:sans-serif; z-index:-1;';
+            renderDiv.innerHTML = `
+                <div style="text-align:center; border-bottom:2px solid #eee; padding-bottom:20px; margin-bottom:20px;">
+                    <h1 style="font-size:32px; color:#007AFF; margin:0;">Aarish Dairy Pro</h1>
+                    <h2 style="font-size:24px; color:#333; margin:10px 0 0 0;">${title}</h2>
+                    <p style="color:#666; margin:5px 0 0 0;">Generated on: ${new Date().toLocaleDateString('en-IN')}</p>
+                </div>
+                <table style="width:100%; border-collapse:collapse; font-size:16px;">
+                    <thead>
+                        <tr style="background:#f5f5f5; text-align:left;">
+                            <th style="padding:12px; border-bottom:2px solid #ddd;">Date</th>
+                            <th style="padding:12px; border-bottom:2px solid #ddd;">Details</th>
+                            <th style="padding:12px; border-bottom:2px solid #ddd; text-align:right;">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>${recordsHTML}</tbody>
+                </table>
+                <div style="text-align:right; font-size:24px; font-weight:bold; border-top:2px solid #333; padding-top:20px; margin-top:20px; color:#10B981;">
+                    Total: ₹${Number(totalAmount).toLocaleString('en-IN')}
+                </div>`;
+            document.body.appendChild(renderDiv);
+
+            const canvas = await html2canvas(renderDiv, { scale: 2, useCORS: true, logging: false });
+            document.body.removeChild(renderDiv);
+
+            const imgData = canvas.toDataURL('image/png');
+            const imgHeight = (canvas.height * pageWidth) / canvas.width;
+
+            let heightLeft = imgHeight;
+            let position = 0;
+
+            doc.addImage(imgData, 'PNG', 0, position, pageWidth, imgHeight);
+            heightLeft -= pageHeight;
+
+            while (heightLeft > 0) {
+                position = heightLeft - imgHeight;
+                doc.addPage();
+                doc.addImage(imgData, 'PNG', 0, position, pageWidth, imgHeight);
+                heightLeft -= pageHeight;
+            }
+
+            doc.save(`${title.replace(/\s+/g, '_')}_${new Date().getTime()}.pdf`);
+            if(typeof showToast === 'function') showToast("PDF Generated!");
+        } catch (e) {
+            alert("PDF Error: " + e.message);
+        } finally {
+            if(typeof hideLoader === 'function') hideLoader();
+        }
+    };
+
+    // 3. ACTION OVERRIDES (Routes everything to Master Generator)
+    window.generateAndShareBill = function() {
+        if (!window.activeMilkCustomer || !window.milkDB[window.activeMilkCustomer]) return;
+        const c = window.milkDB[window.activeMilkCustomer];
+        let total = 0, html = '';
+        (c.records || []).forEach(r => {
+            const rowQty = (Number(r.morning)||0) + (Number(r.evening)||0);
+            const rowAmt = rowQty * (Number(c.rate) || 55);
+            total += rowAmt;
+            html += `<tr><td style="padding:12px; border-bottom:1px solid #eee;">${r.date}</td><td style="padding:12px; border-bottom:1px solid #eee;">${rowQty} KG</td><td style="padding:12px; border-bottom:1px solid #eee; text-align:right;">₹${rowAmt}</td></tr>`;
+        });
+        window.aarishMasterPDF(`Milk Bill - ${window.activeMilkCustomer}`, html, total);
+    };
+
+    window.shareSalaryBill = function() {
+        if (!window.activeSalaryPerson || !window.salaryDB[window.activeSalaryPerson]) return;
+        let total = 0, html = '';
+        (window.salaryDB[window.activeSalaryPerson].records || []).forEach(r => {
+            total += Number(r.amount)||0;
+            html += `<tr><td style="padding:12px; border-bottom:1px solid #eee;">${r.date}</td><td style="padding:12px; border-bottom:1px solid #eee;">Salary</td><td style="padding:12px; border-bottom:1px solid #eee; text-align:right;">₹${r.amount}</td></tr>`;
+        });
+        window.aarishMasterPDF(`Salary Slip - ${window.activeSalaryPerson}`, html, total);
+    };
+
+    window.shareUdharBill = function() {
+        if (!window.activeUdharPerson) return;
+        let total = 0, html = '';
+        (window.udharDB || []).filter(u => String(u.name).trim() === window.activeUdharPerson).forEach(u => {
+            const amt = Number(u.amount)||0;
+            const isCredit = String(u.type).toLowerCase() === 'credit' || String(u.type).toLowerCase() === 'given';
+            total += isCredit ? amt : -amt;
+            html += `<tr><td style="padding:12px; border-bottom:1px solid #eee;">${u.date}</td><td style="padding:12px; border-bottom:1px solid #eee; text-transform: capitalize;">${u.type}</td><td style="padding:12px; border-bottom:1px solid #eee; text-align:right; color:${isCredit?'#34C759':'#FF3B30'}">${isCredit?'+':'-'}₹${amt}</td></tr>`;
+        });
+        window.aarishMasterPDF(`Credit Ledger - ${window.activeUdharPerson}`, html, total);
+    };
+
+    window.shareExpenseCategoryBill = function() {
+        let total = 0, html = '';
+        (window.expenseDB || []).forEach(e => {
+            total += Number(e.amount)||0;
+            html += `<tr><td style="padding:12px; border-bottom:1px solid #eee;">${e.date}</td><td style="padding:12px; border-bottom:1px solid #eee;">${e.category}</td><td style="padding:12px; border-bottom:1px solid #eee; text-align:right;">₹${e.amount}</td></tr>`;
+        });
+        window.aarishMasterPDF(`Expense Report`, html, total);
+    };
+    window.shareAllExpensesBill = window.shareExpenseCategoryBill;
+})();
+</script>
+\n</body>
 </html>
