@@ -9188,18 +9188,78 @@ function aarishBuildCsvFromDatasetCoreV1(dataset) {
     return csv;
 }
 async function aarishShareOrDownloadFileCoreV1(file, toastText) {
-    if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        await navigator.share({ files: [file], title: 'Aarish Dairy Pro', text: toastText || 'Aarish Dairy Pro Report' });
-        return;
+    if (!file) throw new Error('export_file_missing');
+
+    try {
+        const canNativeShare = !!(
+            navigator &&
+            typeof navigator.share === 'function' &&
+            typeof navigator.canShare === 'function'
+        );
+
+        if (canNativeShare) {
+            let supported = false;
+
+            try {
+                supported = !!navigator.canShare({ files: [file] });
+            } catch (e) {
+                supported = false;
+            }
+
+            if (supported) {
+                try {
+                    await navigator.share({
+                        files: [file],
+                        title: 'Aarish Dairy Pro',
+                        text: toastText || 'Aarish Dairy Pro Report'
+                    });
+
+                    return { method: 'share' };
+                } catch (shareError) {
+                    try {
+                        console.warn(
+                            'Native share failed; using download fallback.',
+                            shareError
+                        );
+                    } catch(e) {}
+                }
+            }
+        }
+    } catch (sharePathError) {
+        try {
+            console.warn(
+                'Native share path unavailable; using download fallback.',
+                sharePathError
+            );
+        } catch(e) {}
     }
+
+    /* ========================================================
+       GUARANTEED DIRECT DOWNLOAD FALLBACK
+       ======================================================== */
     const url = URL.createObjectURL(file);
     const a = document.createElement('a');
+
     a.href = url;
-    a.download = file.name;
+    a.download = String(file.name || 'Aarish_Dairy_Export');
+    a.style.display = 'none';
+    a.rel = 'noopener';
+
     document.body.appendChild(a);
-    a.click();
-    a.remove();
-    setTimeout(() => { try { URL.revokeObjectURL(url); } catch(e) {} }, 1500);
+
+    try {
+        a.click();
+    } finally {
+        a.remove();
+
+        setTimeout(() => {
+            try {
+                URL.revokeObjectURL(url);
+            } catch(e) {}
+        }, 10000);
+    }
+
+    return { method: 'download' };
 }
 function aarishSnapshotReportThemeCoreV1(type) {
     const meta = aarishExportMetaCoreV1(type);
@@ -9361,15 +9421,49 @@ async function aarishExportPremiumPdfCoreV1(type, dataset) {
 
         const pdf = new window.jspdf.jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4', compress: true });
         for (let i = 0; i < pages.length; i++) {
+            if (typeof html2canvas !== 'function') {
+                throw new Error('html2canvas_unavailable');
+            }
+
             const canvas = await html2canvas(pages[i], {
                 scale: 2,
                 backgroundColor: theme.bg || null,
                 useCORS: true,
+                allowTaint: false,
                 logging: false,
                 windowWidth: 794,
                 windowHeight: 1123,
                 scrollX: 0,
-                scrollY: 0
+                scrollY: 0,
+
+                onclone: (clonedDocument) => {
+                    /*
+                     * Live report host is intentionally off-screen.
+                     * html2canvas captures a cloned DOM, so move the clone
+                     * into a safe capture position before rendering.
+                     */
+                    clonedDocument
+                        .querySelectorAll('.aarish-report-host')
+                        .forEach(el => {
+                            el.style.position = 'absolute';
+                            el.style.left = '0px';
+                            el.style.top = '0px';
+                            el.style.zIndex = '1';
+                            el.style.pointerEvents = 'none';
+                            el.style.opacity = '1';
+                            el.style.contain = 'none';
+                        });
+
+                    clonedDocument
+                        .querySelectorAll('.aarish-report-page')
+                        .forEach(el => {
+                            el.style.position = 'relative';
+                            el.style.left = '0px';
+                            el.style.top = '0px';
+                            el.style.zIndex = '1';
+                            el.style.visibility = 'visible';
+                        });
+                }
             });
             const img = canvas.toDataURL('image/jpeg', 0.96);
             if (i > 0) pdf.addPage('a4', 'portrait');
@@ -9480,13 +9574,46 @@ function downloadExcel() {
 }
 async function executeDownload(type) {
     aarishCloseExportCenterCoreV1();
-    const format = (window.__aarishExportFormatCoreV1 === 'csv') ? 'csv' : 'pdf';
+
+    const format =
+        (window.__aarishExportFormatCoreV1 === 'csv')
+            ? 'csv'
+            : 'pdf';
+
     const safeType = String(type || 'all');
-    const dataset = aarishBuildExportDatasetCoreV1(safeType);
-    if (format === 'csv') {
-        await aarishExportCsvBackupCoreV1(safeType, dataset);
-    } else {
-        await aarishExportPremiumPdfCoreV1(safeType, dataset);
+
+    try {
+        const dataset =
+            aarishBuildExportDatasetCoreV1(safeType);
+
+        if (format === 'csv') {
+            await aarishExportCsvBackupCoreV1(
+                safeType,
+                dataset
+            );
+        } else {
+            await aarishExportPremiumPdfCoreV1(
+                safeType,
+                dataset
+            );
+        }
+    } catch (err) {
+        console.error(
+            'Aarish export pipeline error:',
+            err
+        );
+
+        try {
+            hideLoader();
+        } catch(e) {}
+
+        try {
+            showToast(
+                format === 'csv'
+                    ? 'CSV export failed.'
+                    : 'PDF export failed.'
+            );
+        } catch(e) {}
     }
 }
 /* AARISH_EXPORT_CENTER_PREMIUM_PDF_CORE_V1_END */
