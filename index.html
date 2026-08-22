@@ -125,8 +125,8 @@
     <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
     
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
     <style>
         /* Apple-like Typography & Base */
@@ -3465,8 +3465,6 @@ html.aarish-tab-switching-v31 .bottom-nav .nav-item.active {
     <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/2965/2965358.png">
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2965/2965358.png">
 <!-- AARISH_CORE_AUTOPSY_MASTER_FIX_V1 applied 20260628_121835: atomic sync + party ledger + batched profile delete -->
-<!-- AARISH_OMNI_PDF_DEPENDENCY_V7 -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 </head>
 
 <body>
@@ -9191,6 +9189,11 @@ function aarishBuildCsvFromDatasetCoreV1(dataset) {
 async function aarishShareOrDownloadFileCoreV1(file, toastText) {
     if (!file) throw new Error('export_file_missing');
 
+    // Native sharing is an optional delivery path, never the only path.
+    // Some Android WebViews/PWAs reject navigator.share() because the
+    // transient user-activation window has ended or the file type is unsupported.
+    // A rejected share must NEVER turn a successfully generated export into
+    // an apparent generation failure.
     try {
         const canNativeShare = !!(
             navigator &&
@@ -9200,7 +9203,6 @@ async function aarishShareOrDownloadFileCoreV1(file, toastText) {
 
         if (canNativeShare) {
             let supported = false;
-
             try {
                 supported = !!navigator.canShare({ files: [file] });
             } catch (e) {
@@ -9214,52 +9216,35 @@ async function aarishShareOrDownloadFileCoreV1(file, toastText) {
                         title: 'Aarish Dairy Pro',
                         text: toastText || 'Aarish Dairy Pro Report'
                     });
-
                     return { method: 'share' };
                 } catch (shareError) {
-                    try {
-                        console.warn(
-                            'Native share failed; using download fallback.',
-                            shareError
-                        );
-                    } catch(e) {}
+                    // User cancellation, unsupported WebView, missing
+                    // transient activation, or platform share failure:
+                    // fall through to deterministic browser download.
+                    try { console.warn('Native share failed; using download fallback.', shareError); } catch(e) {}
                 }
             }
         }
     } catch (sharePathError) {
-        try {
-            console.warn(
-                'Native share path unavailable; using download fallback.',
-                sharePathError
-            );
-        } catch(e) {}
+        try { console.warn('Native share path unavailable; using download fallback.', sharePathError); } catch(e) {}
     }
 
-    /* ========================================================
-       GUARANTEED DIRECT DOWNLOAD FALLBACK
-       ======================================================== */
+    // Deterministic fallback: works without Web Share API support.
     const url = URL.createObjectURL(file);
     const a = document.createElement('a');
-
     a.href = url;
     a.download = String(file.name || 'Aarish_Dairy_Export');
     a.style.display = 'none';
     a.rel = 'noopener';
-
     document.body.appendChild(a);
-
     try {
         a.click();
     } finally {
         a.remove();
-
         setTimeout(() => {
-            try {
-                URL.revokeObjectURL(url);
-            } catch(e) {}
+            try { URL.revokeObjectURL(url); } catch(e) {}
         }, 10000);
     }
-
     return { method: 'download' };
 }
 function aarishSnapshotReportThemeCoreV1(type) {
@@ -9400,83 +9385,82 @@ function aarishBuildReportPagesCoreV1(dataset, theme) {
     }
     return pages.map((p, index) => aarishCreateReportPageCoreV1(dataset, p.section, p.rows, index + 1, pages.length, theme));
 }
-async function aarishExportPremiumPdfCoreV1(title, subtitle, pagesHtmlArray) {
-    if (!pagesHtmlArray || !pagesHtmlArray.length) {
-        try { showToast("No data to export!"); } catch(e){}
+async function aarishExportPremiumPdfCoreV1(type, dataset) {
+    showLoader('Premium PDF बन रही है...');
+    await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+
+    if (!window.jspdf || !window.jspdf.jsPDF) {
+        hideLoader();
+        showToast('PDF library loading. Please try again.');
         return;
     }
-    try { showLoader("PREPARING PDF ENGINE..."); } catch(e){}
-    
+
+    const theme = aarishSnapshotReportThemeCoreV1(type);
+    const host = document.createElement('div');
+    host.className = 'aarish-report-host';
+    document.body.appendChild(host);
+
     try {
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF('p', 'pt', 'a4');
-        const pageWidth = 595.28;
-        const pageHeight = 841.89;
-        const totalPages = pagesHtmlArray.length;
-        
-        // SMART LOGIC: Auto-scale for large datasets to prevent RAM explosion
-        // 1-150 pages = High Res (scale: 2) | >150 pages = Standard Res (scale: 1)
-        const scaleFactor = totalPages > 150 ? 1 : 2; 
-        const imgQuality = scaleFactor === 1 ? 0.75 : 0.95;
+        const pages = aarishBuildReportPagesCoreV1(dataset, theme);
+        pages.forEach(page => host.appendChild(page));
+        await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
 
-        let host = document.getElementById('aarish-pdf-omni-host');
-        if (!host) {
-            host = document.createElement('div');
-            host.id = 'aarish-pdf-omni-host';
-            host.className = 'aarish-report-host';
-            document.body.appendChild(host);
-        }
-
-        let skipped = 0;
-
-        for (let i = 0; i < totalPages; i++) {
-            try { showLoader(`RENDERING PAGE ${i + 1} OF ${totalPages}...`); } catch(e){}
-            
-            // SURGICAL RENDER: Process only ONE page at a time
-            host.innerHTML = pagesHtmlArray[i];
-            const pageEl = host.firstElementChild;
-            if (!pageEl) continue;
-
-            // Micro-delay to ensure DOM repaint finishes before capture
-            await new Promise(r => setTimeout(r, 60));
-
-            try {
-                const canvas = await html2canvas(pageEl, {
-                    scale: scaleFactor,
-                    useCORS: true,
-                    logging: false,
-                    backgroundColor: document.documentElement.classList.contains('dark') ? '#000000' : '#F5F5F7'
-                });
-
-                const imgData = canvas.toDataURL('image/jpeg', imgQuality);
-                
-                if (i > 0 - skipped) doc.addPage();
-                doc.addImage(imgData, 'JPEG', 0, 0, pageWidth, pageHeight);
-            } catch(err) {
-                console.warn(`Page ${i+1} failed, skipping to prevent total crash.`, err);
-                skipped++;
+        const pdf = new window.jspdf.jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4', compress: true });
+        for (let i = 0; i < pages.length; i++) {
+            if (typeof html2canvas !== 'function') {
+                throw new Error('html2canvas_unavailable');
             }
-            
-            // ABSOLUTE MEMORY FLUSH: Clear RAM instantly after page capture
-            host.innerHTML = '';
+
+            const canvas = await html2canvas(pages[i], {
+                scale: 2,
+                backgroundColor: theme.bg || null,
+                useCORS: true,
+                allowTaint: false,
+                logging: false,
+                windowWidth: 794,
+                windowHeight: 1123,
+                scrollX: 0,
+                scrollY: 0,
+                onclone: (clonedDocument) => {
+                    // The live report host intentionally sits off-screen.
+                    // html2canvas renders a cloned document, so reposition the
+                    // clone into the viewport-safe origin before painting.
+                    clonedDocument.querySelectorAll('.aarish-report-host').forEach(el => {
+                        el.style.position = 'absolute';
+                        el.style.left = '0px';
+                        el.style.top = '0px';
+                        el.style.zIndex = '1';
+                        el.style.pointerEvents = 'none';
+                        el.style.opacity = '1';
+                        el.style.contain = 'none';
+                    });
+                    clonedDocument.querySelectorAll('.aarish-report-page').forEach(el => {
+                        el.style.position = 'relative';
+                        el.style.left = '0px';
+                        el.style.top = '0px';
+                        el.style.zIndex = '1';
+                        el.style.visibility = 'visible';
+                    });
+                }
+            });
+            const img = canvas.toDataURL('image/jpeg', 0.96);
+            if (i > 0) pdf.addPage('a4', 'portrait');
+            pdf.addImage(img, 'JPEG', 0, 0, 210, 297, undefined, 'FAST');
         }
 
-        try { showLoader("SAVING DOCUMENT..."); } catch(e){}
-        const safeTitle = (title || 'Report').replace(/[^a-z0-9]/gi, '_');
-        doc.save(`${safeTitle}_${Date.now()}.pdf`);
-        
-        if (skipped > 0) {
-            try { showToast(`Saved! (${skipped} pages skipped due to device limits)`); } catch(e){}
-        } else {
-            try { showToast("Premium PDF Generated Successfully!"); } catch(e){}
-        }
-    } catch (error) {
-        console.error("OMNI PDF Error:", error);
-        try { showToast("Critical Error: Dataset might be too massive for this device."); } catch(e){}
+        const fileName = 'Aarish_' + aarishExportSafeFileNameCoreV1(type || 'all') + '_Premium_Report.pdf';
+        const blob = pdf.output('blob');
+        const file = new File([blob], fileName, { type: 'application/pdf' });
+
+        hideLoader();
+        await aarishShareOrDownloadFileCoreV1(file, 'Premium PDF Report');
+        showToast('Premium PDF Ready ✅');
+    } catch (err) {
+        hideLoader();
+        console.error('Aarish Premium PDF error:', err);
+        showToast('PDF generation failed.');
     } finally {
-        try { hideLoader(); } catch(e){}
-        const host = document.getElementById('aarish-pdf-omni-host');
-        if (host) host.innerHTML = '';
+        try { host.remove(); } catch(e) {}
     }
 }
 async function aarishExportCsvBackupCoreV1(type, dataset) {
@@ -9568,46 +9552,20 @@ function downloadExcel() {
 }
 async function executeDownload(type) {
     aarishCloseExportCenterCoreV1();
-
-    const format =
-        (window.__aarishExportFormatCoreV1 === 'csv')
-            ? 'csv'
-            : 'pdf';
-
+    const format = (window.__aarishExportFormatCoreV1 === 'csv') ? 'csv' : 'pdf';
     const safeType = String(type || 'all');
 
     try {
-        const dataset =
-            aarishBuildExportDatasetCoreV1(safeType);
-
+        const dataset = aarishBuildExportDatasetCoreV1(safeType);
         if (format === 'csv') {
-            await aarishExportCsvBackupCoreV1(
-                safeType,
-                dataset
-            );
+            await aarishExportCsvBackupCoreV1(safeType, dataset);
         } else {
-            await aarishExportPremiumPdfCoreV1(
-                safeType,
-                dataset
-            );
+            await aarishExportPremiumPdfCoreV1(safeType, dataset);
         }
     } catch (err) {
-        console.error(
-            'Aarish export pipeline error:',
-            err
-        );
-
-        try {
-            hideLoader();
-        } catch(e) {}
-
-        try {
-            showToast(
-                format === 'csv'
-                    ? 'CSV export failed.'
-                    : 'PDF export failed.'
-            );
-        } catch(e) {}
+        console.error('Aarish export pipeline error:', err);
+        try { hideLoader(); } catch(e) {}
+        try { showToast(format === 'csv' ? 'CSV export failed.' : 'PDF export failed.'); } catch(e) {}
     }
 }
 /* AARISH_EXPORT_CENTER_PREMIUM_PDF_CORE_V1_END */
@@ -12781,154 +12739,5 @@ function aarishCsvRowCoreV4(values) {
 </script>
 
 
-<!-- AARISH_OMNI_VECTOR_PDF_ENGINE_V7_START -->
-<script>
-/**
- * AARISH DAIRY PRO — OMNI-VECTOR PDF ENGINE V7.0
- * Architecture: Apple-Grade Native Vector Table Rendering
- * Features: Zero UI-Freeze, Smart Thread Yielding, O(1) Memory Footprint
- */
-window.AarishPDFEngine = {
-    generatePDF: async function(options) {
-        const {
-            title = "Financial Record Report",
-            subtitle = "Official Dairy Record",
-            personName = "",
-            dateRange = "",
-            summaryCards = [],
-            headers = [],
-            rows = [],
-            filename = "Aarish_Dairy_Report.pdf"
-        } = options;
-
-        if (typeof window.showLoader === 'function') window.showLoader(true);
-        await new Promise(resolve => requestAnimationFrame(resolve));
-        await new Promise(resolve => setTimeout(resolve, 50));
-
-        try {
-            if (!window.jspdf || !window.jspdf.jsPDF) throw new Error("Core PDF Library missing.");
-            if (!window.jspdf.jsPDF.API.autoTable) throw new Error("AutoTable Vector Engine missing.");
-
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-            const pageWidth = doc.internal.pageSize.getWidth();
-            const pageHeight = doc.internal.pageSize.getHeight();
-            let startY = 18;
-
-            // 1. Diagonal Security Watermark
-            doc.setTextColor(245, 245, 247);
-            doc.setFontSize(50);
-            doc.setFont("helvetica", "bold");
-            doc.text("AARISH DAIRY PRO", pageWidth / 2, pageHeight / 2 + 20, { align: 'center', angle: 45 });
-
-            // 2. iOS Header Layout
-            doc.setFont("helvetica", "bold");
-            doc.setFontSize(20);
-            doc.setTextColor(0, 122, 255);
-            doc.text("AARISH DAIRY PRO", 14, startY);
-
-            doc.setFontSize(9);
-            doc.setTextColor(142, 142, 147);
-            doc.text(subtitle.toUpperCase(), 14, startY + 5);
-
-            doc.setFontSize(14);
-            doc.setTextColor(28, 28, 30);
-            doc.text(title, pageWidth - 14, startY, { align: 'right' });
-
-            if (personName) {
-                doc.setFontSize(11);
-                doc.setTextColor(0, 122, 255);
-                doc.text(personName, pageWidth - 14, startY + 6, { align: 'right' });
-            }
-            if (dateRange) {
-                doc.setFontSize(8);
-                doc.setTextColor(142, 142, 147);
-                doc.setFont("helvetica", "normal");
-                doc.text(dateRange, pageWidth - 14, startY + 11, { align: 'right' });
-            }
-
-            startY += 20;
-
-            // 3. Apple-Style Summary Cards
-            if (summaryCards && summaryCards.length > 0) {
-                const cardGap = 4;
-                const totalGaps = (summaryCards.length - 1) * cardGap;
-                const cardWidth = (pageWidth - 28 - totalGaps) / summaryCards.length;
-
-                summaryCards.forEach((card, idx) => {
-                    const x = 14 + (idx * (cardWidth + cardGap));
-                    const hexColor = card.color || '#007AFF';
-
-                    doc.setDrawColor(229, 229, 234);
-                    doc.setFillColor(248, 248, 250);
-                    doc.roundedRect(x, startY, cardWidth, 18, 3, 3, 'FD');
-
-                    doc.setDrawColor(hexColor);
-                    doc.setLineWidth(1.2);
-                    doc.line(x + 0.6, startY + 3, x + 0.6, startY + 15);
-
-                    doc.setFontSize(7);
-                    doc.setTextColor(142, 142, 147);
-                    doc.text(String(card.label).toUpperCase(), x + 4, startY + 6);
-
-                    doc.setFontSize(11);
-                    doc.setTextColor(hexColor);
-                    doc.setFont("helvetica", "bold");
-                    doc.text(String(card.value), x + 4, startY + 14);
-                });
-                startY += 24;
-            }
-
-            // 4. Infinite-Data Vector AutoTable
-            const safeRows = rows.length > 0 ? rows : [Array(headers.length).fill("No Data Available")];
-
-            doc.autoTable({
-                startY: startY,
-                head: [headers],
-                body: safeRows,
-                theme: 'plain',
-                styles: { font: 'helvetica', cellPadding: 3.5, overflow: 'linebreak', fontSize: 8.5 },
-                headStyles: {
-                    fillColor: [242, 242, 247],
-                    textColor: [0, 122, 255],
-                    fontStyle: 'bold',
-                    fontSize: 9,
-                    valign: 'middle',
-                    halign: 'center',
-                    lineWidth: 0.1,
-                    lineColor: [209, 209, 214]
-                },
-                bodyStyles: {
-                    fontSize: 8.5,
-                    textColor: [28, 28, 30],
-                    borderBottomColor: [229, 229, 234],
-                    borderBottomWidth: 0.1,
-                    valign: 'middle'
-                },
-                alternateRowStyles: { fillColor: [250, 250, 252] },
-                margin: { top: 20, bottom: 20, left: 14, right: 14 },
-                didDrawPage: function (data) {
-                    const totalPages = doc.internal.getNumberOfPages();
-                    doc.setFontSize(7);
-                    doc.setTextColor(174, 174, 178);
-                    doc.setFont("helvetica", "normal");
-                    const timeStamp = new Date().toLocaleString('en-IN');
-                    doc.text(`Generated securely by Aarish Dairy Pro • ${timeStamp}`, 14, pageHeight - 10);
-                    doc.text(`Page ${data.pageNumber} of ${totalPages}`, pageWidth - 14, pageHeight - 10, { align: 'right' });
-                }
-            });
-
-            doc.save(filename);
-            if (typeof window.showToast === 'function') window.showToast("PDF Export Completed Successfully!");
-        } catch (err) {
-            console.error("Omni-Vector PDF Engine Error:", err);
-            if (typeof window.showToast === 'function') window.showToast("Export Failed. Please try again.");
-        } finally {
-            if (typeof window.showLoader === 'function') window.showLoader(false);
-        }
-    }
-};
-</script>
-<!-- AARISH_OMNI_VECTOR_PDF_ENGINE_V7_END -->
 </body>
 </html>
