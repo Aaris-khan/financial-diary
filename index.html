@@ -420,7 +420,7 @@
             isolation: isolate;
             backface-visibility: hidden;
             -webkit-backface-visibility: hidden;
-            will-change: transform;
+            /* Tap-time promotion is applied by the motion interaction layer. */
             /* AARISH_CORE_SHARE_STABLE_V2 */
         }
         .dark .btn-ios-share { background: rgba(10, 132, 255, 0.15); color: #5E5CE6; border-color: rgba(10, 132, 255, 0.2); }
@@ -856,7 +856,6 @@
   isolation: isolate !important;
   backface-visibility: hidden !important;
   -webkit-backface-visibility: hidden !important;
-  will-change: transform !important;
 }
 #udhar-screen #udhar-search::placeholder,
 #udhar-screen #udhar-search::-webkit-input-placeholder {
@@ -2359,7 +2358,6 @@ body {
     inset 0 -1px 0 rgba(0,0,0,0.055) !important;
 
   transform: translateZ(0) !important;
-  will-change: transform, box-shadow, backdrop-filter !important;
 }
 
 .dark #milk-detail-screen .milk-core-total-card,
@@ -2680,22 +2678,50 @@ button[data-business-entry-core] {
 }
 /* AARISH_NET_CARD_TONE_PARITY_V13_END */
 
-/* AARISH_ULTRA_CORE_MOTION_V3_START */
+/* AARISH_ULTRA_CORE_MOTION_V4_START */
 :root {
-    --spring-bounce:     cubic-bezier(0.34, 1.56, 0.64, 1);
-    --spring-smooth:     cubic-bezier(0.25, 1.0, 0.5, 1);
-    --spring-snappy:     cubic-bezier(0.32, 0.72, 0.0, 1);
-    --spring-gentle:     cubic-bezier(0.4, 0.0, 0.2, 1);
-    --spring-overshoot:  cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    --duration-instant:  120ms;
-    --duration-fast:     240ms;
-    --duration-normal:   380ms;
-    --duration-slow:     520ms;
+    --motion-spring: cubic-bezier(0.32, 0.72, 0, 1);
+    --motion-smooth: cubic-bezier(0.25, 1, 0.5, 1);
+    --motion-tap: cubic-bezier(0.2, 0, 0, 1);
+    --motion-bounce: cubic-bezier(0.34, 1.18, 0.64, 1);
+    --motion-fast: 180ms;
+    --motion-normal: 280ms;
+    --motion-slow: 420ms;
 }
 
-/* Core rule: never overwrite layout-critical transforms like bottom-nav translateX(-50%). */
-.screen,
+/* Promote only the element being interacted with; avoid a permanent GPU layer budget. */
+button, .btn-primary, .btn-ios-share, .btn-ios-add, .action-btn, .nav-item, .glass-card {
+    touch-action: manipulation;
+}
+
+.screen {
+    display: none;
+    flex-direction: column;
+    height: 100vh;
+    height: 100dvh;
+    overflow-y: auto;
+    padding-bottom: 120px;
+    position: relative;
+    z-index: 2;
+    contain: layout paint style;
+    scroll-behavior: smooth;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+}
+.screen.active {
+    display: flex !important;
+    animation: aarishSmoothScreenEnterV4 260ms var(--motion-spring) both;
+}
+@keyframes aarishSmoothScreenEnterV4 {
+    from { opacity: 0; transform: translate3d(18px, 0, 0); }
+    72% { opacity: 1; transform: translate3d(-0.5px, 0, 0); }
+    to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+
 .glass-card,
+.list-enter,
 .modal-content,
 #toast,
 #global-loader,
@@ -2707,146 +2733,99 @@ button[data-business-entry-core] {
 .action-btn,
 button,
 .input-box,
-.table-custom tr,
-.list-enter {
-    backface-visibility: hidden !important;
-    -webkit-backface-visibility: hidden !important;
+.table-custom tr {
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
     -webkit-font-smoothing: antialiased;
 }
 
-.screen {
-    contain: layout style !important;
-    scroll-behavior: smooth !important;
-    overscroll-behavior: contain !important;
-    -webkit-overflow-scrolling: touch !important;
-}
-
 .glass-card {
-    /* V3 safety: no preserve-3d and no overflow:hidden on cards; Safari/Android glass blur + edge badges stay safe. */
-    contain: layout style !important;
-    position: relative !important;
+    contain: layout style;
+    position: relative;
     transition:
-        transform var(--duration-fast) var(--spring-snappy),
-        box-shadow var(--duration-normal) var(--spring-smooth),
-        opacity var(--duration-fast) var(--spring-smooth),
-        border-color var(--duration-normal) var(--spring-smooth),
-        background-color var(--duration-normal) var(--spring-smooth) !important;
+        transform var(--motion-normal) var(--motion-spring),
+        opacity var(--motion-fast) var(--motion-smooth),
+        box-shadow var(--motion-normal) var(--motion-smooth),
+        border-color var(--motion-normal) var(--motion-smooth),
+        background-color var(--motion-normal) var(--motion-smooth) !important;
 }
-
 .glass-card:active {
-    transform: scale(0.968) !important;
+    transform: scale(0.985) !important;
 }
 
-.bottom-nav {
-    contain: layout style !important;
-    transform: translateX(-50%) translateZ(0) !important;
-    will-change: scroll-position;
-}
-
-.app-container {
-    transition:
-        transform var(--duration-normal) var(--spring-snappy),
-        border-radius var(--duration-normal) var(--spring-snappy),
-        opacity var(--duration-fast) var(--spring-smooth),
-        filter var(--duration-normal) var(--spring-snappy) !important;
-}
-.app-scale-down {
-    filter: brightness(0.86) saturate(0.96) !important;
-}
-
-/* iOS-grade screen choreography */
-.screen.active {
-    animation: none !important;
-    opacity: 1 !important;
-    transform: none !important;
-} /* AARISH_CORE_DIRECT_MODULE_OPEN */
-.screen.aarish-screen-exit-v3 {
-    pointer-events: none !important;
-    animation: none !important;
-    opacity: 1 !important;
-    transform: none !important;
-} /* AARISH_CORE_NO_MODULE_EXIT_ANIM */
-@keyframes aarishUltraScreenEnterV3 {
-    0%   { opacity: 0; transform: translate3d(7%, 0, 0) scale(0.982); }
-    70%  { opacity: 1; transform: translate3d(-0.8%, 0, 0) scale(1.002); }
-    100% { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
-}
-@keyframes aarishUltraScreenExitV3 {
-    0%   { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
-    100% { opacity: 0.62; transform: translate3d(-3.5%, 0, 0) scale(0.97); }
-}
-
-/* Linear-style list entrance; delay set by JS only on visible active screen. */
+/* List entrance is short and bounded so large lists do not feel slow. */
 .list-enter {
     opacity: 0;
-    transform: translate3d(6px, 10px, 0) scale(0.985);
-    animation: aarishUltraListEnterV3 320ms var(--spring-snappy) forwards !important;
+    transform: translate3d(0, 8px, 0);
+    animation: aarishSmoothListEnterV4 220ms var(--motion-spring) forwards !important;
     animation-delay: var(--aarish-stagger, 0ms) !important;
 }
-@keyframes aarishUltraListEnterV3 {
-    0%   { opacity: 0; transform: translate3d(6px, 10px, 0) scale(0.985); }
-    58%  { opacity: 1; transform: translate3d(0, -1px, 0) scale(1.003); }
-    100% { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+@keyframes aarishSmoothListEnterV4 {
+    from { opacity: 0; transform: translate3d(0, 8px, 0); }
+    72% { opacity: 1; transform: translate3d(0, -0.5px, 0); }
+    to { opacity: 1; transform: translate3d(0, 0, 0); }
 }
 
-/* Button physics: feedback without permanent transform clobber. */
 .btn-primary,
 .btn-ios-share,
 .btn-ios-add,
 .action-btn,
-button {
+button,
+.nav-item {
     transition:
-        transform var(--duration-fast) var(--spring-snappy),
-        opacity var(--duration-fast) var(--spring-smooth),
-        box-shadow var(--duration-normal) var(--spring-smooth),
-        background-color var(--duration-normal) var(--spring-smooth),
-        border-color var(--duration-normal) var(--spring-smooth) !important;
+        transform var(--motion-fast) var(--motion-spring),
+        opacity var(--motion-fast) var(--motion-smooth),
+        box-shadow var(--motion-normal) var(--motion-smooth),
+        background-color var(--motion-normal) var(--motion-smooth),
+        border-color var(--motion-normal) var(--motion-smooth) !important;
 }
 .btn-primary:active,
 .btn-ios-share:active,
 .btn-ios-add:active,
 .action-btn:active,
 button:active {
-    transform: translate3d(0, 1px, 0) scale(0.94) !important;
-    transition-duration: 80ms !important;
-    transition-timing-function: var(--spring-snappy) !important;
+    transform: translate3d(0, 1px, 0) scale(0.975) !important;
+    transition-duration: 70ms !important;
+    transition-timing-function: var(--motion-tap) !important;
 }
-.aarish-release-bounce-v3 {
-    animation: aarishUltraReleaseBounceV3 var(--duration-normal) var(--spring-bounce) both !important;
+.aarish-release-bounce-v4 {
+    animation: aarishSmoothReleaseV4 220ms var(--motion-bounce) both !important;
 }
-@keyframes aarishUltraReleaseBounceV3 {
-    0%   { transform: translate3d(0, 1px, 0) scale(0.94); }
-    55%  { transform: translate3d(0, -1px, 0) scale(1.032); }
-    100% { transform: translate3d(0, 0, 0) scale(1); }
+@keyframes aarishSmoothReleaseV4 {
+    from { transform: translate3d(0, 1px, 0) scale(0.975); }
+    55% { transform: translate3d(0, -0.5px, 0) scale(1.012); }
+    to { transform: translate3d(0, 0, 0) scale(1); }
 }
 
-/* Tap ripple: does not change card color/gradient, only transient light overlay. */
-.aarish-ripple-v3 {
+/* Ripple stays on the compositor and avoids blend-mode/filter work on every tap. */
+.aarish-ripple-v4 {
     position: absolute !important;
     left: var(--aarish-ripple-x, 50%);
     top: var(--aarish-ripple-y, 50%);
     width: var(--aarish-ripple-size, 120px);
     height: var(--aarish-ripple-size, 120px);
     border-radius: 999px;
-    background: rgba(255, 255, 255, 0.35);
+    background: rgba(255, 255, 255, 0.24);
     pointer-events: none;
     opacity: 0;
-    transform: translate(-50%, -50%) scale(0);
-    animation: aarishUltraRippleV3 600ms var(--spring-smooth) forwards;
-    mix-blend-mode: overlay;
+    transform: translate3d(-50%, -50%, 0) scale(0);
+    animation: aarishSmoothRippleV4 420ms var(--motion-smooth) forwards;
     z-index: 1;
 }
-.glass-card > * { position: relative; z-index: 2; }
-@keyframes aarishUltraRippleV3 {
-    0%   { opacity: 0.86; transform: translate(-50%, -50%) scale(0); }
-    62%  { opacity: 0.30; }
-    100% { opacity: 0; transform: translate(-50%, -50%) scale(2.5); }
+@keyframes aarishSmoothRippleV4 {
+    from { opacity: 0.62; transform: translate3d(-50%, -50%, 0) scale(0); }
+    to { opacity: 0; transform: translate3d(-50%, -50%, 0) scale(2.15); }
 }
+.glass-card > * { position: relative; z-index: 2; }
 
-/* Nav: icon pop + sliding indicator, exact existing colors preserved. */
+/* The pill keeps the bottom-nav centering transform intact. */
+.bottom-nav {
+    contain: layout style;
+    transform: translateX(-50%) translateZ(0) !important;
+}
 .nav-item { position: relative; z-index: 2; }
-.nav-item.active { animation: aarishUltraNavLabelV3 var(--duration-normal) var(--spring-smooth) both; }
-.nav-item.active i { animation: aarishUltraNavIconV3 460ms var(--spring-bounce) both; }
+.nav-item.active { animation: aarishSmoothNavLabelV4 260ms var(--motion-smooth) both; }
+.nav-item.active i { animation: aarishSmoothNavIconV4 320ms var(--motion-bounce) both; }
 .aarish-nav-pill-v3 {
     position: absolute;
     left: 0;
@@ -2857,186 +2836,72 @@ button:active {
     background: rgba(0, 122, 255, 0.22);
     box-shadow: 0 0 18px rgba(0, 122, 255, 0.28);
     transform: translate3d(18px, 0, 0);
-    transition: transform var(--duration-normal) var(--spring-snappy), width var(--duration-normal) var(--spring-snappy), opacity var(--duration-fast) var(--spring-smooth);
+    transition: transform var(--motion-normal) var(--motion-spring), width var(--motion-normal) var(--motion-spring), opacity var(--motion-fast) var(--motion-smooth);
     pointer-events: none;
     z-index: 1;
     opacity: 0.9;
 }
-@keyframes aarishUltraNavIconV3 {
-    0%   { opacity: 0; transform: translate3d(0, 4px, 0) scale(0.70); }
-    54%  { opacity: 1; transform: translate3d(0, -2px, 0) scale(1.20); }
-    100% { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+@keyframes aarishSmoothNavIconV4 {
+    from { opacity: 0; transform: translate3d(0, 3px, 0) scale(0.86); }
+    62% { opacity: 1; transform: translate3d(0, -1px, 0) scale(1.08); }
+    to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
 }
-@keyframes aarishUltraNavLabelV3 {
-    0%   { opacity: 0.78; transform: translate3d(0, 4px, 0); }
-    60%  { opacity: 1; transform: translate3d(0, -4px, 0); }
-    100% { opacity: 1; transform: translate3d(0, -3px, 0); }
-}
-
-/* Gemini FAB: disabled while dragging/spinning; keeps original drag logic. */
-#gemini-draggable-logo:not(.gemini-spinning):not(.aarish-fab-dragging-v3) {
-    animation: aarishUltraFabFloatV3 3s var(--spring-gentle) infinite;
-    transition: box-shadow var(--duration-normal) var(--spring-smooth), opacity var(--duration-fast) var(--spring-smooth) !important;
-}
-#gemini-draggable-logo.aarish-fab-tap-v3 {
-    animation: aarishUltraFabTapV3 520ms var(--spring-bounce) both !important;
-}
-@keyframes aarishUltraFabFloatV3 {
-    0%, 100% { transform: translate3d(0, 0, 0); }
-    50%      { transform: translate3d(0, -3px, 0); }
-}
-@keyframes aarishUltraFabTapV3 {
-    0%   { transform: scale(0.88); }
-    52%  { transform: scale(1.08); }
-    100% { transform: scale(1); }
+@keyframes aarishSmoothNavLabelV4 {
+    from { opacity: 0.82; transform: translate3d(0, 2px, 0); }
+    to { opacity: 1; transform: translate3d(0, -3px, 0); }
 }
 
-.aarish-delete-shake-v3 { animation: aarishUltraDeleteShakeV3 260ms var(--spring-snappy) both !important; }
-@keyframes aarishUltraDeleteShakeV3 {
-    0%, 100% { transform: translate3d(0, 0, 0); }
-    18%      { transform: translate3d(-4px, 0, 0); }
-    36%      { transform: translate3d(4px, 0, 0); }
-    54%      { transform: translate3d(-4px, 0, 0); }
-    72%      { transform: translate3d(4px, 0, 0); }
-}
-
-.input-box {
-    transition: transform 280ms var(--spring-smooth), background-color 280ms var(--spring-smooth), border-color 280ms var(--spring-smooth), box-shadow 280ms var(--spring-smooth), color 280ms var(--spring-smooth) !important;
-}
-.input-box:focus { transform: translate3d(0, -1px, 0); }
-.aarish-input-wrap-v3 { position: relative !important; }
-.aarish-input-wrap-v3::after {
-    content: attr(data-aarish-label);
-    position: absolute;
-    left: 18px;
-    top: 5px;
-    max-width: calc(100% - 36px);
-    pointer-events: none;
-    opacity: 0;
-    transform: translate3d(0, 8px, 0) scale(1);
-    transform-origin: left center;
-    font-size: 11px;
-    font-weight: 800;
-    letter-spacing: 0.02em;
-    color: currentColor;
-    filter: blur(4px);
-    transition: transform 280ms var(--spring-smooth), opacity 220ms var(--spring-smooth), filter 280ms var(--spring-smooth);
-    z-index: 4;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-.aarish-input-wrap-v3:focus-within::after {
-    opacity: 0.72;
-    filter: blur(0);
-    transform: translate3d(0, -12px, 0) scale(0.85);
-}
-
-#toast { transition: none !important; will-change: transform, opacity, filter; }
-#toast.show:not(.aarish-toast-out-v3) { animation: aarishUltraToastInV3 480ms var(--spring-bounce) both !important; }
-#toast.show.aarish-toast-out-v3 { animation: aarishUltraToastOutV3 320ms var(--spring-smooth) both !important; }
-@keyframes aarishUltraToastInV3 {
-    0%   { opacity: 0; filter: blur(8px); transform: translateX(-50%) translateY(-120%) scale(0.85); }
-    64%  { opacity: 1; filter: blur(0); transform: translateX(-50%) translateY(8px) scale(1.04); }
-    100% { opacity: 1; filter: blur(0); transform: translateX(-50%) translateY(0) scale(1); }
-}
-@keyframes aarishUltraToastOutV3 {
-    0%   { opacity: 1; filter: blur(0); transform: translateX(-50%) translateY(0) scale(1); }
-    100% { opacity: 0; filter: blur(4px); transform: translateX(-50%) translateY(-120%) scale(0.90); }
-}
-
+/* Modal overlay blur is removed; the sheet retains its glass treatment without a full-screen filter. */
 .modal-overlay {
-    transition: opacity 200ms var(--spring-smooth), backdrop-filter 280ms var(--spring-smooth), -webkit-backdrop-filter 280ms var(--spring-smooth) !important;
+    transition: opacity 180ms var(--motion-smooth) !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
 }
-.modal-overlay.aarish-modal-visible-v3,
-.modal-overlay[style*="display: flex"] {
-    backdrop-filter: blur(12px) !important;
-    -webkit-backdrop-filter: blur(12px) !important;
+.modal-content {
+    animation: aarishSmoothModalInV4 300ms var(--motion-spring) both !important;
 }
-.modal-content { animation: aarishUltraModalInV3 var(--duration-normal) var(--spring-snappy) both !important; }
-.modal-overlay.aarish-modal-closing-v3 .modal-content { animation: aarishUltraModalOutV3 var(--duration-fast) var(--spring-smooth) both !important; }
-@keyframes aarishUltraModalInV3 {
-    0%   { opacity: 0; transform: translate3d(0, 100%, 0) scale(0.98); }
-    78%  { opacity: 1; transform: translate3d(0, -1.5%, 0) scale(1.002); }
-    100% { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+.modal-overlay.aarish-modal-closing-v3 .modal-content {
+    animation: aarishSmoothModalOutV4 220ms var(--motion-smooth) both !important;
 }
-@keyframes aarishUltraModalOutV3 {
-    0%   { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
-    100% { opacity: 0; transform: translate3d(0, 14%, 0) scale(0.98); }
+@keyframes aarishSmoothModalInV4 {
+    from { opacity: 0; transform: translate3d(0, 100%, 0); }
+    76% { opacity: 1; transform: translate3d(0, -1%, 0); }
+    to { opacity: 1; transform: translate3d(0, 0, 0); }
 }
-
-.list-enter[class*="opacity-50"] > div:first-child,
-.aarish-empty-state-icon-v3 {
-    animation: aarishUltraEmptyIconV3 620ms var(--spring-bounce) both, aarishUltraEmptyPulseV3 2.8s var(--spring-smooth) 720ms infinite;
-}
-.list-enter[class*="opacity-50"] p { animation: aarishUltraEmptyTextV3 520ms var(--spring-smooth) 80ms both; }
-@keyframes aarishUltraEmptyIconV3 {
-    0% { opacity: 0; transform: scale(0); }
-    64% { opacity: 1; transform: scale(1.10); }
-    100% { opacity: 1; transform: scale(1); }
-}
-@keyframes aarishUltraEmptyTextV3 {
-    0% { opacity: 0; transform: translate3d(0, 10px, 0); }
-    100% { opacity: 1; transform: translate3d(0, 0, 0); }
-}
-@keyframes aarishUltraEmptyPulseV3 {
-    0%, 100% { box-shadow: 0 0 0 rgba(0, 122, 255, 0); }
-    50% { box-shadow: 0 0 28px rgba(0, 122, 255, 0.14); }
+@keyframes aarishSmoothModalOutV4 {
+    from { opacity: 1; transform: translate3d(0, 0, 0); }
+    to { opacity: 0; transform: translate3d(0, 10%, 0); }
 }
 
-/* Liquid loader keeps #007AFF as requested and original spinner remains fallback. */
+#toast {
+    transition: none !important;
+}
+#toast.show:not(.aarish-toast-out-v3) { animation: aarishSmoothToastInV4 300ms var(--motion-bounce) both !important; }
+#toast.show.aarish-toast-out-v3 { animation: aarishSmoothToastOutV4 220ms var(--motion-smooth) both !important; }
+@keyframes aarishSmoothToastInV4 {
+    from { opacity: 0; transform: translateX(-50%) translate3d(0, -24px, 0) scale(0.96); }
+    to { opacity: 1; transform: translateX(-50%) translate3d(0, 0, 0) scale(1); }
+}
+@keyframes aarishSmoothToastOutV4 {
+    from { opacity: 1; transform: translateX(-50%) translate3d(0, 0, 0) scale(1); }
+    to { opacity: 0; transform: translateX(-50%) translate3d(0, -20px, 0) scale(0.98); }
+}
+
 #global-loader .spinner {
-    border: 0 !important;
-    width: 54px !important;
-    height: 54px !important;
-    border-radius: 42% 58% 54% 46% / 46% 44% 56% 54% !important;
-    background: #007AFF !important;
-    box-shadow: 0 14px 42px rgba(0, 122, 255, 0.30), inset 0 1px 0 rgba(255, 255, 255, 0.35) !important;
-    animation: aarishUltraLiquidBlobV3 1.4s var(--spring-smooth) infinite !important;
-    position: relative;
-    overflow: hidden;
+    animation-duration: 1.1s !important;
 }
-#global-loader .spinner::after {
-    content: "";
-    position: absolute;
-    inset: 8px 10px auto auto;
-    width: 14px;
-    height: 14px;
-    border-radius: 999px;
-    background: rgba(255,255,255,0.38);
-    filter: blur(1px);
-}
-@keyframes aarishUltraLiquidBlobV3 {
-    0%, 100% { transform: rotate(0deg) scale(1); border-radius: 42% 58% 54% 46% / 46% 44% 56% 54%; }
-    50% { transform: rotate(180deg) scale(1.06); border-radius: 58% 42% 44% 56% / 55% 58% 42% 45%; }
-}
-
-.aarish-skeleton-layer-v3 {
-    position: absolute;
-    inset: 88px 18px 130px 18px;
-    z-index: 3;
-    pointer-events: none;
-    display: grid;
-    align-content: start;
-    gap: 14px;
-    opacity: 0;
-    animation: aarishUltraSkeletonInV3 260ms var(--spring-smooth) forwards;
-}
-.aarish-skeleton-card-v3 {
-    height: 86px;
-    border-radius: 24px;
-    background: linear-gradient(90deg, rgba(142,142,147,0.10) 0%, rgba(142,142,147,0.20) 42%, rgba(142,142,147,0.10) 84%);
-    background-size: 220% 100%;
-    animation: aarishUltraSkeletonShimmerV3 1.4s linear infinite;
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-}
-@keyframes aarishUltraSkeletonInV3 { to { opacity: 1; } }
-@keyframes aarishUltraSkeletonShimmerV3 { from { background-position: 120% 0; } to { background-position: -120% 0; } }
 
 .ambient-glow,
 .ambient-glow-2 {
-    transition: transform 1.2s var(--spring-smooth), filter var(--duration-slow) var(--spring-smooth), opacity var(--duration-slow) var(--spring-smooth) !important;
+    transition: transform 900ms var(--motion-smooth), opacity var(--motion-slow) var(--motion-smooth) !important;
+}
+
+/* Avoid the previous V3/V32 transform fight during a tab change. */
+html.aarish-tab-switching-v31 .screen.active,
+html.aarish-tab-switching-v31 .screen.active .glass-card:active {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
 }
 
 @media (hover: hover) and (pointer: fine) {
@@ -3045,100 +2910,20 @@ button:active {
     }
 }
 
-
-/* Optional View Transitions API: used only where supported; falls back to existing screen animation. */
-::view-transition-old(root),
-::view-transition-new(root) {
-    animation-duration: 280ms;
-    animation-timing-function: var(--spring-snappy);
-}
-html.aarish-vt-running-v3 .screen.active {
-    animation: none !important;
-}
-
-/* Modern CSS entry hints: safe no-op on unsupported browsers. */
-@supports (transition-behavior: allow-discrete) {
-    .modal-overlay.aarish-modal-visible-v3 {
-        @starting-style {
-            opacity: 0;
-            backdrop-filter: blur(0px);
-            -webkit-backdrop-filter: blur(0px);
-        }
-    }
-    #toast.show:not(.aarish-toast-out-v3) {
-        @starting-style {
-            opacity: 0;
-            filter: blur(8px);
-            transform: translateX(-50%) translateY(-120%) scale(0.85);
-        }
-    }
-}
-
-/* Scroll-driven depth is feature-gated; it never runs on older Android WebViews. */
-@supports (animation-timeline: view()) {
-    html:not(.aarish-tab-switching-v31):not(.aarish-vt-running-v3) .screen.active .glass-card:not(.list-enter) {
-        animation: aarishUltraScrollDepthV3 linear both;
-        animation-timeline: view();
-        animation-range: entry 0% cover 22%;
-    }
-    @keyframes aarishUltraScrollDepthV3 {
-        0% { opacity: 0.84; transform: translate3d(0, 8px, 0) scale(0.992); }
-        100% { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
-    }
-}
-
 @media (prefers-reduced-motion: reduce) {
     .screen.active,
-    .screen.aarish-screen-exit-v3,
     .list-enter,
     #toast.show,
     .modal-content,
     #gemini-draggable-logo,
-    .aarish-ripple-v3,
-    .aarish-release-bounce-v3,
-    .aarish-delete-shake-v3 {
+    .aarish-ripple-v4,
+    .aarish-release-bounce-v4 {
         animation-duration: 1ms !important;
         animation-iteration-count: 1 !important;
         transition-duration: 1ms !important;
     }
 }
-/* AARISH_MOTION_V31_DOUBLE_JERK_HOTFIX_CSS_START */
-/* V3.1: During tab switch, do not let scroll-depth/card animation fight screen transition. */
-html.aarish-tab-switching-v31 .screen.active .glass-card:not(.list-enter),
-html.aarish-vt-running-v3 .screen.active .glass-card:not(.list-enter) {
-    animation: none !important;
-}
-
-/* V3.1: bottom nav already has its own icon/pill animation; release bounce on nav caused double-snap. */
-.bottom-nav .nav-item.aarish-release-bounce-v3 {
-    animation: none !important;
-}
-
-/* V3.1: keep active card press, but stop accidental duplicate animation while switching screens. */
-html.aarish-tab-switching-v31 .aarish-release-bounce-v3 {
-    animation: none !important;
-}
-/* AARISH_MOTION_V31_DOUBLE_JERK_HOTFIX_CSS_END */
-/* AARISH_ULTRA_CORE_MOTION_V3_END */
-
-/* AARISH_MOTION_V32_LEGACY_SLIDE_CLASH_FIX_START */
-/* Core surgical update:
-   Module/tab switch is now direct-open. Cards keep their list-enter premium animation.
-   No overlay/wrapper/observer added; Firebase/Gemini API/CSV/PDF/data logic untouched.
-*/
-html.aarish-tab-switching-v31 .screen.active {
-    animation: none !important;
-    opacity: 1 !important;
-    transform: none !important;
-}
-html.aarish-tab-switching-v31 .screen.active .glass-card:active {
-    transform: none !important;
-}
-html.aarish-tab-switching-v31 .bottom-nav .nav-item.aarish-release-bounce-v3,
-html.aarish-tab-switching-v31 .bottom-nav .nav-item.active {
-    animation-duration: 80ms !important;
-}
-/* AARISH_MOTION_V32_LEGACY_SLIDE_CLASH_FIX_END */
+/* AARISH_ULTRA_CORE_MOTION_V4_END */
 
 
 /* ==================== AARISH_EXPORT_CENTER_PREMIUM_PDF_CORE_V1_CSS_START ====================
@@ -12681,7 +12466,7 @@ function aarishCsvRowCoreV4(values) {
         const y = (p.clientY || rect.top + rect.height / 2) - rect.top;
         const size = Math.max(rect.width, rect.height) * 1.15;
         const r = document.createElement('span');
-        r.className = 'aarish-ripple-v3';
+        r.className = 'aarish-ripple-v4';
         r.style.setProperty('--aarish-ripple-x', x + 'px');
         r.style.setProperty('--aarish-ripple-y', y + 'px');
         r.style.setProperty('--aarish-ripple-size', size + 'px');
@@ -12691,10 +12476,10 @@ function aarishCsvRowCoreV4(values) {
 
     function bounce(el) {
         if (!el || el.disabled) return;
-        el.classList.remove('aarish-release-bounce-v3');
+        el.classList.remove('aarish-release-bounce-v4');
         void el.offsetWidth;
-        el.classList.add('aarish-release-bounce-v3');
-        setTimeout(() => el.classList.remove('aarish-release-bounce-v3'), 430);
+        el.classList.add('aarish-release-bounce-v4');
+        setTimeout(() => el.classList.remove('aarish-release-bounce-v4'), 250);
     }
 
     function isDeleteButton(el) {
@@ -12714,13 +12499,38 @@ function aarishCsvRowCoreV4(values) {
     }
 
     function installTapLayer() {
+        const interactiveSelector = 'button, .btn-primary, .btn-ios-share, .btn-ios-add, .action-btn, .nav-item';
+        const promotionTimers = new WeakMap();
+
+        function promote(el) {
+            if (!el) return;
+            const previous = promotionTimers.get(el);
+            if (previous) clearTimeout(previous);
+            el.style.willChange = 'transform';
+        }
+
+        function release(el) {
+            if (!el) return;
+            const timer = setTimeout(() => {
+                el.style.willChange = 'auto';
+                promotionTimers.delete(el);
+            }, 260);
+            promotionTimers.set(el, timer);
+        }
+
         document.addEventListener('pointerdown', (ev) => {
             const target = ev.target;
-            const button = target && target.closest('button, .btn-primary, .btn-ios-share, .btn-ios-add, .action-btn, .nav-item');
+            const button = target && target.closest(interactiveSelector);
             const card = target && target.closest('.glass-card');
             const del = isDeleteButton(target) && target.closest('button, .action-btn, [id*="delete"], [onclick*="delete"], [onclick*="Delete"]');
-            if (button) safeHaptic(25);
-            if (card) ripple(card, ev);
+            if (button) {
+                promote(button);
+                safeHaptic(25);
+            }
+            if (card) {
+                promote(card);
+                ripple(card, ev);
+            }
             if (del) {
                 const icon = del.querySelector('i') || del;
                 icon.classList.remove('aarish-delete-shake-v3');
@@ -12732,14 +12542,25 @@ function aarishCsvRowCoreV4(values) {
         }, { capture: true, passive: true });
 
         document.addEventListener('pointerup', (ev) => {
-            const button = ev.target && ev.target.closest('button, .btn-primary, .btn-ios-share, .btn-ios-add, .action-btn');
+            const button = ev.target && ev.target.closest(interactiveSelector);
             if (button && !button.closest('.bottom-nav .nav-item')) bounce(button);
+            release(button);
+            release(button && button.closest('.glass-card'));
+        }, { capture: true, passive: true });
+
+        document.addEventListener('pointercancel', (ev) => {
+            const button = ev.target && ev.target.closest(interactiveSelector);
+            release(button);
+            release(button && button.closest('.glass-card'));
         }, { capture: true, passive: true });
 
         const fab = qs('#gemini-draggable-logo');
         if (fab) {
             let downAt = 0;
-            fab.addEventListener('touchstart', () => { downAt = Date.now(); fab.classList.add('aarish-fab-dragging-v3'); }, { passive: true });
+            fab.addEventListener('touchstart', () => {
+                downAt = Date.now();
+                fab.classList.add('aarish-fab-dragging-v3');
+            }, { passive: true });
             fab.addEventListener('touchend', () => {
                 fab.classList.remove('aarish-fab-dragging-v3');
                 if (Date.now() - downAt < 170) {
