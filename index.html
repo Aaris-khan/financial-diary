@@ -125,8 +125,8 @@
     <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
     
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 
     <style>
         /* Apple-like Typography & Base */
@@ -3572,6 +3572,7 @@ html.aarish-tab-switching-v31 .bottom-nav .nav-item.active {
             <div class="flex items-center gap-3 w-full min-w-0">
                 <button onclick="haptic(); switchTab('home')" class="w-10 h-10 shrink-0 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center transition-transform active:scale-95"><i class="fa-solid fa-chevron-left"></i></button>
                 <h1 class="text-xl font-extrabold truncate flex-1 min-w-0 w-full">Party Ledger</h1>
+                <button onclick="haptic(); sharePartyLedgerBill()" class="btn-ios-share !rounded-full !px-3 !py-2" title="Share Party Ledger" aria-label="Share Party Ledger"><i class="fa-solid fa-file-pdf m-0"></i></button>
             </div>
         </div>
         <div class="p-5">
@@ -8897,139 +8898,464 @@ async function deleteMilkEntry(id) {
 
 
     
-    // ========================== WHATSAPP PHOTO BILL SHARE FUNCTIONS ==========================
+    // ========================== AARISH TITANIUM VECTOR PDF ENGINE ==========================
+    // One owner for all module exports. It prefers AutoTable, but includes a mathematical
+    // vector fallback so a CDN hiccup never turns a share button into a runtime crash.
+    window.AarishTitaniumPDF = (function () {
+        'use strict';
+
+        const A4 = { width: 210, height: 297, left: 14, right: 14, top: 24, bottom: 16 };
+        const pluginUrl = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js';
+        let pluginPromise = null;
+
+        function text(value, fallback) {
+            const raw = value == null ? '' : String(value);
+            const clean = raw.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, ' ').replace(/\s+/g, ' ').trim();
+            return clean || (fallback == null ? '-' : String(fallback));
+        }
+        function numeric(value) {
+            const n = Number(value);
+            return Number.isFinite(n) ? n : 0;
+        }
+        function money(value) {
+            return 'Rs. ' + Math.round(numeric(value)).toLocaleString('en-IN');
+        }
+        function filename(value, fallback) {
+            return text(value, fallback || 'Aarish_Report')
+                .replace(/[\\/:*?"<>|]+/g, '_')
+                .replace(/\s+/g, '_')
+                .replace(/_+/g, '_')
+                .slice(0, 96) || (fallback || 'Aarish_Report');
+        }
+        function color(value, fallback) {
+            const c = Array.isArray(value) ? value.map(numeric) : fallback;
+            return (c && c.length === 3) ? c.map(v => Math.max(0, Math.min(255, Math.round(v)))) : [0, 122, 255];
+        }
+        function dateLabel(value) {
+            try {
+                if (typeof formatDisplayDate === 'function') return text(formatDisplayDate(value));
+            } catch (_) {}
+            return text(value);
+        }
+        function safeToast(message) {
+            try { if (typeof showToast === 'function') showToast(message); } catch (_) {}
+        }
+        function setLoader(message) {
+            try { if (typeof showLoader === 'function') showLoader(message); } catch (_) {}
+        }
+        function clearLoader() {
+            try { if (typeof hideLoader === 'function') hideLoader(); } catch (_) {}
+        }
+        function frame() {
+            return new Promise(resolve => {
+                if (typeof requestAnimationFrame === 'function') requestAnimationFrame(() => requestAnimationFrame(resolve));
+                else setTimeout(resolve, 40);
+            });
+        }
+        function jsPDFConstructor() {
+            if (!window.jspdf || typeof window.jspdf.jsPDF !== 'function') throw new Error('jspdf_unavailable');
+            return window.jspdf.jsPDF;
+        }
+        function ensurePlugin() {
+            try {
+                const Ctor = window.jspdf && window.jspdf.jsPDF;
+                if (Ctor && Ctor.prototype && typeof Ctor.prototype.autoTable === 'function') return Promise.resolve(true);
+            } catch (_) {}
+            if (pluginPromise) return pluginPromise;
+            pluginPromise = new Promise(resolve => {
+                const existing = document.querySelector('script[data-aarish-autotable="true"]');
+                const script = existing || document.createElement('script');
+                const done = () => {
+                    let ready = false;
+                    try { ready = !!(window.jspdf && window.jspdf.jsPDF && typeof window.jspdf.jsPDF.prototype.autoTable === 'function'); } catch (_) {}
+                    resolve(ready);
+                };
+                script.onload = done;
+                script.onerror = () => resolve(false);
+                if (!existing) {
+                    script.src = pluginUrl;
+                    script.async = false;
+                    script.dataset.aarishAutotable = 'true';
+                    document.head.appendChild(script);
+                }
+                if (existing && existing.dataset.loaded === 'true') done();
+            }).finally(() => { pluginPromise = null; });
+            return pluginPromise;
+        }
+        function drawFooter(doc) {
+            const page = doc.internal.getNumberOfPages();
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(7.5);
+            doc.setTextColor(140, 140, 140);
+            doc.text('Aarish Dairy Pro Ledger - Verified Digital Copy', A4.left, 290);
+            doc.text('Page ' + page, A4.width - A4.right, 290, { align: 'right' });
+        }
+        function drawHeader(doc, options) {
+            const primary = color(options.themeColor, [0, 122, 255]);
+            const secondary = color(options.themeColor2, primary);
+            doc.setFillColor(primary[0], primary[1], primary[2]);
+            doc.rect(0, 0, A4.width, 23, 'F');
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(15);
+            doc.setTextColor(255, 255, 255);
+            doc.text('AARISH DAIRY PRO', A4.left, 14);
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(8.5);
+            doc.text(text(options.statementType, 'FINANCIAL STATEMENT').slice(0, 50), A4.width - A4.right, 14, { align: 'right' });
+
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(14);
+            doc.setTextColor(28, 28, 30);
+            const title = text(options.title, 'Statement');
+            const titleLines = doc.splitTextToSize(title, 112).slice(0, 2);
+            doc.text(titleLines, A4.left, 35);
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(8);
+            doc.setTextColor(105, 105, 112);
+            doc.text('Generated: ' + new Date().toLocaleString('en-IN'), A4.width - A4.right, 34, { align: 'right' });
+
+            let metaY = 42 + Math.max(0, titleLines.length - 1) * 4;
+            (Array.isArray(options.meta) ? options.meta : []).slice(0, 6).forEach(item => {
+                if (metaY > 66) return;
+                doc.setFont('helvetica', 'bold');
+                doc.setTextColor(80, 80, 88);
+                doc.text(text(item && item.label, 'Info') + ':', A4.left, metaY);
+                doc.setFont('helvetica', 'normal');
+                doc.setTextColor(45, 45, 52);
+                doc.text(text(item && item.value), A4.left + 30, metaY);
+                metaY += 4.5;
+            });
+            return { primary, secondary, startY: Math.max(metaY + 4, 58) };
+        }
+        function drawSummary(doc, boxes, startY, primary) {
+            const list = Array.isArray(boxes) ? boxes.filter(Boolean).slice(0, 8) : [];
+            if (!list.length) return startY;
+            const cols = Math.min(4, list.length);
+            const gap = 4;
+            const width = (A4.width - A4.left - A4.right - gap * (cols - 1)) / cols;
+            let y = startY;
+            list.forEach((box, index) => {
+                const row = Math.floor(index / cols);
+                const col = index % cols;
+                if (col === 0 && index > 0) y += 18;
+                const x = A4.left + col * (width + gap);
+                const fill = color(box.color, primary);
+                doc.setFillColor(246, 247, 249);
+                doc.setDrawColor(224, 225, 230);
+                doc.roundedRect(x, y, width, 14, 2, 2, 'FD');
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(6.5);
+                doc.setTextColor(115, 115, 123);
+                doc.text(text(box.label, 'SUMMARY').toUpperCase().slice(0, 24), x + 3.5, y + 5);
+                doc.setFontSize(9);
+                doc.setTextColor(fill[0], fill[1], fill[2]);
+                doc.text(text(box.value), x + 3.5, y + 10.5);
+            });
+            return y + 20;
+        }
+        function normalizeTable(head, body) {
+            const headers = (Array.isArray(head) ? head : []).map(value => text(value, ''));
+            const rows = (Array.isArray(body) ? body : []).map(row => headers.map((_, i) => text(Array.isArray(row) ? row[i] : '', '')));
+            return { headers, rows };
+        }
+        function drawVectorTable(doc, table, startY, options) {
+            const headers = table.headers;
+            const rows = table.rows;
+            const available = A4.width - A4.left - A4.right;
+            if (!headers.length) return startY;
+            const styles = options.columnStyles || {};
+            const widths = headers.map((header, i) => {
+                const configured = styles[i] && Number(styles[i].cellWidth);
+                if (Number.isFinite(configured) && configured > 8) return configured;
+                const maxLength = Math.max(header.length, ...rows.slice(0, 80).map(row => String(row[i] || '').length));
+                return Math.max(18, Math.min(62, 12 + maxLength * 1.35));
+            });
+            const total = widths.reduce((sum, value) => sum + value, 0);
+            const scale = total > available ? available / total : 1;
+            const finalWidths = widths.map(value => value * scale);
+            if (total < available) finalWidths[finalWidths.length - 1] += available - total;
+            const drawColumnHead = y => {
+                let x = A4.left;
+                doc.setFillColor(...color(options.themeColor, [0, 122, 255]));
+                doc.setDrawColor(210, 212, 218);
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(7.5);
+                doc.setTextColor(255, 255, 255);
+                headers.forEach((header, i) => {
+                    doc.rect(x, y, finalWidths[i], 8, 'FD');
+                    const lines = doc.splitTextToSize(header.toUpperCase(), Math.max(10, finalWidths[i] - 4)).slice(0, 2);
+                    doc.text(lines, x + 2, y + 3.4);
+                    x += finalWidths[i];
+                });
+                return y + 8;
+            };
+            let y = drawColumnHead(startY);
+            if (!rows.length) {
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(9);
+                doc.setTextColor(120, 120, 128);
+                doc.text('No records found for this period.', A4.left + 2, y + 12);
+                return y + 22;
+            }
+            rows.forEach((row, rowIndex) => {
+                const linesByCell = row.map((value, i) => doc.splitTextToSize(String(value), Math.max(10, finalWidths[i] - 4)).slice(0, 4));
+                const rowHeight = Math.max(7, ...linesByCell.map(lines => lines.length * 3.6 + 3));
+                if (y + rowHeight > A4.height - A4.bottom - 7) {
+                    drawFooter(doc);
+                    doc.addPage('a4', 'portrait');
+                    y = drawColumnHead(22);
+                }
+                let x = A4.left;
+                doc.setFillColor(rowIndex % 2 ? 249 : 255, rowIndex % 2 ? 250 : 255, rowIndex % 2 ? 252 : 255);
+                doc.setDrawColor(228, 229, 233);
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(7.4);
+                doc.setTextColor(35, 35, 42);
+                row.forEach((value, i) => {
+                    doc.rect(x, y, finalWidths[i], rowHeight, 'FD');
+                    const style = styles[i] || {};
+                    if (Array.isArray(style.textColor)) doc.setTextColor(...color(style.textColor, [35, 35, 42]));
+                    const align = style.halign === 'right' ? 'right' : (style.halign === 'center' ? 'center' : 'left');
+                    const tx = align === 'right' ? x + finalWidths[i] - 2 : (align === 'center' ? x + finalWidths[i] / 2 : x + 2);
+                    doc.text(linesByCell[i], tx, y + 3.4, { align });
+                    doc.setTextColor(35, 35, 42);
+                    x += finalWidths[i];
+                });
+                y += rowHeight;
+            });
+            return y + 3;
+        }
+        function drawTable(doc, table, startY, options) {
+            if (typeof doc.autoTable === 'function') {
+                doc.autoTable({
+                    startY,
+                    head: [table.headers],
+                    body: table.rows,
+                    theme: 'grid',
+                    margin: { left: A4.left, right: A4.right, bottom: 18 },
+                    styles: { font: 'helvetica', fontSize: 8, cellPadding: 2.5, overflow: 'linebreak', textColor: [35, 35, 42] },
+                    headStyles: { fillColor: color(options.themeColor, [0, 122, 255]), textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 8 },
+                    alternateRowStyles: { fillColor: [249, 250, 252] },
+                    columnStyles: options.columnStyles || {},
+                    didDrawPage: () => drawFooter(doc)
+                });
+                return (doc.lastAutoTable && doc.lastAutoTable.finalY) || startY + 12;
+            }
+            return drawVectorTable(doc, table, startY, options);
+        }
+        async function deliverFile(file, title, shareText) {
+            if (!file) throw new Error('export_file_missing');
+            const canShare = typeof navigator !== 'undefined' && typeof navigator.share === 'function' && typeof navigator.canShare === 'function';
+            if (canShare) {
+                let supported = false;
+                try { supported = !!navigator.canShare({ files: [file] }); } catch (_) {}
+                if (supported) {
+                    try {
+                        await navigator.share({ files: [file], title: text(title, 'Aarish Dairy Pro'), text: text(shareText, 'Aarish Dairy Pro Report') });
+                        safeToast('Shared successfully!');
+                        return { method: 'share' };
+                    } catch (error) {
+                        if (error && error.name === 'AbortError') return { method: 'cancelled' };
+                    }
+                }
+            }
+            const url = URL.createObjectURL(file);
+            const anchor = document.createElement('a');
+            anchor.href = url;
+            anchor.download = filename(file.name, 'Aarish_Report.pdf');
+            anchor.style.display = 'none';
+            document.body.appendChild(anchor);
+            try { anchor.click(); } finally {
+                anchor.remove();
+                setTimeout(() => { try { URL.revokeObjectURL(url); } catch (_) {} }, 10000);
+            }
+            safeToast('PDF downloaded!');
+            return { method: 'download' };
+        }
+        async function renderDocument(options) {
+            options = options || {};
+            setLoader('Generating PDF...');
+            try {
+                await frame();
+                await ensurePlugin();
+                const Ctor = jsPDFConstructor();
+                const doc = new Ctor({ orientation: 'portrait', unit: 'mm', format: 'a4', compress: true });
+                const header = drawHeader(doc, options);
+                const summaryEnd = drawSummary(doc, options.summaryBoxes, header.startY, header.primary);
+                const table = normalizeTable(options.head, options.body);
+                drawTable(doc, table, summaryEnd, { ...options, themeColor: header.primary });
+                if (typeof doc.autoTable !== 'function') drawFooter(doc);
+                const file = new File([doc.output('blob')], filename(options.filename, 'Aarish_Statement.pdf'), { type: 'application/pdf' });
+                return await deliverFile(file, options.title, options.shareText || options.statementType);
+            } catch (error) {
+                console.error('Aarish Titanium PDF error:', error);
+                safeToast(error && error.message === 'jspdf_unavailable' ? 'PDF library unavailable. Check your internet and retry.' : 'PDF generation failed.');
+                return { method: 'error', error };
+            } finally { clearLoader(); }
+        }
+        async function renderDiary(entry) {
+            setLoader('Preparing Diary PDF...');
+            try {
+                await frame();
+                const Ctor = jsPDFConstructor();
+                const doc = new Ctor({ orientation: 'portrait', unit: 'mm', format: 'a4', compress: true });
+                const title = text(entry && entry.title, 'Untitled');
+                const content = String(entry && entry.content || '').replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, ' ').trim() || 'No diary content.';
+                let page = 0;
+                let y = 0;
+                const begin = () => {
+                    if (page > 0) doc.addPage('a4', 'portrait');
+                    page += 1;
+                    doc.setFillColor(245, 166, 35); doc.rect(0, 0, A4.width, 22, 'F');
+                    doc.setFont('helvetica', 'bold'); doc.setFontSize(15); doc.setTextColor(255, 255, 255); doc.text('AARISH PERSONAL DIARY', A4.left, 14);
+                    doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.text(dateLabel(entry && entry.date), A4.width - A4.right, 14, { align: 'right' });
+                    doc.setFont('helvetica', 'bold'); doc.setFontSize(17); doc.setTextColor(245, 166, 35);
+                    const titleLines = doc.splitTextToSize(title, 182).slice(0, 3); doc.text(titleLines, A4.left, 36);
+                    const lineY = 40 + Math.max(0, titleLines.length - 1) * 5;
+                    doc.setDrawColor(245, 166, 35); doc.setLineWidth(0.5); doc.line(A4.left, lineY, A4.width - A4.right, lineY);
+                    doc.setFont('helvetica', 'normal'); doc.setFontSize(11); doc.setTextColor(45, 45, 50);
+                    y = lineY + 10;
+                };
+                begin();
+                const lines = doc.splitTextToSize(content, 182);
+                lines.forEach(line => {
+                    if (y > A4.height - A4.bottom - 10) { drawFooter(doc); begin(); }
+                    doc.text(line, A4.left, y); y += 5.2;
+                });
+                drawFooter(doc);
+                const file = new File([doc.output('blob')], filename('Diary_' + title + '.pdf', 'Diary_Entry.pdf'), { type: 'application/pdf' });
+                return await deliverFile(file, title, 'Personal Diary Entry');
+            } catch (error) {
+                console.error('Aarish Diary PDF error:', error); safeToast('Diary PDF generation failed.'); return { method: 'error', error };
+            } finally { clearLoader(); }
+        }
+        async function renderDataset(dataset) {
+            dataset = dataset || {};
+            setLoader('Building Premium PDF...');
+            try {
+                await frame();
+                await ensurePlugin();
+                const Ctor = jsPDFConstructor();
+                const doc = new Ctor({ orientation: 'portrait', unit: 'mm', format: 'a4', compress: true });
+                const sections = Array.isArray(dataset.sections) ? dataset.sections : [];
+                const options = { title: dataset.title || 'All Data', statementType: 'PREMIUM REPORT', themeColor: [0, 122, 255] };
+                let first = true;
+                for (const section of sections.length ? sections : [{ title: 'No Data', headers: ['Message'], rows: [] }]) {
+                    const rows = Array.isArray(section.rows) ? section.rows : [];
+                    const perPage = section.id === 'diary' ? 16 : (section.headers && section.headers.length >= 6 ? 22 : 28);
+                    for (let offset = 0; offset < Math.max(1, rows.length); offset += perPage) {
+                        if (!first) doc.addPage('a4', 'portrait');
+                        first = false;
+                        const header = drawHeader(doc, { ...options, statementType: text(section.title, 'REPORT') });
+                        const summaryEnd = drawSummary(doc, [
+                            { label: 'Section', value: text(section.title, 'Report') },
+                            { label: 'Rows Shown', value: String(Math.min(perPage, Math.max(0, rows.length - offset))) },
+                            { label: 'Total Rows', value: String(rows.length) },
+                            { label: 'Generated', value: text(dataset.generatedOn, new Date().toLocaleDateString('en-IN')) }
+                        ], header.startY, header.primary);
+                        drawTable(doc, normalizeTable(section.headers, rows.slice(offset, offset + perPage)), summaryEnd, { themeColor: header.primary });
+                        if (typeof doc.autoTable !== 'function') drawFooter(doc);
+                        if (!rows.length) break;
+                    }
+                }
+                const file = new File([doc.output('blob')], filename('Aarish_' + (dataset.type || 'all') + '_Premium_Report.pdf', 'Aarish_Premium_Report.pdf'), { type: 'application/pdf' });
+                return await deliverFile(file, dataset.title || 'Premium PDF Report', 'Aarish Dairy Pro Premium PDF Report');
+            } catch (error) {
+                console.error('Aarish Premium PDF error:', error); safeToast('PDF generation failed.'); return { method: 'error', error };
+            } finally { clearLoader(); }
+        }
+        return { ensurePlugin, deliverPDF: async (doc, name, title, shareText) => deliverFile(new File([doc.output('blob')], filename(name, 'Aarish_Report.pdf'), { type: 'application/pdf' }), title, shareText), renderDocument, renderDiary, renderDataset };
+    })();
+
+    function aarishPdfMonthLabelCoreV1() {
+        try { return (MONTHS[selectedMonth] || 'Month') + ' ' + selectedYear; } catch (_) { return 'Selected Period'; }
+    }
+    function aarishPdfRecordsCoreV1(value) {
+        try { return typeof aarishBackendCanonicalListCoreV8 === 'function' ? aarishBackendCanonicalListCoreV8(value) : (Array.isArray(value) ? value : []); } catch (_) { return Array.isArray(value) ? value : []; }
+    }
+    function aarishPdfDateCoreV1(value) {
+        try { return typeof formatDisplayDate === 'function' ? formatDisplayDate(value) : String(value || '-'); } catch (_) { return String(value || '-'); }
+    }
+    function aarishPdfMoneyCoreV1(value) { return 'Rs. ' + Math.round(Number(value) || 0).toLocaleString('en-IN'); }
+    function aarishPdfSafeNameCoreV1(value) { return String(value || 'Report').replace(/[\\/:*?"<>|]+/g, '_').replace(/\s+/g, '_').slice(0, 70); }
+
     async function generateAndShareBill() {
-    if (!activeMilkCustomer || !milkDB || !milkDB[activeMilkCustomer]) return;
-
-    showLoader('Generating net bill photo...');
-
-    const c = milkDB[activeMilkCustomer];
-    const total = aarishMilkTotalsCore(c, true);
-
-    document.getElementById('rcpt-name').textContent = activeMilkCustomer;
-    document.getElementById('rcpt-month').textContent = `${MONTHS[selectedMonth]} ${selectedYear}`;
-    document.getElementById('rcpt-qty').textContent = aarishMilkSignedKgCore(total.netKg);
-    document.getElementById('rcpt-amt').textContent = aarishMilkSignedMoneyCore(total.netAmount);
-
-    await exportAndShareCanvas(
-        'receipt-card',
-        `${activeMilkCustomer}_Milk_Net_Bill.png`,
-        `Hello ${activeMilkCustomer},\nMilk bill for ${MONTHS[selectedMonth]} ${selectedYear}\nGiven: ${total.givenKg.toFixed(2)} KG = ₹${Math.round(total.givenAmount).toLocaleString('en-IN')}\nTaken: ${total.takenKg.toFixed(2)} KG = ₹${Math.round(total.takenAmount).toLocaleString('en-IN')}\nNet Milk: ${aarishMilkSignedKgCore(total.netKg)}\nNet Amount: ${aarishMilkSignedMoneyCore(total.netAmount)}`
-    );
-}
+        if (!activeMilkCustomer || !milkDB || !milkDB[activeMilkCustomer]) return showToast('Customer not selected');
+        const customer = milkDB[activeMilkCustomer];
+        const records = (typeof filterByMonth === 'function' ? filterByMonth(aarishPdfRecordsCoreV1(customer.records)) : aarishPdfRecordsCoreV1(customer.records)).sort((a, b) => new Date(a.date || 0) - new Date(b.date || 0));
+        let morning = 0, evening = 0, totalKg = 0, totalAmount = 0;
+        const rows = records.map(record => {
+            const m = Math.abs(Number(record && record.morning) || 0), e = Math.abs(Number(record && record.evening) || 0);
+            const qty = (m || e) ? m + e : Math.abs(Number(record && (record.kg || record.qty || record.quantity || record.total)) || 0);
+            const rate = typeof aarishMilkRateCore === 'function' ? aarishMilkRateCore(customer, record) : (Number(customer.rate) || DEFAULT_RATE || 0);
+            const amount = qty * rate;
+            const flow = typeof aarishMilkFlowCore === 'function' ? aarishMilkFlowCore(record, customer) : 'given';
+            morning += m; evening += e; totalKg += flow === 'taken' ? -qty : qty; totalAmount += flow === 'taken' ? -amount : amount;
+            return [aarishPdfDateCoreV1(record.date), m ? m.toFixed(2) : '-', e ? e.toFixed(2) : '-', qty.toFixed(2) + ' KG', flow === 'taken' ? 'Taken (-)' : 'Given (+)', aarishPdfMoneyCoreV1(amount)];
+        });
+        const month = aarishPdfMonthLabelCoreV1();
+        return AarishTitaniumPDF.renderDocument({ title: activeMilkCustomer, statementType: 'MILK STATEMENT (' + month + ')', filename: 'Milk_' + aarishPdfSafeNameCoreV1(activeMilkCustomer) + '_' + aarishPdfSafeNameCoreV1(month) + '.pdf', themeColor: [52, 199, 89], meta: [{ label: 'Customer', value: activeMilkCustomer }, { label: 'Type', value: customer.type === 'dene_wala' ? 'Buyer (Dene Wala)' : 'Seller (Lene Wala)' }, { label: 'Milk Rate', value: aarishPdfMoneyCoreV1(customer.rate || DEFAULT_RATE) + ' / KG' }, { label: 'Period', value: month }], summaryBoxes: [{ label: 'Morning', value: morning.toFixed(2) + ' KG' }, { label: 'Evening', value: evening.toFixed(2) + ' KG' }, { label: 'Net Milk', value: totalKg.toFixed(2) + ' KG', color: [52, 199, 89] }, { label: 'Net Amount', value: aarishPdfMoneyCoreV1(totalAmount), color: [0, 122, 255] }], head: ['Date', 'Morning', 'Evening', 'Quantity', 'Flow', 'Amount'], body: rows, columnStyles: { 0: { cellWidth: 26 }, 1: { halign: 'center' }, 2: { halign: 'center' }, 3: { halign: 'center' }, 4: { fontStyle: 'bold' }, 5: { halign: 'right', fontStyle: 'bold' } }, shareText: 'Milk statement for ' + activeMilkCustomer });
+    }
 
     async function shareSalaryBill(name) {
-        showLoader("Generating Salary Slip...");
-        const s = salaryDB[name];
-        let totalAmt = 0;
-        filterByMonth(s.records || []).forEach(r => totalAmt += Number(r.amount||0));
-        
-        document.getElementById('sal-rcpt-name').textContent = name;
-        document.getElementById('sal-rcpt-company').textContent = s.company || 'N/A';
-        document.getElementById('sal-rcpt-amt').textContent = `₹${totalAmt.toLocaleString('en-IN')}`;
-        
-        await exportAndShareCanvas('salary-receipt-card', `${name}_SalarySlip.png`, `Hello ${name},\nHere is your Salary Slip. Total: ₹${totalAmt}`);
+        const personName = name || activeSalaryPerson;
+        if (!personName || !salaryDB || !salaryDB[personName]) return showToast('Employee not found');
+        const person = salaryDB[personName];
+        const records = (typeof filterByMonth === 'function' ? filterByMonth(person.records || []) : (person.records || [])).sort((a, b) => new Date(a.date || 0) - new Date(b.date || 0));
+        const receives = person.type === 'lene_wala';
+        let total = 0;
+        const rows = records.map(record => { const amount = Math.abs(Number(record && record.amount) || 0); const signed = receives ? amount : -amount; total += signed; return [aarishPdfDateCoreV1(record.date), receives ? 'Received (+)' : 'Paid (-)', aarishPdfMoneyCoreV1(amount)]; });
+        const month = aarishPdfMonthLabelCoreV1();
+        return AarishTitaniumPDF.renderDocument({ title: personName, statementType: 'SALARY REGISTER (' + month + ')', filename: 'Salary_' + aarishPdfSafeNameCoreV1(personName) + '_' + aarishPdfSafeNameCoreV1(month) + '.pdf', themeColor: [16, 185, 129], meta: [{ label: 'Employee', value: personName }, { label: 'Company', value: person.company || '-' }, { label: 'Period', value: month }, { label: 'Direction', value: receives ? 'Money Received' : 'Money Paid' }], summaryBoxes: [{ label: 'Entries', value: records.length + ' Records' }, { label: 'Net Total', value: aarishPdfMoneyCoreV1(total), color: [16, 185, 129] }], head: ['Date', 'Direction', 'Amount'], body: rows, columnStyles: { 0: { cellWidth: 38 }, 1: { fontStyle: 'bold' }, 2: { halign: 'right', fontStyle: 'bold' } }, shareText: 'Salary statement for ' + personName });
     }
 
-
-async function shareDiaryBill(id) {
-    showLoader('Generating Diary Page...');
-
-    const d = diaryFindEntryCoreV1(id);
-    if (!d) {
-        hideLoader();
-        return showToast('Error: Diary not found!');
+    function aarishPdfExpenseRecordsCoreV1(category) {
+        const source = typeof expenseEntriesCoreV1 === 'function' ? expenseEntriesCoreV1() : (expenseDB || []);
+        const month = typeof filterByMonth === 'function' ? filterByMonth(source) : source;
+        return month.filter(record => !category || String(record && record.category || '').trim().toLowerCase() === String(category || '').trim().toLowerCase()).sort((a, b) => new Date(a.date || 0) - new Date(b.date || 0));
     }
-
-    const dateEl = document.getElementById('diary-rcpt-date');
-    const titleEl = document.getElementById('diary-rcpt-title');
-    const contentEl = document.getElementById('diary-rcpt-content');
-
-    if (dateEl) dateEl.textContent = diaryFormatDateCoreV1(d.date);
-    if (titleEl) titleEl.textContent = d.title || 'Untitled';
-    if (contentEl) contentEl.textContent = d.content || '';
-
-    let msg = `Diary Page: ${d.title || 'Untitled'}\nDate: ${diaryFormatDateCoreV1(d.date)}`;
-
-    await exportAndShareCanvas('diary-receipt-card', `Diary_${d.date || 'page'}.png`, msg);
-}
-
-
-    
     async function shareAllExpensesBill() {
-        showLoader("Generating All Expenses Bill...");
-        let total = 0;
-        filterByMonth(expenseDB || []).forEach(e => total += Number(e.amount));
-        
-        document.getElementById('exp-rcpt-date').textContent = `${MONTHS[selectedMonth]} ${selectedYear}`;
-        document.getElementById('exp-rcpt-cat').textContent = 'All Expenses Summary';
-        document.getElementById('exp-rcpt-amt').textContent = `₹${total.toLocaleString('en-IN')}`;
-        
-        await exportAndShareCanvas('expense-receipt-card', `All_Expenses_${MONTHS[selectedMonth]}.png`, `All Expenses for ${MONTHS[selectedMonth]} - ₹${total}`);
+        const records = aarishPdfExpenseRecordsCoreV1();
+        const total = records.reduce((sum, record) => sum + Math.abs(Number(record && record.amount) || 0), 0);
+        const month = aarishPdfMonthLabelCoreV1();
+        return AarishTitaniumPDF.renderDocument({ title: 'Monthly Expenses', statementType: 'EXPENSE REGISTER (' + month + ')', filename: 'Expenses_' + aarishPdfSafeNameCoreV1(month) + '.pdf', themeColor: [255, 59, 48], meta: [{ label: 'Scope', value: 'All Categories' }, { label: 'Period', value: month }], summaryBoxes: [{ label: 'Records', value: records.length + ' Items' }, { label: 'Total Kharcha', value: aarishPdfMoneyCoreV1(total), color: [255, 59, 48] }], head: ['Date', 'Category / Detail', 'Amount'], body: records.map(record => [aarishPdfDateCoreV1(record.date), record.category || 'General', aarishPdfMoneyCoreV1(record.amount)]), columnStyles: { 0: { cellWidth: 38 }, 1: { fontStyle: 'bold' }, 2: { halign: 'right', fontStyle: 'bold', textColor: [255, 59, 48] } }, shareText: 'All expenses for ' + month });
     }
-
     async function shareExpenseCategoryBill() {
-        if(!activeExpenseCategory) return;
-        showLoader("Generating Expense Bill...");
-        let total = 0;
-        filterByMonth(expenseDB || []).forEach(e => {
-            if(e.category === activeExpenseCategory) total += Number(e.amount);
+        if (!activeExpenseCategory) return showToast('Select an expense category first');
+        const records = aarishPdfExpenseRecordsCoreV1(activeExpenseCategory);
+        const total = records.reduce((sum, record) => sum + Math.abs(Number(record && record.amount) || 0), 0);
+        const month = aarishPdfMonthLabelCoreV1();
+        return AarishTitaniumPDF.renderDocument({ title: activeExpenseCategory, statementType: 'CATEGORY EXPENSES (' + month + ')', filename: aarishPdfSafeNameCoreV1(activeExpenseCategory) + '_Expenses_' + aarishPdfSafeNameCoreV1(month) + '.pdf', themeColor: [255, 59, 48], meta: [{ label: 'Category', value: activeExpenseCategory }, { label: 'Period', value: month }], summaryBoxes: [{ label: 'Records', value: records.length + ' Items' }, { label: 'Category Total', value: aarishPdfMoneyCoreV1(total), color: [255, 59, 48] }], head: ['Date', 'Detail', 'Amount'], body: records.map(record => [aarishPdfDateCoreV1(record.date), record.note || record.description || activeExpenseCategory, aarishPdfMoneyCoreV1(record.amount)]), columnStyles: { 0: { cellWidth: 38 }, 1: { fontStyle: 'bold' }, 2: { halign: 'right', fontStyle: 'bold', textColor: [255, 59, 48] } }, shareText: activeExpenseCategory + ' expenses for ' + month });
+    }
+    async function shareDiaryBill(id) {
+        const entry = typeof diaryFindEntryCoreV1 === 'function' ? diaryFindEntryCoreV1(id == null ? activeDiaryIndex : id) : (diaryDB || []).find(item => String(item && item.id) === String(id));
+        if (!entry) return showToast('Diary entry not found');
+        return AarishTitaniumPDF.renderDiary(entry);
+    }
+    async function sharePartyLedgerBill() {
+        const milkByParty = Object.create(null), creditByParty = Object.create(null);
+        Object.keys(milkDB || {}).forEach(name => {
+            const customer = milkDB[name] || {};
+            let total = 0;
+            aarishPdfRecordsCoreV1(customer.records).forEach(record => { const qty = typeof aarishMilkQtyCore === 'function' ? aarishMilkQtyCore(record) : Math.abs(Number(record && (record.kg || record.total)) || 0); const rate = typeof aarishMilkRateCore === 'function' ? aarishMilkRateCore(customer, record) : (Number(customer.rate) || DEFAULT_RATE || 0); const amount = qty * rate; total += (typeof aarishMilkFlowCore === 'function' && aarishMilkFlowCore(record, customer) === 'taken') ? -amount : amount; });
+            milkByParty[name] = total;
         });
-        
-        document.getElementById('exp-rcpt-date').textContent = `${MONTHS[selectedMonth]} ${selectedYear}`;
-        document.getElementById('exp-rcpt-cat').textContent = activeExpenseCategory;
-        document.getElementById('exp-rcpt-amt').textContent = `₹${total.toLocaleString('en-IN')}`;
-        
-        await exportAndShareCanvas('expense-receipt-card', `${activeExpenseCategory}_Expenses.png`, `${activeExpenseCategory} Expenses - ₹${total}`);
+        const creditRows = typeof creditEntriesCoreV1 === 'function' ? creditEntriesCoreV1() : (udharDB || []);
+        creditRows.forEach(record => { const name = String(record && record.name || '').trim(); if (!name) return; const amount = Number(record && record.amount) || 0; const signed = typeof creditSignedAmountCoreV1 === 'function' ? creditSignedAmountCoreV1(record) : (String(record && record.type || '').toLowerCase() === 'credit' ? amount : -amount); creditByParty[name] = (creditByParty[name] || 0) + signed; });
+        const names = Array.from(new Set(Object.keys(milkByParty).concat(Object.keys(creditByParty))));
+        const search = String((document.getElementById('balance-search') || {}).value || '').trim().toLowerCase();
+        const rows = names.filter(name => !search || name.toLowerCase().includes(search)).map(name => { const milk = milkByParty[name] || 0, credit = creditByParty[name] || 0; return [name, aarishPdfMoneyCoreV1(milk), aarishPdfMoneyCoreV1(credit), aarishPdfMoneyCoreV1(milk + credit), milk + credit]; }).sort((a, b) => Math.abs(Number(b[4])) - Math.abs(Number(a[4]))).map(row => row.slice(0, 4));
+        const month = 'Lifetime';
+        const net = rows.reduce((sum, row) => sum + (Number(String(row[3]).replace(/[^0-9-]/g, '')) || 0), 0);
+        return AarishTitaniumPDF.renderDocument({ title: 'Party Ledger', statementType: 'COMBINED MILK + CREDIT LEDGER', filename: 'Party_Ledger_Lifetime.pdf', themeColor: [0, 122, 255], meta: [{ label: 'Scope', value: search ? 'Search: ' + search : 'All Parties' }, { label: 'Period', value: month }], summaryBoxes: [{ label: 'Parties', value: rows.length + ' Parties' }, { label: 'Combined Net', value: aarishPdfMoneyCoreV1(net), color: [0, 122, 255] }], head: ['Party', 'Milk Net', 'Credit Net', 'Combined Balance'], body: rows, columnStyles: { 0: { fontStyle: 'bold' }, 1: { halign: 'right' }, 2: { halign: 'right' }, 3: { halign: 'right', fontStyle: 'bold' } }, shareText: 'Combined Party Ledger' });
     }
 
-    async function exportAndShareCanvas(elementId, fileName, shareText) {
-        const receipt = document.getElementById(elementId);
-        if (!receipt) {
-            hideLoader();
-            showToast("Error! Receipt not found.");
-            return;
-        }
-        let canvas = null;
-        const cleanupCanvas = () => { try { if (canvas && canvas.parentNode) canvas.remove(); } catch(e) {} canvas = null; };
-        try {
-            canvas = await html2canvas(receipt, { scale: 2, backgroundColor: '#ffffff' });
-            canvas.toBlob(async (blob) => {
-                try {
-                    if (!blob) {
-                        hideLoader();
-                        showToast("Error! Photo generation failed.");
-                        return;
-                    }
-                    const file = new File([blob], fileName, { type: 'image/png' });
-                    if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                        hideLoader();
-                        await navigator.share({ files: [file], title: 'Aarish Dairy Pro', text: shareText });
-                    } else {
-                        const url = URL.createObjectURL(blob);
-                        const a = document.createElement('a');
-                        a.href = url; a.download = fileName; a.click();
-                        setTimeout(() => { try { URL.revokeObjectURL(url); } catch(e) {} }, 1000);
-                        hideLoader(); showToast("Photo downloaded!");
-                    }
-                } catch (innerError) {
-                    hideLoader();
-                    showToast("Error! Photo generation failed.");
-                } finally {
-                    cleanupCanvas();
-                }
-            });
-        } catch (error) {
-            cleanupCanvas();
-            hideLoader(); showToast("Error! Photo generation failed.");
-        }
-    }
 
     // ========================== SMART EXCEL (CSV) EXPORT ==========================
     /* AARISH_EXPORT_CENTER_PREMIUM_PDF_CORE_V1_START
    Core-integrated Export Center.
    Share receipt buttons stay untouched. CSV stays permanent backup.
-   Premium PDF uses live app CSS variables + hidden page-by-page report DOM.
+   Premium PDF is rendered by the shared vector engine; CSV stays a permanent backup.
 */
 function aarishExportEscCoreV1(value) {
     return String(value == null ? '' : value).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
@@ -9386,82 +9712,10 @@ function aarishBuildReportPagesCoreV1(dataset, theme) {
     return pages.map((p, index) => aarishCreateReportPageCoreV1(dataset, p.section, p.rows, index + 1, pages.length, theme));
 }
 async function aarishExportPremiumPdfCoreV1(type, dataset) {
-    showLoader('Premium PDF बन रही है...');
-    await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
-
-    if (!window.jspdf || !window.jspdf.jsPDF) {
-        hideLoader();
-        showToast('PDF library loading. Please try again.');
-        return;
+    if (window.AarishTitaniumPDF && typeof window.AarishTitaniumPDF.renderDataset === 'function') {
+        return window.AarishTitaniumPDF.renderDataset(dataset || aarishBuildExportDatasetCoreV1(type));
     }
-
-    const theme = aarishSnapshotReportThemeCoreV1(type);
-    const host = document.createElement('div');
-    host.className = 'aarish-report-host';
-    document.body.appendChild(host);
-
-    try {
-        const pages = aarishBuildReportPagesCoreV1(dataset, theme);
-        pages.forEach(page => host.appendChild(page));
-        await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
-
-        const pdf = new window.jspdf.jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4', compress: true });
-        for (let i = 0; i < pages.length; i++) {
-            if (typeof html2canvas !== 'function') {
-                throw new Error('html2canvas_unavailable');
-            }
-
-            const canvas = await html2canvas(pages[i], {
-                scale: 2,
-                backgroundColor: theme.bg || null,
-                useCORS: true,
-                allowTaint: false,
-                logging: false,
-                windowWidth: 794,
-                windowHeight: 1123,
-                scrollX: 0,
-                scrollY: 0,
-                onclone: (clonedDocument) => {
-                    // The live report host intentionally sits off-screen.
-                    // html2canvas renders a cloned document, so reposition the
-                    // clone into the viewport-safe origin before painting.
-                    clonedDocument.querySelectorAll('.aarish-report-host').forEach(el => {
-                        el.style.position = 'absolute';
-                        el.style.left = '0px';
-                        el.style.top = '0px';
-                        el.style.zIndex = '1';
-                        el.style.pointerEvents = 'none';
-                        el.style.opacity = '1';
-                        el.style.contain = 'none';
-                    });
-                    clonedDocument.querySelectorAll('.aarish-report-page').forEach(el => {
-                        el.style.position = 'relative';
-                        el.style.left = '0px';
-                        el.style.top = '0px';
-                        el.style.zIndex = '1';
-                        el.style.visibility = 'visible';
-                    });
-                }
-            });
-            const img = canvas.toDataURL('image/jpeg', 0.96);
-            if (i > 0) pdf.addPage('a4', 'portrait');
-            pdf.addImage(img, 'JPEG', 0, 0, 210, 297, undefined, 'FAST');
-        }
-
-        const fileName = 'Aarish_' + aarishExportSafeFileNameCoreV1(type || 'all') + '_Premium_Report.pdf';
-        const blob = pdf.output('blob');
-        const file = new File([blob], fileName, { type: 'application/pdf' });
-
-        hideLoader();
-        await aarishShareOrDownloadFileCoreV1(file, 'Premium PDF Report');
-        showToast('Premium PDF Ready ✅');
-    } catch (err) {
-        hideLoader();
-        console.error('Aarish Premium PDF error:', err);
-        showToast('PDF generation failed.');
-    } finally {
-        try { host.remove(); } catch(e) {}
-    }
+    try { showToast('PDF engine loading. Please try again.'); } catch (e) {}
 }
 async function aarishExportCsvBackupCoreV1(type, dataset) {
     showLoader('CSV Backup बन रहा है...');
@@ -10193,35 +10447,23 @@ async function deleteUdhar(id) {
         }
     }
 }
-
-
-    
-
     async function shareUdharBill() {
-    if (!activeUdharPerson) return;
-    showLoader('Generating Ledger...');
-    let net = 0;
-    creditEntriesCoreV1().forEach(u => {
-        if (creditCleanNameCoreV1(u && u.name) === creditCleanNameCoreV1(activeUdharPerson)) net += creditSignedAmountCoreV1(u);
-    });
-
-    const nameEl = document.getElementById('udh-rcpt-name');
-    const rcptStatus = document.getElementById('udh-rcpt-status');
-    const rcptAmt = document.getElementById('udh-rcpt-amt');
-    const tone = creditToneCoreV1(net);
-    const pack = creditPackCoreV1(tone);
-
-    if (nameEl) nameEl.textContent = activeUdharPerson;
-    if (rcptStatus) rcptStatus.textContent = tone === 'positive' ? 'You need to pay us:' : (tone === 'negative' ? 'We owe you:' : 'Settled:');
-    if (rcptAmt) {
-        rcptAmt.textContent = creditMoneyCoreV1(net);
-        rcptAmt.style.color = pack.color;
+        if (!activeUdharPerson) return showToast('Select customer first');
+        const name = activeUdharPerson;
+        const records = (typeof creditEntriesCoreV1 === 'function' ? creditEntriesCoreV1() : (udharDB || []))
+            .filter(record => String(record && record.name || '').trim().toLowerCase() === String(name).trim().toLowerCase())
+            .sort((a, b) => new Date(a.date || 0) - new Date(b.date || 0));
+        let given = 0, taken = 0;
+        const rows = records.map(record => {
+            const amount = Math.abs(Number(record && record.amount) || 0);
+            const isGiven = String(record && record.type || '').toLowerCase() === 'credit';
+            if (isGiven) given += amount; else taken += amount;
+            return [aarishPdfDateCoreV1(record.date), isGiven ? 'Given (+)' : 'Taken (-)', isGiven ? aarishPdfMoneyCoreV1(amount) : '-', !isGiven ? aarishPdfMoneyCoreV1(amount) : '-'];
+        });
+        const net = given - taken;
+        return AarishTitaniumPDF.renderDocument({ title: name, statementType: 'CREDIT / UDHAR LEDGER', filename: 'Credit_Ledger_' + aarishPdfSafeNameCoreV1(name) + '.pdf', themeColor: [0, 122, 255], meta: [{ label: 'Party Name', value: name }, { label: 'Status', value: net >= 0 ? 'To Receive (Lena Hai)' : 'To Pay (Dena Hai)' }], summaryBoxes: [{ label: 'Total Given', value: aarishPdfMoneyCoreV1(given), color: [52, 199, 89] }, { label: 'Total Taken', value: aarishPdfMoneyCoreV1(taken), color: [255, 59, 48] }, { label: 'Net Balance', value: (net >= 0 ? '+' : '-') + aarishPdfMoneyCoreV1(Math.abs(net)), color: [0, 122, 255] }], head: ['Date', 'Transaction', 'Given', 'Taken'], body: rows, columnStyles: { 0: { cellWidth: 34 }, 1: { fontStyle: 'bold' }, 2: { halign: 'right', textColor: [52, 199, 89] }, 3: { halign: 'right', textColor: [255, 59, 48] } }, shareText: 'Credit ledger for ' + name });
     }
 
-    await exportAndShareCanvas('udhar-receipt-card', `${activeUdharPerson}_Ledger.png`, `Hello ${activeUdharPerson},\nHere is your Credit Ledger summary. Net Balance: ${creditMoneyCoreV1(net)}`);
-}
-
-    
 /* AARISH_EXPENSE_CORE_ENGINE_V1_START */
 function expenseNumCoreV1(v) {
     const x = Number(v);
