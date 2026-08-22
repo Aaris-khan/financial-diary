@@ -9492,24 +9492,148 @@ function aarishBuildExportDatasetCoreV1(type) {
     const rowCount = sections.reduce((sum, s) => sum + ((s.rows || []).length), 0);
     return { type, meta, title: meta.title, generatedOn: aarishExportTodayCoreV1(), sections, rowCount };
 }
-function aarishBuildCsvFromDatasetCoreV1(dataset) {
-    let csv = '';
-    const title = `AARISH DAIRY PRO - ${String((dataset && dataset.title) || 'ALL DATA').toUpperCase()} REPORT`;
-    csv += aarishCsvRowCoreV4([title]);
-    csv += aarishCsvRowCoreV4(['Generated On', (dataset && dataset.generatedOn) || aarishExportTodayCoreV1()]);
-    csv += aarishCsvRowCoreV4(['Format', 'CSV Backup']);
-    csv += aarishCsvRowCoreV4(['Total Sections', ((dataset && dataset.sections) || []).length]);
-    csv += aarishCsvRowCoreV4(['Total Rows', (dataset && dataset.rowCount) || 0]);
-    csv += '\n';
-    ((dataset && dataset.sections) || []).forEach(section => {
-        csv += aarishCsvRowCoreV4(['============================================================']);
-        csv += aarishCsvRowCoreV4([String(section.title || '').toUpperCase()]);
-        csv += aarishCsvRowCoreV4(['Rows', (section.rows || []).length]);
-        csv += aarishCsvRowCoreV4(['------------------------------------------------------------']);
-        csv += aarishCsvRowCoreV4(section.headers || []);
-        (section.rows || []).forEach(row => csv += aarishCsvRowCoreV4(row));
-        csv += '\n';
+/* AARISH_UNIFIED_LEDGER_CSV_CORE_V2_START */
+function aarishExportSmartNumberCoreV2(value) {
+    if (typeof value === 'number') return Number.isFinite(value) ? value : 0;
+    const raw = String(value == null ? '' : value).replace(/[₹,\s]/g, '').trim();
+    const n = Number(raw);
+    return Number.isFinite(n) ? n : 0;
+}
+function aarishExportListCoreV2(value) {
+    try {
+        if (typeof aarishBackendCanonicalListCoreV8 === 'function') return aarishBackendCanonicalListCoreV8(value);
+    } catch(e) {}
+    if (Array.isArray(value)) return value.filter(Boolean);
+    if (value && typeof value === 'object') return Object.keys(value).map(key => value[key]).filter(Boolean);
+    return [];
+}
+function aarishExportDateIsoCoreV2(value) {
+    const raw = String(value == null ? '' : value).trim();
+    if (!raw) return '';
+    const direct = raw.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
+    if (direct) return direct[1] + '-' + String(direct[2]).padStart(2, '0') + '-' + String(direct[3]).padStart(2, '0');
+    const parsed = new Date(raw);
+    return Number.isNaN(parsed.getTime()) ? raw : parsed.toISOString().slice(0, 10);
+}
+function aarishExportSourceKeyCoreV2(value, fallback) {
+    const raw = String(value == null ? '' : value).trim();
+    return raw || String(fallback || 'record');
+}
+function aarishExportListValueCoreV2(name, fallback) {
+    try {
+        if (name === 'milkDB' && typeof milkDB !== 'undefined') return milkDB;
+        if (name === 'udharDB' && typeof udharDB !== 'undefined') return udharDB;
+        if (name === 'salaryDB' && typeof salaryDB !== 'undefined') return salaryDB;
+        if (name === 'expenseDB' && typeof expenseDB !== 'undefined') return expenseDB;
+        if (name === 'diaryDB' && typeof diaryDB !== 'undefined') return diaryDB;
+        if (name === 'projectDB' && typeof projectDB !== 'undefined') return projectDB;
+    } catch(e) {}
+    try { return typeof window !== 'undefined' && window[name] !== undefined ? window[name] : fallback; } catch(e) { return fallback; }
+}
+function aarishBuildUnifiedLedgerCoreV2(type) {
+    const rows = [];
+    const text = (value, max) => {
+        let s = String(value == null ? '' : value).replace(/\s+/g, ' ').trim();
+        return max && s.length > max ? s.slice(0, max - 1) + '…' : s;
+    };
+    const displayDate = value => {
+        try { return typeof formatDisplayDate === 'function' ? formatDisplayDate(value) : String(value || ''); } catch(e) { return String(value || ''); }
+    };
+    const push = row => {
+        const amount = Math.abs(aarishExportSmartNumberCoreV2(row.amount));
+        const signed = aarishExportSmartNumberCoreV2(row.signedAmount);
+        rows.push({
+            source_id: String(row.sourceId || ''), record_id: aarishExportSourceKeyCoreV2(row.recordId, 'record-' + (rows.length + 1)),
+            source_module: String(row.sourceModule || ''), record_type: String(row.recordType || ''),
+            date_iso: aarishExportDateIsoCoreV2(row.date), date_display: String(row.dateDisplay || row.date || ''),
+            counterparty: text(row.counterparty), account: text(row.account), description: text(row.description, 700),
+            owner_action: String(row.ownerAction || 'NONE'), financial_direction: String(row.direction || 'NEUTRAL'),
+            amount, signed_amount: signed, quantity: row.quantity === '' || row.quantity == null ? '' : aarishExportSmartNumberCoreV2(row.quantity),
+            unit: String(row.unit || ''), rate: row.rate === '' || row.rate == null ? '' : aarishExportSmartNumberCoreV2(row.rate),
+            status: String(row.status || 'RECORDED'), ai_interpretation: text(row.aiInterpretation, 900),
+            source_key: aarishExportSourceKeyCoreV2(row.sourceKey || row.recordId, '')
+        });
+    };
+    const milk = aarishExportListValueCoreV2('milkDB', {}), udhar = aarishExportListValueCoreV2('udharDB', []), salary = aarishExportListValueCoreV2('salaryDB', {});
+    const expenses = aarishExportListValueCoreV2('expenseDB', []), diary = aarishExportListValueCoreV2('diaryDB', []), projects = aarishExportListValueCoreV2('projectDB', {});
+
+    Object.keys(milk || {}).forEach(name => {
+        const profile = milk[name] || {};
+        aarishExportListCoreV2(profile.records).forEach(record => {
+            const flow = typeof aarishMilkFlowCore === 'function' ? aarishMilkFlowCore(record, profile) : (profile.type === 'dene_wala' ? 'taken' : 'given');
+            const morning = Math.abs(aarishExportSmartNumberCoreV2(record && record.morning));
+            const evening = Math.abs(aarishExportSmartNumberCoreV2(record && record.evening));
+            const quantity = typeof aarishMilkQtyCore === 'function' ? aarishMilkQtyCore(record) : ((morning || evening) ? morning + evening : 0);
+            const rate = typeof aarishMilkRateCore === 'function' ? aarishMilkRateCore(profile, record) : aarishExportSmartNumberCoreV2(record && record.rate) || aarishExportSmartNumberCoreV2(profile.rate);
+            const given = flow === 'given', amount = quantity * rate, signed = given ? amount : -amount;
+            push({ sourceId:'milk', recordId:record && (record.id || record.key), sourceModule:'Milk Records', recordType:given ? 'MILK_SUPPLIED' : 'MILK_TAKEN', date:record && record.date, dateDisplay:displayDate(record && record.date), counterparty:name, account:'Milk Ledger', description:`Morning: ${morning} KG; Evening: ${evening} KG; Total: ${quantity} KG @ ₹${rate}/KG`, ownerAction:given ? 'MILK_SUPPLIED' : 'MILK_TAKEN', direction:given ? 'TO_RECEIVE' : 'TO_PAY', amount, signedAmount:signed, quantity, unit:'KG', rate, aiInterpretation:given ? `Milk supplied to ${name}; ₹${amount} is receivable by the owner (lena hai).` : `Milk taken from ${name}; ₹${amount} is payable by the owner (dena hai).`, sourceKey:`milk/${name}/${aarishExportSourceKeyCoreV2(record && (record.id || record.key), 'record')}` });
+        });
     });
+
+    aarishExportListCoreV2(udhar).forEach(entry => {
+        const raw = String(entry && (entry.type || entry.entryType || entry.flow || entry.direction || '') || '').toLowerCase();
+        const amount = Math.abs(aarishExportSmartNumberCoreV2(entry && (entry.amount ?? entry.amt ?? entry.total ?? entry.value)));
+        const given = raw === 'credit' || raw === 'given' || raw === 'receive' || raw === 'received' || raw === 'lena';
+        const signed = given ? amount : -amount, name = entry && (entry.name || entry.party || entry.person) || 'Unknown';
+        push({ sourceId:'udhar', recordId:entry && (entry.id || entry.key), sourceModule:'Credit Ledger', recordType:given ? 'CREDIT_GIVEN' : 'CREDIT_TAKEN', date:entry && entry.date, dateDisplay:displayDate(entry && entry.date), counterparty:name, account:'Udhar / Credit Book', description:entry && (entry.detail || entry.note || entry.description) || '', ownerAction:given ? 'CREDIT_GIVEN' : 'CREDIT_TAKEN', direction:given ? 'TO_RECEIVE' : 'TO_PAY', amount, signedAmount:signed, aiInterpretation:given ? `₹${amount} credit/udhar given to ${name}; receivable increased (lena hai).` : `₹${amount} credit/udhar taken from ${name}; payable increased (dena hai).`, sourceKey:`udhar/${aarishExportSourceKeyCoreV2(entry && (entry.id || entry.key), name)}` });
+    });
+
+    Object.keys(salary || {}).forEach(name => {
+        const profile = salary[name] || {}, received = String(profile.type || '').toLowerCase() === 'lene_wala';
+        const records = typeof salaryRecordsCoreV1 === 'function' ? salaryRecordsCoreV1(profile) : aarishExportListCoreV2(profile.records);
+        records.forEach(record => {
+            const amount = Math.abs(aarishExportSmartNumberCoreV2(record && record.amount)), signed = received ? amount : -amount;
+            push({ sourceId:'salary', recordId:record && (record.id || record.key), sourceModule:'Salary', recordType:received ? 'SALARY_RECEIVED' : 'SALARY_PAID', date:record && record.date, dateDisplay:displayDate(record && record.date), counterparty:name, account:profile.company || 'Salary Register', description:profile.company ? `Company: ${profile.company}` : 'Salary entry', ownerAction:received ? 'SALARY_RECEIVED' : 'SALARY_PAID', direction:received ? 'INFLOW' : 'OUTFLOW', amount, signedAmount:signed, aiInterpretation:received ? `Salary of ₹${amount} received from ${name}; money inflow for the owner.` : `Salary of ₹${amount} paid to ${name}; money outflow for the owner.`, sourceKey:`salary/${name}/${aarishExportSourceKeyCoreV2(record && (record.id || record.key), 'record')}` });
+        });
+    });
+
+    const expenseList = typeof expenseEntriesCoreV1 === 'function' ? expenseEntriesCoreV1() : aarishExportListCoreV2(expenses);
+    expenseList.forEach(entry => {
+        const amount = Math.abs(aarishExportSmartNumberCoreV2(entry && entry.amount)), category = entry && (entry.category || entry.name) || 'Other', detail = entry && (entry.note || entry.description || entry.detail) || category;
+        push({ sourceId:'expenses', recordId:entry && (entry.id || entry.key), sourceModule:'Expenses', recordType:'EXPENSE', date:entry && entry.date, dateDisplay:displayDate(entry && entry.date), counterparty:category, account:'Expense Register', description:detail, ownerAction:'EXPENSE_PAID', direction:'OUTFLOW', amount, signedAmount:-amount, aiInterpretation:`Expense of ₹${amount} paid for ${category}; money outflow (kharcha).`, sourceKey:`expenses/${aarishExportSourceKeyCoreV2(entry && (entry.id || entry.key), 'record')}` });
+    });
+
+    aarishExportListCoreV2(diary).forEach(entry => {
+        const title = entry && entry.title || '', content = entry && (entry.content || entry.note || entry.description) || '';
+        push({ sourceId:'diary', recordId:entry && (entry.id || entry.key), sourceModule:'Personal Diary', recordType:'DIARY_NOTE', date:entry && entry.date, dateDisplay:displayDate(entry && entry.date), counterparty:'', account:'Personal Diary', description:[title, content].filter(Boolean).join(' — '), ownerAction:'NOTE', direction:'NOT_APPLICABLE', amount:0, signedAmount:0, status:'INFORMATIONAL', aiInterpretation:'Personal diary note only; do not count this row as a financial transaction.', sourceKey:`diary/${aarishExportSourceKeyCoreV2(entry && (entry.id || entry.key), 'record')}` });
+    });
+
+    Object.keys(projects || {}).forEach(name => {
+        const project = projects[name] || {}, records = typeof businessRecordsCoreV1 === 'function' ? businessRecordsCoreV1(project) : aarishExportListCoreV2(project.records);
+        records.forEach(entry => {
+            const color = String(entry && entry.color || 'blue').toLowerCase(), amount = Math.abs(aarishExportSmartNumberCoreV2(entry && entry.amount));
+            const meaning = {
+                green: { type:'BUSINESS_INCOME', action:'BUSINESS_INCOME', direction:'INFLOW', signed:amount, status:'RECORDED', text:`Business income of ₹${amount} received in ${name}; money inflow.` },
+                red: { type:'BUSINESS_EXPENSE', action:'BUSINESS_EXPENSE', direction:'OUTFLOW', signed:-amount, status:'RECORDED', text:`Business expense of ₹${amount} recorded in ${name}; money outflow.` },
+                blue: { type:'BUSINESS_TRANSFER', action:'BANK_TRANSFER', direction:'NEUTRAL', signed:0, status:'RECORDED', text:`₹${amount} bank/other transfer in ${name}; no net owner balance change.` },
+                orange: { type:'BUSINESS_PENDING', action:'PENDING', direction:'NEUTRAL', signed:0, status:'PENDING', text:`₹${amount} pending/udhar entry in ${name}; not counted as settled cash.` }
+            }[color] || { type:'BUSINESS_OTHER', action:'OTHER', direction:'NEUTRAL', signed:0, status:'RECORDED', text:`₹${amount} business entry in ${name}; direction not specified.` };
+            push({ sourceId:'projects', recordId:entry && (entry.id || entry.key), sourceModule:'Business Hub', recordType:meaning.type, date:entry && entry.date, dateDisplay:displayDate(entry && entry.date), counterparty:name, account:name, description:entry && (entry.title || entry.detail) || '', ownerAction:meaning.action, direction:meaning.direction, amount, signedAmount:meaning.signed, status:meaning.status, aiInterpretation:meaning.text, sourceKey:`projects/${name}/${aarishExportSourceKeyCoreV2(entry && (entry.id || entry.key), 'record')}` });
+        });
+    });
+
+    rows.sort((a, b) => (b.date_iso || '0000-00-00').localeCompare(a.date_iso || '0000-00-00') || a.source_module.localeCompare(b.source_module) || a.source_key.localeCompare(b.source_key));
+    return rows.filter(row => String(type || 'all') === 'all' || row.source_id === String(type));
+}
+/* AARISH_UNIFIED_LEDGER_CSV_CORE_V2_END */
+function aarishBuildCsvFromDatasetCoreV1(dataset) {
+    const rows = aarishBuildUnifiedLedgerCoreV2(dataset && dataset.type || 'all');
+    const headers = ['Source ID','Record ID','Source Module','Record Type','Date (ISO)','Date (Display)','Counterparty / User / Party','Ledger Account','Description','Owner Action','Financial Direction','Amount (₹)','Signed Amount (₹)','Quantity','Unit','Rate (₹)','Status','AI Interpretation','Source Key'];
+    const row = values => aarishCsvRowCoreV4(values);
+    const positive = rows.reduce((sum, item) => sum + Math.max(0, item.signed_amount), 0);
+    const negative = rows.reduce((sum, item) => sum + Math.abs(Math.min(0, item.signed_amount)), 0);
+    let csv = '';
+    csv += row([`AARISH DAIRY PRO - ${String((dataset && dataset.title) || 'ALL DATA').toUpperCase()} REPORT`]);
+    csv += row(['Generated On', (dataset && dataset.generatedOn) || new Date().toISOString()]);
+    csv += row(['Schema Version', 'AARISH_UNIFIED_LEDGER_V2']);
+    csv += row(['Scope', String((dataset && dataset.type) || 'all')]);
+    csv += row(['Total Transaction Rows', rows.length]);
+    csv += row(['Total To Receive / Inflow (₹)', positive]);
+    csv += row(['Total To Pay / Outflow (₹)', negative]);
+    csv += row(['Sign Convention', 'signed_amount > 0 = owner will receive / lena hai; signed_amount < 0 = owner will pay or money went out / dena hai/kharcha; 0 = neutral or non-financial.']);
+    csv += row(['AI Parsing Rule', 'One ledger row equals one source record. Prefer record_type, owner_action, financial_direction and signed_amount over guessing from descriptions. DIARY_NOTE, BUSINESS_TRANSFER and BUSINESS_PENDING are not settled cash.']);
+    csv += '\n' + row(['AI-READY UNIFIED TRANSACTION LEDGER']) + row(['Rows', rows.length]) + row(headers);
+    rows.forEach(item => csv += row([item.source_id, item.record_id, item.source_module, item.record_type, item.date_iso, item.date_display, item.counterparty, item.account, item.description, item.owner_action, item.financial_direction, item.amount, item.signed_amount, item.quantity, item.unit, item.rate, item.status, item.ai_interpretation, item.source_key]));
     return csv;
 }
 async function aarishShareOrDownloadFileCoreV1(file, toastText) {
