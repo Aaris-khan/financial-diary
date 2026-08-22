@@ -9400,90 +9400,83 @@ function aarishBuildReportPagesCoreV1(dataset, theme) {
     }
     return pages.map((p, index) => aarishCreateReportPageCoreV1(dataset, p.section, p.rows, index + 1, pages.length, theme));
 }
-async function aarishExportPremiumPdfCoreV1(type, dataset) {
-    showLoader('Premium PDF बन रही है...');
-    await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
-
-    if (!window.jspdf || !window.jspdf.jsPDF) {
-        hideLoader();
-        showToast('PDF library loading. Please try again.');
+async function aarishExportPremiumPdfCoreV1(title, subtitle, pagesHtmlArray) {
+    if (!pagesHtmlArray || !pagesHtmlArray.length) {
+        try { showToast("No data to export!"); } catch(e){}
         return;
     }
-
-    const theme = aarishSnapshotReportThemeCoreV1(type);
-    const host = document.createElement('div');
-    host.className = 'aarish-report-host';
-    document.body.appendChild(host);
-
+    try { showLoader("PREPARING PDF ENGINE..."); } catch(e){}
+    
     try {
-        const pages = aarishBuildReportPagesCoreV1(dataset, theme);
-        pages.forEach(page => host.appendChild(page));
-        await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF('p', 'pt', 'a4');
+        const pageWidth = 595.28;
+        const pageHeight = 841.89;
+        const totalPages = pagesHtmlArray.length;
+        
+        // SMART LOGIC: Auto-scale for large datasets to prevent RAM explosion
+        // 1-150 pages = High Res (scale: 2) | >150 pages = Standard Res (scale: 1)
+        const scaleFactor = totalPages > 150 ? 1 : 2; 
+        const imgQuality = scaleFactor === 1 ? 0.75 : 0.95;
 
-        const pdf = new window.jspdf.jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4', compress: true });
-        for (let i = 0; i < pages.length; i++) {
-            if (typeof html2canvas !== 'function') {
-                throw new Error('html2canvas_unavailable');
-            }
-
-            const canvas = await html2canvas(pages[i], {
-                scale: 2,
-                backgroundColor: theme.bg || null,
-                useCORS: true,
-                allowTaint: false,
-                logging: false,
-                windowWidth: 794,
-                windowHeight: 1123,
-                scrollX: 0,
-                scrollY: 0,
-
-                onclone: (clonedDocument) => {
-                    /*
-                     * Live report host is intentionally off-screen.
-                     * html2canvas captures a cloned DOM, so move the clone
-                     * into a safe capture position before rendering.
-                     */
-                    clonedDocument
-                        .querySelectorAll('.aarish-report-host')
-                        .forEach(el => {
-                            el.style.position = 'absolute';
-                            el.style.left = '0px';
-                            el.style.top = '0px';
-                            el.style.zIndex = '1';
-                            el.style.pointerEvents = 'none';
-                            el.style.opacity = '1';
-                            el.style.contain = 'none';
-                        });
-
-                    clonedDocument
-                        .querySelectorAll('.aarish-report-page')
-                        .forEach(el => {
-                            el.style.position = 'relative';
-                            el.style.left = '0px';
-                            el.style.top = '0px';
-                            el.style.zIndex = '1';
-                            el.style.visibility = 'visible';
-                        });
-                }
-            });
-            const img = canvas.toDataURL('image/jpeg', 0.96);
-            if (i > 0) pdf.addPage('a4', 'portrait');
-            pdf.addImage(img, 'JPEG', 0, 0, 210, 297, undefined, 'FAST');
+        let host = document.getElementById('aarish-pdf-omni-host');
+        if (!host) {
+            host = document.createElement('div');
+            host.id = 'aarish-pdf-omni-host';
+            host.className = 'aarish-report-host';
+            document.body.appendChild(host);
         }
 
-        const fileName = 'Aarish_' + aarishExportSafeFileNameCoreV1(type || 'all') + '_Premium_Report.pdf';
-        const blob = pdf.output('blob');
-        const file = new File([blob], fileName, { type: 'application/pdf' });
+        let skipped = 0;
 
-        hideLoader();
-        await aarishShareOrDownloadFileCoreV1(file, 'Premium PDF Report');
-        showToast('Premium PDF Ready ✅');
-    } catch (err) {
-        hideLoader();
-        console.error('Aarish Premium PDF error:', err);
-        showToast('PDF generation failed.');
+        for (let i = 0; i < totalPages; i++) {
+            try { showLoader(`RENDERING PAGE ${i + 1} OF ${totalPages}...`); } catch(e){}
+            
+            // SURGICAL RENDER: Process only ONE page at a time
+            host.innerHTML = pagesHtmlArray[i];
+            const pageEl = host.firstElementChild;
+            if (!pageEl) continue;
+
+            // Micro-delay to ensure DOM repaint finishes before capture
+            await new Promise(r => setTimeout(r, 60));
+
+            try {
+                const canvas = await html2canvas(pageEl, {
+                    scale: scaleFactor,
+                    useCORS: true,
+                    logging: false,
+                    backgroundColor: document.documentElement.classList.contains('dark') ? '#000000' : '#F5F5F7'
+                });
+
+                const imgData = canvas.toDataURL('image/jpeg', imgQuality);
+                
+                if (i > 0 - skipped) doc.addPage();
+                doc.addImage(imgData, 'JPEG', 0, 0, pageWidth, pageHeight);
+            } catch(err) {
+                console.warn(`Page ${i+1} failed, skipping to prevent total crash.`, err);
+                skipped++;
+            }
+            
+            // ABSOLUTE MEMORY FLUSH: Clear RAM instantly after page capture
+            host.innerHTML = '';
+        }
+
+        try { showLoader("SAVING DOCUMENT..."); } catch(e){}
+        const safeTitle = (title || 'Report').replace(/[^a-z0-9]/gi, '_');
+        doc.save(`${safeTitle}_${Date.now()}.pdf`);
+        
+        if (skipped > 0) {
+            try { showToast(`Saved! (${skipped} pages skipped due to device limits)`); } catch(e){}
+        } else {
+            try { showToast("Premium PDF Generated Successfully!"); } catch(e){}
+        }
+    } catch (error) {
+        console.error("OMNI PDF Error:", error);
+        try { showToast("Critical Error: Dataset might be too massive for this device."); } catch(e){}
     } finally {
-        try { host.remove(); } catch(e) {}
+        try { hideLoader(); } catch(e){}
+        const host = document.getElementById('aarish-pdf-omni-host');
+        if (host) host.innerHTML = '';
     }
 }
 async function aarishExportCsvBackupCoreV1(type, dataset) {
