@@ -51,7 +51,17 @@ assert.deepEqual(reminder.dueEntries({
 const longNote = reminder.normalizeEntry('Eve', { date: '2026-08-23', note: 'x'.repeat(500) });
 assert.equal(longNote.note.length, 240);
 assert.equal(reminder.normalizeEntry('Eve', { date: '2026-08-23' }).name, 'Eve');
+assert.equal(reminder.normalizeEntry('Limit Only', { limit: '1000' }).limit, 1000);
+assert.equal(reminder.normalizeEntry('Invalid Limit', { limit: '0' }), null);
 assert.equal(reminder.normalizeEntry('Eve', { date: '2026-08-23', name: '<script>' }).name, '<script>');
+
+const partyArray = value => Array.isArray(value) ? value : Object.values(value || {});
+const signedAmount = row => (/^(credit|given|receive|positive)$/i.test(String(row.type || row.flow || '')) ? 1 : -1) * (Number(row.amount) || 0);
+const limitHarness = new Function('getTodayISO', 'partyLedgerArrayCoreV1', 'milkDB', 'udharDB', 'creditSignedAmountCoreV1', `${source}; return { dueEntries: aarishReminderDueEntriesCoreV3 };`)(getTodayISO, partyArray, { Alice: { rate: 55, type: 'lene_wala', records: [{ morning: 20, evening: 0 }] } }, [], signedAmount);
+const limitDue = limitHarness.dueEntries({ [reminder.key('Alice')]: { name: 'Alice', limit: 1000 } }, '2026-08-23');
+assert.equal(limitDue.length, 1);
+assert.match(limitDue[0].reason, /^LIMIT ₹1,100 \/ ₹1,000$/);
+
 
 console.log('PASS: reminder date validation and malformed-state normalization');
 console.log('PASS: UID-safe deterministic party keys and today/overdue filtering');

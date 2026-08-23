@@ -3326,8 +3326,17 @@ html.aarish-tab-switching-v31 .screen.active .glass-card:active {
                 <button id="reminder-delete-btn" onclick="haptic(); deletePartyReminderCoreV3()" class="hidden action-btn shrink-0 ml-2 !bg-red-500/10 !text-red-500 !w-10 !h-10 !rounded-full !items-center !justify-center"><i class="fa-solid fa-trash"></i></button>
             </div>
             <p id="reminder-party-name" class="text-[14px] text-gray-500 font-bold mb-4 truncate w-full uppercase tracking-wider"></p>
-            <input type="date" id="reminder-date" class="input-box mb-4 w-full">
-            <input type="text" id="reminder-note" class="input-box mb-8 w-full" maxlength="240" placeholder="Optional note">
+            <div class="flex gap-3 mb-4 w-full">
+                <div class="flex-1 min-w-0">
+                    <label class="text-[10px] font-extrabold text-gray-500 uppercase tracking-widest pl-2 mb-1 block">Alert Date</label>
+                    <input type="date" id="reminder-date" class="input-box w-full">
+                </div>
+                <div class="flex-1 min-w-0">
+                    <label class="text-[10px] font-extrabold text-gray-500 uppercase tracking-widest pl-2 mb-1 block">Limit (₹)</label>
+                    <input type="number" id="reminder-limit" class="input-box w-full" min="0.01" step="0.01" inputmode="decimal" placeholder="e.g. 10000">
+                </div>
+            </div>
+            <input type="text" id="reminder-note" class="input-box mb-8 w-full" maxlength="240" placeholder="Optional note (e.g. Call for payment)">
             <button onclick="haptic(); savePartyReminderCoreV3()" class="btn-primary shrink-0 w-full !bg-[#007AFF] !shadow-[0_4px_14px_rgba(0,122,255,0.25)]"><i class="fa-solid fa-check"></i> Save Reminder</button>
         </div>
     </div>
@@ -7117,8 +7126,9 @@ function openAllBalances() {
                 data-party-tone="${tone}"
                 data-aarish-party-stripe-v65="${tone}"
                 data-module-tone="${tone}"
-                class="glass-card party-ledger-core-card party-ledger-balance-stripe-v40 list-enter flex items-center justify-between w-full min-w-0"
+                class="glass-card party-ledger-core-card party-ledger-balance-stripe-v40 list-enter flex items-center justify-between w-full min-w-0 relative"
                 style="${partyLedgerVarsCoreV1(tone)} animation-delay:${i * 0.035}s;">
+                <button type="button" data-reminder-party="${encodeURIComponent(name)}" class="absolute top-3 right-3 w-8 h-8 rounded-full flex items-center justify-center transition-transform active:scale-90 z-10" style="background:${aarishReminderGetCoreV3(name) ? 'rgba(0,122,255,0.12)' : 'rgba(142,142,147,0.1)'}; color:${aarishReminderGetCoreV3(name) ? '#007AFF' : '#8E8E93'};" aria-label="Set reminder for ${safeName}" title="Set reminder"><i class="fa-solid fa-clock text-[16px]"></i></button>
                 <div class="flex items-center gap-4 flex-1 min-w-0 mr-3">
                     <div class="party-avatar-core w-12 h-12 shrink-0 squircle font-extrabold flex items-center justify-center text-lg">${partyLedgerInitialCoreV1(name)}</div>
                     <div class="flex-1 min-w-0">
@@ -7128,7 +7138,6 @@ function openAllBalances() {
                 </div>
                 <div class="flex items-center gap-3 shrink-0">
                     <span class="party-amount-core font-extrabold text-[22px] tracking-tight">${pack.sign}₹${displayNet}</span>
-                    <button type="button" data-reminder-party="${encodeURIComponent(name)}" class="reminder-party-btn p-2 -mr-2 shrink-0 transition-transform active:scale-90" aria-label="Set reminder for ${safeName}" title="Set reminder"><i class="fa-solid fa-clock text-[19px]"></i></button>
                     <i class="fa-solid fa-chevron-right text-[13px] opacity-80"></i>
                 </div>
             </div>`;
@@ -12612,10 +12621,13 @@ function aarishReminderNormalizeEntryCoreV3(name, raw) {
     if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
     const cleanName = aarishReminderCleanPartyCoreV3(raw.name || name);
     const date = aarishReminderIsoDateCoreV3(raw.date);
-    if (!cleanName || !date) return null;
+    const limitRaw = raw.limit == null || String(raw.limit).trim() === '' ? null : Number(raw.limit);
+    const limit = limitRaw != null && Number.isFinite(limitRaw) && limitRaw > 0 ? Math.round(limitRaw * 100) / 100 : null;
+    if (!cleanName || (!date && limit == null)) return null;
     return {
         name: cleanName,
-        date: date,
+        date: date || null,
+        limit: limit,
         note: String(raw.note == null ? '' : raw.note).replace(/[\u0000-\u001F\u007F]/g, ' ').trim().slice(0, 240),
         createdAt: Number.isFinite(Number(raw.createdAt)) ? Number(raw.createdAt) : Date.now()
     };
@@ -12638,15 +12650,48 @@ function aarishReminderGetCoreV3(name) {
     return key && remindersDB && remindersDB[key] ? remindersDB[key] : null;
 }
 
+function aarishReminderPartyBalanceCoreV3(targetName) {
+    const target = aarishReminderCleanPartyCoreV3(targetName).toLowerCase().replace(/\s+/g, '');
+    if (!target) return 0;
+    let balance = 0;
+    try {
+        Object.keys(milkDB || {}).forEach(function(name) {
+            if (aarishReminderCleanPartyCoreV3(name).toLowerCase().replace(/\s+/g, '') !== target) return;
+            const customer = milkDB[name] || {};
+            partyLedgerArrayCoreV1(customer.records).forEach(function(record) {
+                const amount = (Number(record && record.morning) || 0) + (Number(record && record.evening) || 0);
+                const total = amount * (Number(customer.rate) || DEFAULT_RATE || 0);
+                balance += customer.type === 'dene_wala' ? -total : total;
+            });
+        });
+    } catch(e) {}
+    try {
+        const rows = typeof creditEntriesCoreV1 === 'function' ? creditEntriesCoreV1() : partyLedgerArrayCoreV1(udharDB);
+        rows.forEach(function(row) {
+            if (!row || aarishReminderCleanPartyCoreV3(row.name).toLowerCase().replace(/\s+/g, '') !== target) return;
+            const amount = typeof creditSignedAmountCoreV1 === 'function'
+                ? Number(creditSignedAmountCoreV1(row)) || 0
+                : ((/^(credit|given|receive|positive)$/i.test(String(row.type || row.flow || ''))) ? 1 : -1) * (Number(row.amount) || 0);
+            balance += amount;
+        });
+    } catch(e) {}
+    return Math.round(balance * 100) / 100;
+}
+
 function aarishReminderDueEntriesCoreV3(raw, todayISO) {
     const today = aarishReminderIsoDateCoreV3(todayISO) || getTodayISO();
     const normalized = aarishReminderNormalizeDbCoreV3(raw);
     return Object.keys(normalized).map(function(key) {
-        return normalized[key];
-    }).filter(function(entry) {
-        return entry && entry.date <= today;
-    }).sort(function(a, b) {
-        return a.date.localeCompare(b.date) || a.name.localeCompare(b.name);
+        const entry = normalized[key];
+        const balance = entry.limit != null ? Math.abs(aarishReminderPartyBalanceCoreV3(entry.name)) : null;
+        const limitTriggered = entry.limit != null && balance >= entry.limit;
+        const dateTriggered = !!entry.date && entry.date <= today;
+        if (!limitTriggered && !dateTriggered) return null;
+        let reason = dateTriggered ? (entry.date === today ? 'DUE TODAY' : 'OVERDUE') : '';
+        if (limitTriggered) reason = 'LIMIT ₹' + balance.toLocaleString('en-IN') + ' / ₹' + entry.limit.toLocaleString('en-IN');
+        return Object.assign({}, entry, { balance: balance, reason: reason });
+    }).filter(Boolean).sort(function(a, b) {
+        return (a.date || '9999-12-31').localeCompare(b.date || '9999-12-31') || a.name.localeCompare(b.name);
     });
 }
 
@@ -12737,10 +12782,11 @@ function aarishReminderRenderDashboardCoreV3(dueEntries) {
     if (!dueEntries.length) { container.innerHTML = ''; return; }
     let html = '<div class="mb-2 text-[12px] font-extrabold uppercase tracking-widest text-gray-500 flex items-center gap-2 px-1"><i class="fa-solid fa-bell text-[#007AFF] drop-shadow-md"></i> Action Required</div>';
     dueEntries.forEach(function(entry, index) {
-        const label = entry.date === getTodayISO() ? 'TODAY' : 'OVERDUE';
+        const label = entry.reason || (entry.date === getTodayISO() ? 'DUE TODAY' : 'OVERDUE');
         const safeName = aarishReminderEscapeCoreV3(entry.name);
         const safeNote = aarishReminderEscapeCoreV3(entry.note);
-        html += '<button type="button" data-due-reminder-party="' + safeName + '" class="glass-card mb-2.5 p-3.5 flex items-center justify-between cursor-pointer w-full border border-solid bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20 list-enter text-left" style="animation-delay:' + (index * 0.04) + 's; min-height:0!important; box-shadow:none!important;"><span class="flex-1 min-w-0 pr-3"><span class="flex items-center gap-2 mb-1"><i class="fa-solid fa-circle-exclamation text-red-500 text-[13px]"></i><span class="font-extrabold text-[15.5px] truncate w-full">' + safeName + '</span></span>' + (safeNote ? '<span class="block text-[12px] font-bold opacity-80 truncate w-full">' + safeNote + '</span>' : '') + '</span><span class="shrink-0 text-[10px] font-extrabold uppercase tracking-wider px-2 py-1 rounded-md bg-red-500 text-white">' + label + '</span></button>';
+        const safeReason = aarishReminderEscapeCoreV3(label);
+        html += '<button type="button" data-due-reminder-party="' + encodeURIComponent(entry.name) + '" class="glass-card mb-2.5 p-3.5 flex items-center justify-between cursor-pointer w-full border border-solid bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20 list-enter text-left" style="animation-delay:' + (index * 0.04) + 's; min-height:0!important; box-shadow:none!important;"><span class="flex-1 min-w-0 pr-3"><span class="flex items-center gap-2 mb-1"><i class="fa-solid fa-circle-exclamation text-red-500 text-[13px]"></i><span class="font-extrabold text-[15.5px] truncate w-full">' + safeName + '</span></span>' + (safeNote ? '<span class="block text-[12px] font-bold opacity-80 truncate w-full">' + safeNote + '</span>' : '') + '</span><span class="shrink-0 text-[10px] font-extrabold uppercase tracking-wider px-2 py-1 rounded-md bg-red-500 text-white">' + safeReason + '</span></button>';
     });
     container.innerHTML = html;
     container.querySelectorAll('[data-due-reminder-party]').forEach(function(button) {
@@ -12749,7 +12795,8 @@ function aarishReminderRenderDashboardCoreV3(dueEntries) {
             openAllBalances();
             const search = document.getElementById('balance-search');
             if (search) {
-                search.value = button.getAttribute('data-due-reminder-party') || '';
+                const encodedParty = button.getAttribute('data-due-reminder-party') || '';
+                try { search.value = decodeURIComponent(encodedParty); } catch(e) { search.value = encodedParty; }
                 renderDashboardBalances();
             }
         });
@@ -12823,10 +12870,12 @@ function openReminderModalCoreV3(name) {
     const reminder = aarishReminderGetCoreV3(activeReminderParty);
     const nameEl = document.getElementById('reminder-party-name');
     const dateEl = document.getElementById('reminder-date');
+    const limitEl = document.getElementById('reminder-limit');
     const noteEl = document.getElementById('reminder-note');
     const deleteBtn = document.getElementById('reminder-delete-btn');
     if (nameEl) nameEl.textContent = 'For: ' + activeReminderParty;
-    if (dateEl) dateEl.value = reminder ? reminder.date : getTodayISO();
+    if (dateEl) dateEl.value = reminder && reminder.date ? reminder.date : '';
+    if (limitEl) limitEl.value = reminder && reminder.limit != null ? reminder.limit : '';
     if (noteEl) noteEl.value = reminder ? reminder.note : '';
     if (deleteBtn) deleteBtn.style.display = reminder ? 'flex' : 'none';
     openModal('party-reminder-modal');
@@ -12836,13 +12885,19 @@ async function savePartyReminderCoreV3() {
     if (typeof aarishBackendActionGuardCoreV2 === 'function' && !aarishBackendActionGuardCoreV2('saveReminder', 900)) return;
     const name = aarishReminderCleanPartyCoreV3(activeReminderParty);
     const dateEl = document.getElementById('reminder-date');
+    const limitEl = document.getElementById('reminder-limit');
     const noteEl = document.getElementById('reminder-note');
     const date = aarishReminderIsoDateCoreV3(dateEl && dateEl.value);
+    const limitText = String((limitEl && limitEl.value) || '').trim();
+    const parsedLimit = limitText === '' ? null : Number(limitText);
+    const limit = parsedLimit != null && Number.isFinite(parsedLimit) && parsedLimit > 0 ? Math.round(parsedLimit * 100) / 100 : null;
     const note = String((noteEl && noteEl.value) || '').trim().slice(0, 240);
-    if (!name || !date) { showToast('Please select a valid date.'); return; }
+    if (!name) { showToast('No party selected.'); return; }
+    if (!date && limit == null) { showToast('Set an alert date or a positive limit.'); return; }
+    if (limitText !== '' && limit == null) { showToast('Enter a valid positive limit.'); return; }
     const key = aarishReminderKeyCoreV3(name);
     const previous = remindersDB[key];
-    remindersDB[key] = { name: name, date: date, note: note, createdAt: previous && previous.createdAt ? previous.createdAt : Date.now() };
+    remindersDB[key] = { name: name, date: date || null, limit: limit, note: note, createdAt: previous && previous.createdAt ? previous.createdAt : Date.now() };
     try {
         const result = typeof aarishFirebaseLaterV48 === 'function' ? await aarishFirebaseLaterV48('remindersDB/' + key, 'set', remindersDB[key], { fast: true, reason: 'reminder-save' }) : { queued: true };
         if (result && result.queued === false && !result.direct) throw new Error('sync rejected');
