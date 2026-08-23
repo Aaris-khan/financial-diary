@@ -8922,78 +8922,63 @@ async function deleteMilkEntry(id) {
             }
             return drawVectorTable(doc, table, startY, options);
         }
-        const aarishShareRuntimeV1 = window.__aarishShareRuntimeV1 || (window.__aarishShareRuntimeV1 = { inFlight: null });
         async function deliverFile(file, title, shareText) {
             if (!file) throw new Error('export_file_missing');
 
-            // Web Share is a single native picker per document. Never race an open
-            // picker, but do not queue here: waiting would consume the fresh gesture
-            // activation needed by the next native share attempt.
-            if (aarishShareRuntimeV1.inFlight) {
-                safeToast('A share is already open. Finish it and try again.');
-                return { method: 'busy' };
+            // Each completed long-press owns a fresh delivery attempt. Do not keep a
+            // document-level share lock: some Android WebViews leave the first
+            // navigator.share() promise pending after WhatsApp returns, which would
+            // otherwise make every later export look permanently busy until refresh.
+            const canShare = typeof navigator !== 'undefined' && typeof navigator.share === 'function' && typeof navigator.canShare === 'function';
+            if (canShare) {
+                let supported = false;
+                try { supported = !!navigator.canShare({ files: [file] }); } catch (supportError) {
+                    try { console.warn('Aarish file share capability check failed:', supportError); } catch (_) {}
+                }
+                if (supported) {
+                    try {
+                        // Keep this call in the current export call stack; deferring it
+                        // can consume the platform's transient user activation.
+                        await navigator.share({
+                            files: [file],
+                            title: text(title, 'Aarish Dairy Pro'),
+                            text: text(shareText, 'Aarish Dairy Pro Report')
+                        });
+                        safeToast('Shared successfully!');
+                        return { method: 'share' };
+                    } catch (error) {
+                        if (error && error.name === 'AbortError') return { method: 'cancelled' };
+                        try { console.warn('Aarish native share failed; using visible PDF fallback:', error && error.name, error && error.message); } catch (_) {}
+                    }
+                }
             }
-            const delivery = (async () => {
-                const canShare = typeof navigator !== 'undefined' && typeof navigator.share === 'function' && typeof navigator.canShare === 'function';
-                if (canShare) {
-                    let supported = false;
-                    try { supported = !!navigator.canShare({ files: [file] }); } catch (supportError) {
-                        try { console.warn('Aarish file share capability check failed:', supportError); } catch (_) {}
-                    }
-                    if (supported) {
-                        let shareAttempt;
-                        try {
-                            // Invoke share directly in this call stack. Deferring it to
-                            // another task can consume the platform's transient gesture.
-                            shareAttempt = navigator.share({
-                                files: [file],
-                                title: text(title, 'Aarish Dairy Pro'),
-                                text: text(shareText, 'Aarish Dairy Pro Report')
-                            });
-                            await shareAttempt;
-                            safeToast('Shared successfully!');
-                            return { method: 'share' };
-                        } catch (error) {
-                            if (error && error.name === 'AbortError') return { method: 'cancelled' };
-                            try { console.warn('Aarish native share failed; using visible PDF fallback:', error && error.name, error && error.message); } catch (_) {}
-                        }
-                    }
-                }
 
-                let anchorOk = false;
-                let windowOk = false;
-                const url = URL.createObjectURL(file);
-                try {
-                    const anchor = document.createElement('a');
-                    anchor.href = url;
-                    anchor.download = filename(file.name, 'Aarish_Report.pdf');
-                    anchor.rel = 'noopener';
-                    anchor.style.display = 'none';
-                    document.body.appendChild(anchor);
-                    anchor.click();
-                    anchor.remove();
-                    anchorOk = true;
-                } catch (downloadError) {
-                    try { console.warn('Aarish PDF anchor fallback failed:', downloadError); } catch (_) {}
-                }
-                try {
-                    windowOk = !!window.open(url, '_blank');
-                } catch (openError) {
-                    try { console.warn('Aarish PDF tab fallback failed:', openError); } catch (_) {}
-                }
-                setTimeout(() => { try { URL.revokeObjectURL(url); } catch (_) {} }, 30000);
-                safeToast((anchorOk || windowOk)
-                    ? 'Share menu unavailable; PDF saved. Check Downloads or the new tab.'
-                    : 'Could not share or save the PDF. Please try again.');
-                return { method: (anchorOk || windowOk) ? 'download' : 'error' };
-            })();
-
-            aarishShareRuntimeV1.inFlight = delivery;
+            let anchorOk = false;
+            let windowOk = false;
+            const url = URL.createObjectURL(file);
             try {
-                return await delivery;
-            } finally {
-                if (aarishShareRuntimeV1.inFlight === delivery) aarishShareRuntimeV1.inFlight = null;
+                const anchor = document.createElement('a');
+                anchor.href = url;
+                anchor.download = filename(file.name, 'Aarish_Report.pdf');
+                anchor.rel = 'noopener';
+                anchor.style.display = 'none';
+                document.body.appendChild(anchor);
+                anchor.click();
+                anchor.remove();
+                anchorOk = true;
+            } catch (downloadError) {
+                try { console.warn('Aarish PDF anchor fallback failed:', downloadError); } catch (_) {}
             }
+            try {
+                windowOk = !!window.open(url, '_blank');
+            } catch (openError) {
+                try { console.warn('Aarish PDF tab fallback failed:', openError); } catch (_) {}
+            }
+            setTimeout(() => { try { URL.revokeObjectURL(url); } catch (_) {} }, 30000);
+            safeToast((anchorOk || windowOk)
+                ? 'Share menu unavailable; PDF saved. Check Downloads or the new tab.'
+                : 'Could not share or save the PDF. Please try again.');
+            return { method: (anchorOk || windowOk) ? 'download' : 'error' };
         }
         async function renderDocument(options) {
             options = options || {};
