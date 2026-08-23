@@ -271,6 +271,38 @@
         .nav-item i { font-size: 20px; margin-bottom: 5px; transition: transform 0.3s cubic-bezier(0.32, 1.5, 0.5, 1); }
         .nav-item.active i { transform: scale(1.15); text-shadow: 0 2px 10px rgba(0,122,255,0.3); }
         
+        /* AARISH_UNIVERSAL_LONG_PRESS_EXPORT_CSS_V1_START */
+        [data-aarish-export-card="true"] {
+            -webkit-touch-callout: none !important;
+            user-select: none !important;
+            -webkit-user-select: none !important;
+            touch-action: pan-y !important;
+        }
+        [data-aarish-export-card="true"].aarish-longpress-active-v1 {
+            transform: scale(0.965) translateY(-1px) !important;
+            box-shadow: 0 0 0 3px rgba(0,122,255,0.18), 0 14px 38px rgba(0,122,255,0.24), var(--surfaceShadow) !important;
+            transition-duration: 0.18s !important;
+        }
+        [data-aarish-export-card="true"].aarish-longpress-active-v1::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            pointer-events: none;
+            border: 2px solid rgba(0,122,255,0.55);
+            opacity: 0.9;
+            animation: aarishLongPressPulseV1 0.72s ease-in-out infinite alternate;
+        }
+        [data-aarish-export-card="true"] { position: relative; }
+        @keyframes aarishLongPressPulseV1 {
+            from { opacity: 0.28; transform: scale(0.985); }
+            to { opacity: 0.92; transform: scale(1); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            [data-aarish-export-card="true"].aarish-longpress-active-v1::after { animation: none; }
+        }
+        /* AARISH_UNIVERSAL_LONG_PRESS_EXPORT_CSS_V1_END */
+
         /* Modals */
         .modal-overlay { 
             position: fixed; inset: 0; background: rgba(0, 0, 0, 0.4); 
@@ -7321,6 +7353,7 @@ function renderDiaryList() {
         return `<div
             data-diary-core-tone="yellow"
             data-module-tone="diary"
+            data-aarish-export-card="true" data-aarish-export-type="diary" data-aarish-export-key="${aarishExportEscCoreV1(d && d.id)}"
             data-v99-tone="diary"
             onclick="try{haptic()}catch(e){}; openDiaryDetail(${idArg})"
             class="glass-card diary-card diary-core-card mb-4 cursor-pointer w-full border-l-[4px] border-l-[#F5A623] ring-1 ring-white/40 dark:ring-white/5 list-enter"
@@ -7400,10 +7433,6 @@ async function deleteDiary(id, goBack = false) {
 }
 
 
-    // Global Long Press State handler
-    let isLongPress = false;
-    
-    
 /* AARISH_SALARY_CORE_ENGINE_V1_START */
 function salaryNumCoreV1(v) {
     const x = Number(v);
@@ -7676,21 +7705,6 @@ async function addSalaryPerson() {
     }
 }
 
-    let salaryPressTimer;
-    function startSalaryLongPress(name) {
-    isLongPress = false;
-    clearTimeout(salaryPressTimer);
-    salaryPressTimer = setTimeout(() => {
-        isLongPress = true;
-        try { haptic(); } catch (e) {}
-        try { showToast('Open employee and use top-right delete button.'); } catch (e) {}
-    }, 800);
-}
-    function cancelSalaryLongPress() {
-    clearTimeout(salaryPressTimer);
-}
-
-
 async function deleteSalaryPersonProfile(name) {
     name = salaryCleanNameCoreV1(name || activeSalaryPerson || '');
     const db = salaryDBCoreV1();
@@ -7767,16 +7781,11 @@ async function deleteSalaryPersonProfile(name) {
             return `<div
                 data-salary-core-tone="${tone}"
                 data-module-tone="${tone}"
+                data-aarish-export-card="true" data-aarish-export-type="salary" data-aarish-export-key="${aarishExportEscCoreV1(name)}"
                 data-v99-tone="${tone}"
                 data-v100-tone="${tone}"
                 data-salary-tone-v127="${tone}"
                 onclick="try{haptic()}catch(e){}; openSalaryDetail(${arg})"
-                ontouchstart="startSalaryLongPress(${arg})"
-                ontouchend="cancelSalaryLongPress()"
-                ontouchmove="cancelSalaryLongPress()"
-                onmousedown="startSalaryLongPress(${arg})"
-                onmouseup="cancelSalaryLongPress()"
-                onmouseleave="cancelSalaryLongPress()"
                 class="glass-card salary-core-card mb-3.5 flex items-center justify-between cursor-pointer border-l-[4px] w-full ring-1 ring-white/40 dark:ring-white/5 list-enter"
                 style="${cardStyle}animation-delay:${index * 0.05}s;">
                 <div class="flex items-center gap-4 w-full min-w-0" style="${noColorTransition}">
@@ -7804,8 +7813,6 @@ async function deleteSalaryPersonProfile(name) {
 }
 
     function openSalaryDetail(name) {
-    if (isLongPress) { isLongPress = false; return; }
-
     activeSalaryPerson = salaryCleanNameCoreV1(name || '');
 
     const title = document.getElementById('salary-detail-title');
@@ -8038,19 +8045,6 @@ async function addMilkCustomer() {
 
 
     
-    let pressTimer;
-    function startLongPress(name) {
-    try { if (typeof pressTimer !== "undefined") clearTimeout(pressTimer); } catch(e) {}
-    try { isLongPress = false; } catch(e) {}
-    return false;
-}
-    function cancelLongPress() {
-    try { if (typeof pressTimer !== "undefined") clearTimeout(pressTimer); } catch(e) {}
-    try { isLongPress = false; } catch(e) {}
-    return false;
-}
-
-
 async function deleteMilkCustomerProfile(name) {
     const customerName = String(name == null ? '' : name).trim();
 
@@ -8437,6 +8431,7 @@ function renderMilkList() {
 
         return `<div
             data-module="milk" data-module-tone="${tone}"
+            data-aarish-export-card="true" data-aarish-export-type="milk" data-aarish-export-key="${aarishExportEscCoreV1(name)}"
             onclick="haptic(); openMilkDetail(${argName})"
             class="glass-card milk-core-card mb-3.5 flex items-center justify-between cursor-pointer w-full ring-1 ring-white/40 dark:ring-white/5 list-enter"
             style="${aarishMilkVarsStyleCore(tone)} --aarish-stagger-v4:${delay}s; animation-delay:${delay}s; border-left-color:${v.tone}!important;">
@@ -8463,7 +8458,6 @@ function renderMilkList() {
     function filterMilkList() { renderMilkList(); }
 
     function openMilkDetail(name) {
-        if(isLongPress) { isLongPress = false; return; } // Touch conflict fix
         activeMilkCustomer = name;
         document.getElementById('milk-detail-title').textContent = name;
         document.getElementById('filter-month-milk').value = selectedMonth;
@@ -9063,6 +9057,97 @@ async function deleteMilkEntry(id) {
     }
     function aarishPdfMoneyCoreV1(value) { return 'Rs. ' + Math.round(Number(value) || 0).toLocaleString('en-IN'); }
     function aarishPdfSafeNameCoreV1(value) { return String(value || 'Report').replace(/[\\/:*?"<>|]+/g, '_').replace(/\s+/g, '_').slice(0, 70); }
+
+    /* AARISH_UNIVERSAL_LONG_PRESS_EXPORT_CORE_V1_START */
+    function aarishCardExportListCoreV1(value) {
+        try { return typeof aarishBackendCanonicalListCoreV8 === 'function' ? aarishBackendCanonicalListCoreV8(value) : (Array.isArray(value) ? value.filter(Boolean) : []); } catch (_) { return Array.isArray(value) ? value.filter(Boolean) : []; }
+    }
+    function aarishCardExportNumCoreV1(value) {
+        const n = Number(value);
+        return Number.isFinite(n) ? n : 0;
+    }
+    function aarishCardExportDateCoreV1(value) {
+        try { return typeof aarishPdfDateCoreV1 === 'function' ? aarishPdfDateCoreV1(value) : String(value || '-'); } catch (_) { return String(value || '-'); }
+    }
+    function aarishCardExportMoneyCoreV1(value) {
+        try { return typeof aarishPdfMoneyCoreV1 === 'function' ? aarishPdfMoneyCoreV1(value) : 'Rs. ' + Math.round(aarishCardExportNumCoreV1(value)).toLocaleString('en-IN'); } catch (_) { return 'Rs. 0'; }
+    }
+    function aarishCardExportNameCoreV1(value) {
+        return String(value == null ? '' : value).trim();
+    }
+
+    async function aarishExportCardToPremiumPdfCoreV1(card) {
+        const type = String(card && card.dataset && card.dataset.aarishExportType || '').trim();
+        const key = aarishCardExportNameCoreV1(card && card.dataset && card.dataset.aarishExportKey);
+        if (!type || !key) return showToast('This card cannot be exported yet.');
+        if (!window.AarishTitaniumPDF || typeof window.AarishTitaniumPDF.renderDocument !== 'function' || typeof window.AarishTitaniumPDF.renderDiary !== 'function') {
+            return showToast('PDF engine loading. Please try again.');
+        }
+
+        if (type === 'diary') {
+            const entry = typeof diaryFindEntryCoreV1 === 'function' ? diaryFindEntryCoreV1(key) : (Array.isArray(diaryDB) ? diaryDB.find(item => String(item && item.id) === key) : null);
+            if (!entry) return showToast('Diary page not found!');
+            return window.AarishTitaniumPDF.renderDiary(entry);
+        }
+
+        const month = 'Lifetime';
+        if (type === 'milk') {
+            const customer = milkDB && milkDB[key];
+            if (!customer) return showToast('Customer not found!');
+            const records = aarishCardExportListCoreV1(customer.records).slice().sort((a, b) => new Date(a && a.date || 0) - new Date(b && b.date || 0));
+            let morning = 0, evening = 0, totalKg = 0, totalAmount = 0;
+            const rows = records.map(record => {
+                const m = Math.abs(aarishCardExportNumCoreV1(record && record.morning));
+                const e = Math.abs(aarishCardExportNumCoreV1(record && record.evening));
+                const qty = typeof aarishMilkQtyCore === 'function' ? aarishMilkQtyCore(record) : ((m || e) ? m + e : Math.abs(aarishCardExportNumCoreV1(record && (record.kg || record.qty || record.quantity || record.total))));
+                const rate = typeof aarishMilkRateCore === 'function' ? aarishMilkRateCore(customer, record) : aarishCardExportNumCoreV1(record && record.rate) || aarishCardExportNumCoreV1(customer.rate) || (typeof DEFAULT_RATE !== 'undefined' ? DEFAULT_RATE : 0);
+                const amount = qty * rate;
+                const taken = typeof aarishMilkFlowCore === 'function' && aarishMilkFlowCore(record, customer) === 'taken';
+                morning += m; evening += e; totalKg += taken ? -qty : qty; totalAmount += taken ? -amount : amount;
+                return [aarishCardExportDateCoreV1(record && record.date), m ? m.toFixed(2) : '-', e ? e.toFixed(2) : '-', qty.toFixed(2) + ' KG', taken ? 'Taken (-)' : 'Given (+)', aarishCardExportMoneyCoreV1(amount)];
+            });
+            return window.AarishTitaniumPDF.renderDocument({ title: key, statementType: 'MILK STATEMENT (LIFETIME)', filename: 'Milk_' + aarishPdfSafeNameCoreV1(key) + '_Lifetime.pdf', themeColor: [52, 199, 89], meta: [{ label: 'Customer', value: key }, { label: 'Type', value: customer.type === 'dene_wala' ? 'Buyer (Dene Wala)' : 'Seller (Lene Wala)' }, { label: 'Milk Rate', value: aarishCardExportMoneyCoreV1(customer.rate || (typeof DEFAULT_RATE !== 'undefined' ? DEFAULT_RATE : 0)) + ' / KG' }, { label: 'Period', value: month }], summaryBoxes: [{ label: 'Morning', value: morning.toFixed(2) + ' KG' }, { label: 'Evening', value: evening.toFixed(2) + ' KG' }, { label: 'Net Milk', value: totalKg.toFixed(2) + ' KG', color: [52, 199, 89] }, { label: 'Net Amount', value: aarishCardExportMoneyCoreV1(totalAmount), color: [0, 122, 255] }], head: ['Date', 'Morning', 'Evening', 'Quantity', 'Flow', 'Amount'], body: rows, columnStyles: { 0: { cellWidth: 26 }, 1: { halign: 'center' }, 2: { halign: 'center' }, 3: { halign: 'center' }, 4: { fontStyle: 'bold' }, 5: { halign: 'right', fontStyle: 'bold' } }, shareText: 'Lifetime milk statement for ' + key });
+        }
+
+        if (type === 'udhar') {
+            const records = (typeof creditEntriesCoreV1 === 'function' ? creditEntriesCoreV1() : aarishCardExportListCoreV1(udharDB)).filter(record => creditCleanNameCoreV1(record && record.name) === key).slice().sort((a, b) => String(b && b.date || '').localeCompare(String(a && a.date || '')));
+            let total = 0;
+            const rows = records.map(record => {
+                const signed = typeof creditSignedAmountCoreV1 === 'function' ? creditSignedAmountCoreV1(record) : aarishCardExportNumCoreV1(record && record.amount);
+                total += signed;
+                return [aarishCardExportDateCoreV1(record && record.date), signed >= 0 ? 'Given / Receive (+)' : 'Taken / Pay (-)', aarishCardExportMoneyCoreV1(Math.abs(signed)), record && (record.detail || record.note || record.description) || '-'];
+            });
+            return window.AarishTitaniumPDF.renderDocument({ title: key, statementType: 'CREDIT LEDGER (LIFETIME)', filename: 'Credit_' + aarishPdfSafeNameCoreV1(key) + '_Lifetime.pdf', themeColor: [245, 166, 35], meta: [{ label: 'Party', value: key }, { label: 'Period', value: month }, { label: 'Records', value: records.length + ' Entries' }], summaryBoxes: [{ label: 'Entries', value: records.length + ' Records' }, { label: 'Net Balance', value: aarishCardExportMoneyCoreV1(total), color: [245, 166, 35] }], head: ['Date', 'Direction', 'Amount', 'Detail'], body: rows, columnStyles: { 0: { cellWidth: 30 }, 1: { fontStyle: 'bold' }, 2: { halign: 'right', fontStyle: 'bold' } }, shareText: 'Lifetime credit ledger for ' + key });
+        }
+
+        if (type === 'salary') {
+            const person = salaryDB && salaryDB[key];
+            if (!person) return showToast('Employee not found!');
+            const records = aarishCardExportListCoreV1(person.records).slice().sort((a, b) => new Date(a && a.date || 0) - new Date(b && b.date || 0));
+            const receives = person.type === 'lene_wala';
+            let total = 0;
+            const rows = records.map(record => { const amount = Math.abs(aarishCardExportNumCoreV1(record && record.amount)); const signed = receives ? amount : -amount; total += signed; return [aarishCardExportDateCoreV1(record && record.date), receives ? 'Received (+)' : 'Paid (-)', aarishCardExportMoneyCoreV1(amount)]; });
+            return window.AarishTitaniumPDF.renderDocument({ title: key, statementType: 'SALARY REGISTER (LIFETIME)', filename: 'Salary_' + aarishPdfSafeNameCoreV1(key) + '_Lifetime.pdf', themeColor: [16, 185, 129], meta: [{ label: 'Employee', value: key }, { label: 'Company', value: person.company || '-' }, { label: 'Period', value: month }, { label: 'Direction', value: receives ? 'Money Received' : 'Money Paid' }], summaryBoxes: [{ label: 'Entries', value: records.length + ' Records' }, { label: 'Net Total', value: aarishCardExportMoneyCoreV1(total), color: [16, 185, 129] }], head: ['Date', 'Direction', 'Amount'], body: rows, columnStyles: { 0: { cellWidth: 38 }, 1: { fontStyle: 'bold' }, 2: { halign: 'right', fontStyle: 'bold' } }, shareText: 'Lifetime salary statement for ' + key });
+        }
+
+        if (type === 'expenses') {
+            const records = (typeof expenseEntriesCoreV1 === 'function' ? expenseEntriesCoreV1() : aarishCardExportListCoreV1(expenseDB)).filter(record => expenseCleanCategoryCoreV1(record && record.category) === expenseCleanCategoryCoreV1(key)).slice().sort((a, b) => new Date(a && a.date || 0) - new Date(b && b.date || 0));
+            const total = records.reduce((sum, record) => sum + Math.abs(aarishCardExportNumCoreV1(record && record.amount)), 0);
+            return window.AarishTitaniumPDF.renderDocument({ title: key, statementType: 'EXPENSE CATEGORY (LIFETIME)', filename: aarishPdfSafeNameCoreV1(key) + '_Expenses_Lifetime.pdf', themeColor: [255, 59, 48], meta: [{ label: 'Category', value: key }, { label: 'Period', value: month }], summaryBoxes: [{ label: 'Records', value: records.length + ' Items' }, { label: 'Total Kharcha', value: aarishCardExportMoneyCoreV1(total), color: [255, 59, 48] }], head: ['Date', 'Detail', 'Amount'], body: records.map(record => [aarishCardExportDateCoreV1(record && record.date), record && (record.note || record.description || key), aarishCardExportMoneyCoreV1(record && record.amount)]), columnStyles: { 0: { cellWidth: 38 }, 1: { fontStyle: 'bold' }, 2: { halign: 'right', fontStyle: 'bold', textColor: [255, 59, 48] } }, shareText: 'Lifetime expenses for ' + key });
+        }
+
+        if (type === 'projects') {
+            const project = projectDB && projectDB[key];
+            if (!project) return showToast('Business khata not found!');
+            const records = (typeof businessRecordsCoreV1 === 'function' ? businessRecordsCoreV1(project) : aarishCardExportListCoreV1(project.records)).slice().sort((a, b) => new Date(a && a.date || 0) - new Date(b && b.date || 0));
+            let total = 0;
+            const rows = records.map(record => { const amount = Math.abs(aarishCardExportNumCoreV1(record && record.amount)); const color = String(record && record.color || 'blue').toLowerCase(); const signed = color === 'green' ? amount : (color === 'red' ? -amount : 0); total += signed; return [aarishCardExportDateCoreV1(record && record.date), record && (record.title || record.detail) || '-', color.toUpperCase(), aarishCardExportMoneyCoreV1(amount)]; });
+            return window.AarishTitaniumPDF.renderDocument({ title: key, statementType: 'BUSINESS KHATA (LIFETIME)', filename: 'Business_' + aarishPdfSafeNameCoreV1(key) + '_Lifetime.pdf', themeColor: [66, 133, 244], meta: [{ label: 'Khata', value: key }, { label: 'Period', value: month }, { label: 'Records', value: records.length + ' Entries' }], summaryBoxes: [{ label: 'Entries', value: records.length + ' Records' }, { label: 'Net Total', value: aarishCardExportMoneyCoreV1(total), color: [66, 133, 244] }], head: ['Date', 'Entry Detail', 'Type', 'Amount'], body: rows, columnStyles: { 0: { cellWidth: 30 }, 1: { fontStyle: 'bold' }, 2: { halign: 'center' }, 3: { halign: 'right', fontStyle: 'bold' } }, shareText: 'Lifetime business khata for ' + key });
+        }
+
+        return showToast('This card type is not supported yet.');
+    }
+    /* AARISH_UNIVERSAL_LONG_PRESS_EXPORT_CORE_V1_END */
 
     async function generateAndShareBill() {
         if (!activeMilkCustomer || !milkDB || !milkDB[activeMilkCustomer]) return showToast('Customer not selected');
@@ -10150,6 +10235,7 @@ function openUdharModal(name = null) {
             return `<div
                 data-credit-core-tone="${tone}"
                 data-module-tone="${tone}"
+                data-aarish-export-card="true" data-aarish-export-type="udhar" data-aarish-export-key="${aarishExportEscCoreV1(g.name)}"
                 class="glass-card mb-3.5 flex items-center justify-between cursor-pointer w-full min-w-0 ring-1 ring-white/40 dark:ring-white/5 list-enter rounded-2xl"
                 style="${creditStyleVarsCoreV1(tone)} animation-delay:${index * 0.03}s;"
                 onclick="try{haptic()}catch(e){}; openUdharDetail(${arg})">
@@ -10175,19 +10261,6 @@ function openUdharModal(name = null) {
 }
 
         function filterUdharList() { renderUdharList(); }
-
-    let udharPressTimer;
-    function startUdharLongPress(name) {
-    isLongPress = false;
-    clearTimeout(udharPressTimer);
-    udharPressTimer = setTimeout(() => {
-        isLongPress = true;
-        try { haptic(); } catch (e) {}
-        try { showToast('Open profile and use delete button.'); } catch (e) {}
-    }, 800);
-}
-    function cancelUdharLongPress() { clearTimeout(udharPressTimer); }
-
 
 
 async function deleteUdharPersonProfile(name) {
@@ -10250,8 +10323,6 @@ async function deleteUdharPersonProfile(name) {
     
     
     function openUdharDetail(name) {
-    if (isLongPress) { isLongPress = false; return; }
-
     activeUdharPerson = creditCleanNameCoreV1(name || '');
 
     const title = document.getElementById('udhar-detail-title');
@@ -10683,13 +10754,8 @@ function updateExpenseDetailCoreUi(total) {
             return `<div
                 data-expense-core-tone="${tone}"
                 data-module-tone="${tone}"
+                data-aarish-export-card="true" data-aarish-export-type="expenses" data-aarish-export-key="${aarishExportEscCoreV1(g.category)}"
                 onclick="try{haptic()}catch(e){}; openExpenseDetail('${catArg}')"
-                ontouchstart="startExpenseLongPress('${catArg}')"
-                ontouchend="cancelExpenseLongPress()"
-                ontouchmove="cancelExpenseLongPress()"
-                onmousedown="startExpenseLongPress('${catArg}')"
-                onmouseup="cancelExpenseLongPress()"
-                onmouseleave="cancelExpenseLongPress()"
                 class="glass-card expense-core-card mb-3.5 flex items-center justify-between w-full min-w-0 cursor-pointer ring-1 ring-white/40 dark:ring-white/5 list-enter"
                 style="--expenseTone:#FF3B30;--expenseTone2:#C92A2A;--expenseTint:rgba(255,59,48,0.10);--expenseBorder:rgba(255,59,48,0.28);--expenseGlow:rgba(255,59,48,0.28);animation-delay:${index * 0.035}s;">
                 <div class="flex items-center gap-4 flex-1 min-w-0 mr-3">
@@ -10713,21 +10779,6 @@ function updateExpenseDetailCoreUi(total) {
 
     updateExpenseCoreUi();
 }
-
-        let expensePressTimer;
-    function startExpenseLongPress(category) {
-    isLongPress = false;
-    clearTimeout(expensePressTimer);
-    expensePressTimer = setTimeout(() => {
-        isLongPress = true;
-        try { haptic(); } catch (e) {}
-        try { showToast('Open category and use delete button.'); } catch (e) {}
-    }, 800);
-}
-    function cancelExpenseLongPress() {
-    clearTimeout(expensePressTimer);
-}
-
 
 async function deleteExpenseCategoryProfile(category) {
     category = expenseCleanCategoryCoreV1(category || activeExpenseCategory || '');
@@ -10791,8 +10842,6 @@ async function deleteExpenseCategoryProfile(category) {
 
     
     function openExpenseDetail(category) {
-    if (isLongPress) { isLongPress = false; return; }
-
     activeExpenseCategory = expenseCleanCategoryCoreV1(category || '');
 
     const title = document.getElementById('expense-detail-title');
@@ -11063,6 +11112,7 @@ async function saveNewProject() {
             return `<div
                 data-business-core-card="true"
                 data-module-tone="business"
+                data-aarish-export-card="true" data-aarish-export-type="projects" data-aarish-export-key="${aarishExportEscCoreV1(name)}"
                 onclick="try{haptic()}catch(e){}; openProjectDetail(${argName})"
                 class="glass-card business-core-card mb-3.5 flex items-center justify-between cursor-pointer w-full min-w-0 ring-1 ring-white/40 dark:ring-white/5 list-enter"
                 style="--businessBlue:#007AFF;--businessBlueGlow:rgba(0,122,255,0.28);animation-delay:${index * 0.035}s;">
@@ -12501,6 +12551,60 @@ function aarishCsvRowCoreV4(values) {
     function installTapLayer() {
         const interactiveSelector = 'button, .btn-primary, .btn-ios-share, .btn-ios-add, .action-btn, .nav-item';
         const promotionTimers = new WeakMap();
+        const LONG_PRESS_MS = 720;
+        const LONG_PRESS_MOVE_TOLERANCE = 14;
+        let exportPress = null;
+        let suppressExportClickCard = null;
+
+        function clearExportPress(keepClickSuppression) {
+            if (!exportPress) return;
+            clearTimeout(exportPress.timer);
+            const card = exportPress.card;
+            const fired = exportPress.fired;
+            if (card) {
+                card.classList.remove('aarish-longpress-active-v1');
+                if (fired && keepClickSuppression) {
+                    suppressExportClickCard = card;
+                    setTimeout(() => {
+                        if (suppressExportClickCard === card) suppressExportClickCard = null;
+                    }, 900);
+                }
+            }
+            exportPress = null;
+        }
+
+        function beginExportPress(card, ev) {
+            clearExportPress(false);
+            card.classList.add('aarish-longpress-active-v1');
+            const state = {
+                card,
+                pointerId: ev.pointerId,
+                startX: Number(ev.clientX) || 0,
+                startY: Number(ev.clientY) || 0,
+                fired: false,
+                timer: null
+            };
+            state.timer = setTimeout(() => {
+                if (exportPress !== state || !state.card || !state.card.isConnected) return;
+                state.fired = true;
+                try { safeHaptic(38); } catch (_) {}
+                try {
+                    const result = aarishExportCardToPremiumPdfCoreV1(state.card);
+                    if (result && typeof result.catch === 'function') result.catch(error => console.error('Universal card PDF error:', error));
+                } catch (error) {
+                    console.error('Universal card PDF error:', error);
+                    try { if (typeof showToast === 'function') showToast('PDF generation failed.'); } catch (_) {}
+                }
+            }, LONG_PRESS_MS);
+            exportPress = state;
+        }
+
+        function maybeCancelExportMove(ev) {
+            if (!exportPress || exportPress.pointerId !== ev.pointerId || exportPress.fired) return;
+            const dx = (Number(ev.clientX) || 0) - exportPress.startX;
+            const dy = (Number(ev.clientY) || 0) - exportPress.startY;
+            if (Math.hypot(dx, dy) > LONG_PRESS_MOVE_TOLERANCE) clearExportPress(false);
+        }
 
         function promote(el) {
             if (!el) return;
@@ -12531,6 +12635,11 @@ function aarishCsvRowCoreV4(values) {
                 promote(card);
                 ripple(card, ev);
             }
+            const exportCard = target && target.closest('[data-aarish-export-card="true"]');
+            const blockedExportTarget = !!(target && target.closest('button, a, input, textarea, select, [contenteditable="true"], [role="button"], .nav-item')) || isDeleteButton(target);
+            if (exportCard && !blockedExportTarget && (ev.pointerType !== 'mouse' || ev.button === 0)) {
+                beginExportPress(exportCard, ev);
+            }
             if (del) {
                 const icon = del.querySelector('i') || del;
                 icon.classList.remove('aarish-delete-shake-v3');
@@ -12541,18 +12650,34 @@ function aarishCsvRowCoreV4(values) {
             ambient(ev);
         }, { capture: true, passive: true });
 
+        document.addEventListener('pointermove', (ev) => {
+            maybeCancelExportMove(ev);
+        }, { capture: true, passive: true });
+
         document.addEventListener('pointerup', (ev) => {
             const button = ev.target && ev.target.closest(interactiveSelector);
             if (button && !button.closest('.bottom-nav .nav-item')) bounce(button);
             release(button);
             release(button && button.closest('.glass-card'));
+            if (exportPress && exportPress.pointerId === ev.pointerId) clearExportPress(exportPress.fired);
         }, { capture: true, passive: true });
 
         document.addEventListener('pointercancel', (ev) => {
             const button = ev.target && ev.target.closest(interactiveSelector);
             release(button);
             release(button && button.closest('.glass-card'));
+            if (exportPress && exportPress.pointerId === ev.pointerId) clearExportPress(false);
         }, { capture: true, passive: true });
+
+        document.addEventListener('click', (ev) => {
+            if (!suppressExportClickCard) return;
+            const clickedCard = ev.target && ev.target.closest('[data-aarish-export-card="true"]');
+            if (clickedCard === suppressExportClickCard) {
+                ev.preventDefault();
+                ev.stopImmediatePropagation();
+                suppressExportClickCard = null;
+            }
+        }, { capture: true });
 
         const fab = qs('#gemini-draggable-logo');
         if (fab) {
