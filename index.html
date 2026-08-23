@@ -7128,7 +7128,7 @@ function openAllBalances() {
                 data-module-tone="${tone}"
                 class="glass-card party-ledger-core-card party-ledger-balance-stripe-v40 list-enter flex items-center justify-between w-full min-w-0 relative"
                 style="${partyLedgerVarsCoreV1(tone)} animation-delay:${i * 0.035}s;">
-                <button type="button" data-reminder-party="${encodeURIComponent(name)}" class="absolute top-3 right-3 w-8 h-8 rounded-full flex items-center justify-center transition-transform active:scale-90 z-10" style="background:${aarishReminderGetCoreV3(name) ? 'rgba(0,122,255,0.12)' : 'rgba(142,142,147,0.1)'}; color:${aarishReminderGetCoreV3(name) ? '#007AFF' : '#8E8E93'};" aria-label="Set reminder for ${safeName}" title="Set reminder"><i class="fa-solid fa-clock text-[16px]"></i></button>
+                <button type="button" data-reminder-party="${encodeURIComponent(name)}" class="absolute top-3 right-3 w-14 h-14 rounded-[20px] flex items-center justify-center transition-transform active:scale-90 z-10" style="background:rgba(0,122,255,0.10); border:1px solid rgba(0,122,255,0.28); color:#007AFF; box-shadow:0 4px 14px rgba(0,122,255,0.10), inset 0 1px 0 rgba(255,255,255,0.65);" aria-label="Set reminder for ${safeName}" title="Set reminder"><i class="fa-solid fa-clock text-[28px]"></i></button>
                 <div class="flex items-center gap-4 flex-1 min-w-0 mr-3">
                     <div class="party-avatar-core w-12 h-12 shrink-0 squircle font-extrabold flex items-center justify-center text-lg">${partyLedgerInitialCoreV1(name)}</div>
                     <div class="flex-1 min-w-0">
@@ -7153,10 +7153,16 @@ function openAllBalances() {
         let party = button.getAttribute('data-reminder-party') || '';
         try { party = decodeURIComponent(party); } catch(e) {}
         const reminder = aarishReminderGetCoreV3(party);
+        button.style.background = 'rgba(0,122,255,0.10)';
+        button.style.border = '1px solid rgba(0,122,255,0.28)';
+        button.style.color = '#007AFF';
+        button.style.boxShadow = reminder
+            ? '0 4px 18px rgba(0,122,255,0.24), 0 0 16px rgba(0,122,255,0.14), inset 0 1px 0 rgba(255,255,255,0.72)'
+            : '0 4px 14px rgba(0,122,255,0.10), inset 0 1px 0 rgba(255,255,255,0.65)';
         const icon = button.querySelector('i');
         if (icon) {
-            icon.style.color = reminder ? '#007AFF' : '#C7C7CC';
-            if (reminder) icon.style.textShadow = '0 0 10px rgba(0,122,255,0.4)';
+            icon.style.color = '#007AFF';
+            icon.style.textShadow = reminder ? '0 0 10px rgba(0,122,255,0.42)' : '0 0 8px rgba(0,122,255,0.22)';
         }
         button.addEventListener('click', function(event) {
             event.stopPropagation();

@@ -15,7 +15,8 @@ assert 'remindersDB: aarishReminderNormalizeDbCoreV3(raw.remindersDB)' in html
 assert 'remindersDB = aarishReminderNormalizeDbCoreV3(state.remindersDB);' in html
 assert 'remindersDB = {};' in html
 assert 'navigator.setAppBadge' in html and 'navigator.clearAppBadge' in html
-assert 'class="absolute top-3 right-3 w-8 h-8' in html
+assert 'class="absolute top-3 right-3 w-14 h-14 rounded-[20px]' in html
+assert 'rgba(0,122,255,0.10)' in html and '#007AFF' in html
 assert 'data-reminder-party="${encodeURIComponent(name)}"' in html
 assert "navigator.serviceWorker.register('./sw.js'" in html
 assert 'notificationclick' in (root / 'sw.js').read_text(encoding='utf-8')
