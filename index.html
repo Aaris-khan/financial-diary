@@ -8925,60 +8925,80 @@ async function deleteMilkEntry(id) {
         async function deliverFile(file, title, shareText) {
             if (!file) throw new Error('export_file_missing');
 
-            // Each completed long-press owns a fresh delivery attempt. Do not keep a
-            // document-level share lock: some Android WebViews leave the first
-            // navigator.share() promise pending after WhatsApp returns, which would
-            // otherwise make every later export look permanently busy until refresh.
-            const canShare = typeof navigator !== 'undefined' && typeof navigator.share === 'function' && typeof navigator.canShare === 'function';
+            // Give every delivery attempt a unique filename. This prevents Android
+            // download providers and WebViews from reusing a stale file handle.
+            const originalName = filename(file.name, 'Aarish_Report.pdf');
+            const dot = originalName.toLowerCase().lastIndexOf('.pdf');
+            const base = dot > 0 ? originalName.slice(0, dot) : originalName;
+            const uniqueFile = new File(
+                [file],
+                base + '_' + Date.now() + '.pdf',
+                { type: file.type || 'application/pdf' }
+            );
+
+            // The PDF blob is ready at this point. Unlock the app before entering
+            // any platform share promise; a stuck Android share sheet must never
+            // keep the app's generating overlay visible.
+            clearLoader();
+
+            const fallbackDownload = () => {
+                let anchorOk = false;
+                let windowOk = false;
+                const url = URL.createObjectURL(uniqueFile);
+                try {
+                    const anchor = document.createElement('a');
+                    anchor.href = url;
+                    anchor.download = uniqueFile.name;
+                    anchor.rel = 'noopener';
+                    anchor.style.display = 'none';
+                    document.body.appendChild(anchor);
+                    anchor.click();
+                    anchor.remove();
+                    anchorOk = true;
+                } catch (downloadError) {
+                    try { console.warn('Aarish PDF anchor fallback failed:', downloadError); } catch (_) {}
+                }
+                if (!anchorOk) {
+                    try { windowOk = !!window.open(url, '_blank'); } catch (openError) {
+                        try { console.warn('Aarish PDF tab fallback failed:', openError); } catch (_) {}
+                    }
+                }
+                setTimeout(() => { try { URL.revokeObjectURL(url); } catch (_) {} }, 30000);
+                safeToast((anchorOk || windowOk) ? 'PDF generated securely.' : 'Could not save the PDF. Please try again.');
+                return { method: (anchorOk || windowOk) ? 'download' : 'error' };
+            };
+
+            const canShare = typeof navigator !== 'undefined' &&
+                typeof navigator.share === 'function' &&
+                typeof navigator.canShare === 'function';
             if (canShare) {
                 let supported = false;
-                try { supported = !!navigator.canShare({ files: [file] }); } catch (supportError) {
-                    try { console.warn('Aarish file share capability check failed:', supportError); } catch (_) {}
-                }
+                try { supported = !!navigator.canShare({ files: [uniqueFile] }); } catch (_) {}
                 if (supported) {
+                    // Fire and forget: the renderer can finish immediately while
+                    // this platform promise settles in the background. The catch
+                    // path is intentionally silent for an explicit user cancel.
                     try {
-                        // Keep this call in the current export call stack; deferring it
-                        // can consume the platform's transient user activation.
-                        await navigator.share({
-                            files: [file],
+                        const sharePromise = navigator.share({
+                            files: [uniqueFile],
                             title: text(title, 'Aarish Dairy Pro'),
                             text: text(shareText, 'Aarish Dairy Pro Report')
                         });
-                        safeToast('Shared successfully!');
-                        return { method: 'share' };
-                    } catch (error) {
-                        if (error && error.name === 'AbortError') return { method: 'cancelled' };
-                        try { console.warn('Aarish native share failed; using visible PDF fallback:', error && error.name, error && error.message); } catch (_) {}
+                        Promise.resolve(sharePromise).then(() => {
+                            safeToast('Shared successfully!');
+                        }).catch(error => {
+                            if (error && error.name === 'AbortError') return;
+                            fallbackDownload();
+                        });
+                        return { method: 'share_triggered' };
+                    } catch (shareError) {
+                        try { console.warn('Aarish native share could not start; using download fallback.', shareError); } catch (_) {}
                     }
                 }
             }
 
-            let anchorOk = false;
-            let windowOk = false;
-            const url = URL.createObjectURL(file);
-            try {
-                const anchor = document.createElement('a');
-                anchor.href = url;
-                anchor.download = filename(file.name, 'Aarish_Report.pdf');
-                anchor.rel = 'noopener';
-                anchor.style.display = 'none';
-                document.body.appendChild(anchor);
-                anchor.click();
-                anchor.remove();
-                anchorOk = true;
-            } catch (downloadError) {
-                try { console.warn('Aarish PDF anchor fallback failed:', downloadError); } catch (_) {}
-            }
-            try {
-                windowOk = !!window.open(url, '_blank');
-            } catch (openError) {
-                try { console.warn('Aarish PDF tab fallback failed:', openError); } catch (_) {}
-            }
-            setTimeout(() => { try { URL.revokeObjectURL(url); } catch (_) {} }, 30000);
-            safeToast((anchorOk || windowOk)
-                ? 'Share menu unavailable; PDF saved. Check Downloads or the new tab.'
-                : 'Could not share or save the PDF. Please try again.');
-            return { method: (anchorOk || windowOk) ? 'download' : 'error' };
+            // Native share is unavailable or could not be started.
+            return fallbackDownload();
         }
         async function renderDocument(options) {
             options = options || {};
