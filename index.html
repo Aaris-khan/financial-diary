@@ -3317,29 +3317,6 @@ html.aarish-tab-switching-v31 .screen.active .glass-card:active {
 
 <div id="main-app" class="app-container hidden">
 
-
-    <div id="party-reminder-modal" class="modal-overlay" onclick="if(event.target.id==='party-reminder-modal')closeModal('party-reminder-modal')">
-        <div class="modal-content" onclick="event.stopImmediatePropagation()">
-            <div class="w-12 h-1.5 bg-gray-300 dark:bg-gray-600 shrink-0 rounded-full mx-auto mb-6"></div>
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-2xl font-extrabold truncate w-full flex-1 min-w-0">Set Reminder</h2>
-                <button id="reminder-delete-btn" onclick="haptic(); deletePartyReminderCoreV3()" class="hidden action-btn shrink-0 ml-2 !bg-red-500/10 !text-red-500 !w-10 !h-10 !rounded-full !items-center !justify-center"><i class="fa-solid fa-trash"></i></button>
-            </div>
-            <p id="reminder-party-name" class="text-[14px] text-gray-500 font-bold mb-4 truncate w-full uppercase tracking-wider"></p>
-            <div class="flex gap-3 mb-4 w-full">
-                <div class="flex-1 min-w-0">
-                    <label class="text-[10px] font-extrabold text-gray-500 uppercase tracking-widest pl-2 mb-1 block">Alert Date</label>
-                    <input type="date" id="reminder-date" class="input-box w-full">
-                </div>
-                <div class="flex-1 min-w-0">
-                    <label class="text-[10px] font-extrabold text-gray-500 uppercase tracking-widest pl-2 mb-1 block">Limit (₹)</label>
-                    <input type="number" id="reminder-limit" class="input-box w-full" min="0.01" step="0.01" inputmode="decimal" placeholder="e.g. 10000">
-                </div>
-            </div>
-            <input type="text" id="reminder-note" class="input-box mb-8 w-full" maxlength="240" placeholder="Optional note (e.g. Call for payment)">
-            <button onclick="haptic(); savePartyReminderCoreV3()" class="btn-primary shrink-0 w-full !bg-[#007AFF] !shadow-[0_4px_14px_rgba(0,122,255,0.25)]"><i class="fa-solid fa-check"></i> Save Reminder</button>
-        </div>
-    </div>
     <div id="global-loader"><div class="spinner"></div><div style="margin-top: 18px; font-size: 12px; font-weight: 700; color:#8E8E93; letter-spacing: 1.5px;" id="loader-text">SYNCING DATA...</div></div>
     <div id="toast"><i class="fa-solid fa-circle-check" style="color: #34C759; text-shadow: 0 0 10px rgba(52,199,89,0.5);"></i><span id="toast-msg" class="ml-1">Success</span></div>
 
@@ -3364,7 +3341,6 @@ html.aarish-tab-switching-v31 .screen.active .glass-card:active {
             </div>
             <div class="flex gap-2 items-center shrink-0">
                 <button id="install-app-btn" onclick="haptic(); installAppPWA()" class="hidden w-10 h-10 shrink-0 rounded-full bg-[#007AFF]/10 text-[#007AFF] flex items-center justify-center shadow-sm font-bold transition-transform active:scale-95" title="Install App"><i class="fa-solid fa-download text-[15px]"></i></button>
-                <button id="reminder-notification-btn" onclick="haptic(); enableReminderNotificationsCoreV3()" class="w-10 h-10 shrink-0 rounded-full bg-[#007AFF]/10 text-[#007AFF] flex items-center justify-center shadow-sm font-bold transition-transform active:scale-95 relative" title="Enable reminder notifications" aria-label="Enable reminder notifications"><i class="fa-solid fa-bell text-[15px]"></i><span id="reminder-due-badge" class="hidden absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] leading-[18px] text-center font-extrabold">0</span></button>
                 <button onclick="haptic(); downloadExcel()" class="w-10 h-10 shrink-0 rounded-full bg-green-500/10 text-green-600 flex items-center justify-center shadow-sm transition-transform active:scale-95" title="Download Excel"><i class="fa-solid fa-file-csv text-[15px]"></i></button>
                 <button onclick="haptic(); toggleTheme()" class="w-10 h-10 shrink-0 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center transition-transform active:scale-95"><i class="fa-solid fa-moon text-[15px] dark:hidden text-gray-700"></i><i class="fa-solid fa-sun text-[15px] hidden dark:block text-yellow-400 drop-shadow-[0_0_8px_rgba(250,204,21,0.5)]"></i></button>
                 <button onclick="haptic(); logout()" class="w-10 h-10 shrink-0 rounded-full bg-red-500/10 text-red-500 flex items-center justify-center transition-transform active:scale-95"><i class="fa-solid fa-arrow-right-from-bracket text-[15px]"></i></button>
@@ -3394,7 +3370,6 @@ html.aarish-tab-switching-v31 .screen.active .glass-card:active {
                 </div>
             </div>
             
-            <div id="dashboard-reminders-container" class="w-full mt-4 empty:hidden"></div>
             <div onclick="haptic(); openAllBalances()" class="glass-card mt-4 flex items-center justify-between w-full min-w-0 cursor-pointer transition-transform active:scale-95" style="flex-shrink: 0 !important; min-height: 80px !important;">
                 <div class="flex items-center gap-4 w-full min-w-0">
                     <div class="w-12 h-12 shrink-0 squircle bg-purple-500/10 flex items-center justify-center text-purple-600 dark:text-purple-400"><i class="fa-solid fa-address-book text-[20px]"></i></div>
@@ -4093,9 +4068,8 @@ window.__AARISH_BACKEND_TITANIUM_CORE_V11 = true;
     };
 
         let app, auth, database, currentUserUID = null, appDataRef = null;
-    let milkDB = {}, udharDB = [], expenseDB = [], salaryDB = {}, diaryDB = [], projectDB = {}, remindersDB = {};
+    let milkDB = {}, udharDB = [], expenseDB = [], salaryDB = {}, diaryDB = [], projectDB = {};
     let activeMilkCustomer = null;
-    let activeReminderParty = null;
     let activeSalaryPerson = null;
     let activeExpenseCategory = null;
     let activeUdharPerson = null;
@@ -4380,8 +4354,7 @@ window.__AARISH_BACKEND_TITANIUM_CORE_V11 = true;
             currentUserUID = null;
             appDataRef = null;
 
-            milkDB = {}; udharDB = []; expenseDB = []; salaryDB = {}; diaryDB = []; projectDB = {}; remindersDB = {};
-            activeReminderParty = null;
+            milkDB = {}; udharDB = []; expenseDB = []; salaryDB = {}; diaryDB = []; projectDB = {};
 
             activeMilkCustomer = null;
             activeSalaryPerson = null;
@@ -4860,7 +4833,6 @@ function aarishBackendActionGuardCoreV2(key, ms) {
 function aarishBackendAfterMutationCoreV2(reason) {
     try { aarishBackendNormalizeArraysCoreV2(); } catch(e) {}
     try { if (typeof scheduleCacheSaveCostV81 === "function") scheduleCacheSaveCostV81(reason || "mutation"); } catch(e) {}
-    try { if (typeof aarishReminderReconcileCoreV3 === "function") aarishReminderReconcileCoreV3("mutation"); } catch(e) {}
 }
 // ========================== AARISH_BACKEND_HARDENING_CORE_V2_END ==========================
 
@@ -5195,8 +5167,7 @@ function aarishCostNormalizeStateV1(raw) {
         projectDB: aarishCostSafeGroupV1(raw.projectDB || {}),
         udharDB: aarishCostSafeLoadV1(raw.udharDB),
         expenseDB: aarishCostSafeLoadV1(raw.expenseDB),
-        diaryDB: aarishCostSafeLoadV1(raw.diaryDB),
-        remindersDB: aarishReminderNormalizeDbCoreV3(raw.remindersDB)
+        diaryDB: aarishCostSafeLoadV1(raw.diaryDB)
     };
 }
 
@@ -5209,7 +5180,6 @@ function aarishCostApplyStateV1(state) {
     udharDB = Array.isArray(state.udharDB) ? state.udharDB : [];
     expenseDB = Array.isArray(state.expenseDB) ? state.expenseDB : [];
     diaryDB = Array.isArray(state.diaryDB) ? state.diaryDB : [];
-    remindersDB = aarishReminderNormalizeDbCoreV3(state.remindersDB);
     aarishBackendNormalizeArraysCoreV2();
 }
 
@@ -5221,16 +5191,12 @@ function aarishCostGetStateV1() {
         projectDB: projectDB || {},
         udharDB: aarishBackendCanonicalListCoreV8(udharDB),
         expenseDB: aarishBackendCanonicalListCoreV8(expenseDB),
-        diaryDB: aarishBackendCanonicalListCoreV8(diaryDB),
-        remindersDB: aarishReminderNormalizeDbCoreV3(remindersDB)
+        diaryDB: aarishBackendCanonicalListCoreV8(diaryDB)
     };
     return aarishBackendSanitizeFirebaseValueCoreV2(state, "appData") || state;
 }
 
 function aarishCostShowAppV1() {
-    try { if (typeof aarishReminderReconcileCoreV3 === "function") aarishReminderReconcileCoreV3('app-show'); } catch(e) {}
-    try { if (typeof aarishReminderStartTickerCoreV3 === "function") aarishReminderStartTickerCoreV3(); } catch(e) {}
-
     try { if (typeof updateActiveScreen === "function") updateActiveScreen(); } catch(e) {}
     try { if (typeof hideLoader === "function") hideLoader(); } catch(e) {}
     try { document.getElementById("login-screen").style.display = "none"; } catch(e) {}
@@ -5465,7 +5431,6 @@ function aarishCostApplyMegaToStateCoreV3(mega, reason) {
 function aarishCostRenderAfterStateCoreV3(reason) {
     try { if (typeof updateDashboard === "function") updateDashboard(); } catch(e) {}
     try { if (typeof updateActiveScreen === "function") updateActiveScreen(); } catch(e) {}
-    try { if (typeof aarishReminderReconcileCoreV3 === "function") aarishReminderReconcileCoreV3(reason || "state-render"); } catch(e) {}
 }
 
 async function aarishCostReplayOutboxToLocalCoreV3(reason, opts) {
@@ -6614,7 +6579,6 @@ function installFirebaseCostCoreV1() {
             aarishCostSetTimerCoreV7("__aarishCostOnlineTimerCoreV7", function() {
                 flushFirebaseWriteOutboxV87("online", { force: true });
                 aarishAutoPullCloudIfNewerV87("online", { force: true });
-                try { aarishReminderReconcileCoreV3('online'); } catch(e) {}
             }, 700);
         }, { passive: true });
     } catch(e) {}
@@ -6624,7 +6588,6 @@ function installFirebaseCostCoreV1() {
             aarishCostSetTimerCoreV7("__aarishCostFocusTimerCoreV7", function() {
                 flushFirebaseWriteOutboxV87("focus", { force: false });
                 aarishAutoPullCloudIfNewerV87("focus", { force: false });
-                try { aarishReminderReconcileCoreV3('focus'); } catch(e) {}
             }, 1000);
         }, { passive: true });
     } catch(e) {}
@@ -6638,7 +6601,6 @@ function installFirebaseCostCoreV1() {
                 aarishCostSetTimerCoreV7("__aarishCostVisibleTimerCoreV7", function() {
                     flushFirebaseWriteOutboxV87("visible", { force: false });
                     aarishAutoPullCloudIfNewerV87("visible", { force: false });
-                    try { aarishReminderReconcileCoreV3('visible'); } catch(e) {}
                 }, 1000);
             }
         }, { passive: true });
@@ -6947,10 +6909,10 @@ function updateDashboard() {
     try { if (typeof updateExpenseCoreUi === 'function') updateExpenseCoreUi(); } catch(e) {}
     try { if (typeof updateSalaryCoreUi === 'function') updateSalaryCoreUi(); } catch(e) {}
     try { if (typeof updateDiaryCoreUi === 'function') updateDiaryCoreUi(); } catch(e) {}
-        try { if (typeof updateBusinessCoreUi === 'function') updateBusinessCoreUi(); } catch(e) {}
+    try { if (typeof updateBusinessCoreUi === 'function') updateBusinessCoreUi(); } catch(e) {}
     try { if (typeof updatePartyLedgerCoreUi === 'function') updatePartyLedgerCoreUi(); } catch(e) {}
-    try { if (typeof aarishReminderReconcileCoreV3 === 'function') aarishReminderReconcileCoreV3('dashboard-update'); } catch(e) {}
 }
+
     // ===== PARTY LEDGER LOGIC (MILK + CREDIT MERGER) =====
     
 // ========================== AARISH_PARTY_LEDGER_CORE_ENGINE_V1_START ==========================
@@ -7126,9 +7088,8 @@ function openAllBalances() {
                 data-party-tone="${tone}"
                 data-aarish-party-stripe-v65="${tone}"
                 data-module-tone="${tone}"
-                class="glass-card party-ledger-core-card party-ledger-balance-stripe-v40 list-enter flex items-center justify-between w-full min-w-0 relative"
+                class="glass-card party-ledger-core-card party-ledger-balance-stripe-v40 list-enter flex items-center justify-between w-full min-w-0"
                 style="${partyLedgerVarsCoreV1(tone)} animation-delay:${i * 0.035}s;">
-                <button type="button" data-reminder-party="${encodeURIComponent(name)}" class="absolute top-3 right-3 w-14 h-14 rounded-[20px] flex items-center justify-center transition-transform active:scale-90 z-10" style="background:rgba(0,122,255,0.10); border:1px solid rgba(0,122,255,0.28); color:#007AFF; box-shadow:0 4px 14px rgba(0,122,255,0.10), inset 0 1px 0 rgba(255,255,255,0.65);" aria-label="Set reminder for ${safeName}" title="Set reminder"><i class="fa-solid fa-clock text-[28px]"></i></button>
                 <div class="flex items-center gap-4 flex-1 min-w-0 mr-3">
                     <div class="party-avatar-core w-12 h-12 shrink-0 squircle font-extrabold flex items-center justify-center text-lg">${partyLedgerInitialCoreV1(name)}</div>
                     <div class="flex-1 min-w-0">
@@ -7148,28 +7109,6 @@ function openAllBalances() {
         box.innerHTML = hasData ? html : `<div class="party-empty-core text-center py-12 font-extrabold text-lg">No parties found</div>`;
     }
 
-    if (!box) return;
-    box.querySelectorAll('[data-reminder-party]').forEach(function(button) {
-        let party = button.getAttribute('data-reminder-party') || '';
-        try { party = decodeURIComponent(party); } catch(e) {}
-        const reminder = aarishReminderGetCoreV3(party);
-        button.style.background = 'rgba(0,122,255,0.10)';
-        button.style.border = '1px solid rgba(0,122,255,0.28)';
-        button.style.color = '#007AFF';
-        button.style.boxShadow = reminder
-            ? '0 4px 18px rgba(0,122,255,0.24), 0 0 16px rgba(0,122,255,0.14), inset 0 1px 0 rgba(255,255,255,0.72)'
-            : '0 4px 14px rgba(0,122,255,0.10), inset 0 1px 0 rgba(255,255,255,0.65)';
-        const icon = button.querySelector('i');
-        if (icon) {
-            icon.style.color = '#007AFF';
-            icon.style.textShadow = reminder ? '0 0 10px rgba(0,122,255,0.42)' : '0 0 8px rgba(0,122,255,0.22)';
-        }
-        button.addEventListener('click', function(event) {
-            event.stopPropagation();
-            try { haptic(); } catch(e) {}
-            openReminderModalCoreV3(party);
-        });
-    });
     updatePartyLedgerCoreUi();
 }
     // =============================================================
@@ -12597,346 +12536,6 @@ function aarishCsvRowCoreV4(values) {
     return values.map(aarishCsvCellCoreV4).join(',') + '\n';
 }
 /* AARISH_BACKEND_CORE_SMART_FIX_V4_END */
-
-
-/* AARISH_REMINDER_CORE_V3_START */
-function aarishReminderCleanPartyCoreV3(value) {
-    try {
-        if (typeof partyLedgerCleanNameCoreV1 === 'function') return partyLedgerCleanNameCoreV1(value);
-    } catch(e) {}
-    return String(value == null ? '' : value).normalize('NFKC').replace(/[\u0000-\u001F\u007F]/g, ' ').replace(/\s+/g, ' ').trim();
-}
-
-function aarishReminderKeyCoreV3(name) {
-    const clean = aarishReminderCleanPartyCoreV3(name);
-    if (!clean) return '';
-    const bytes = new TextEncoder().encode(clean);
-    return 'p_' + Array.from(bytes).map(function(byte) { return byte.toString(16).padStart(2, '0'); }).join('');
-}
-
-function aarishReminderIsoDateCoreV3(value) {
-    const date = String(value == null ? '' : value).trim();
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return '';
-    const parts = date.split('-').map(Number);
-    const parsed = new Date(Date.UTC(parts[0], parts[1] - 1, parts[2]));
-    if (!Number.isFinite(parsed.getTime()) || parsed.getUTCFullYear() !== parts[0] || parsed.getUTCMonth() !== parts[1] - 1 || parsed.getUTCDate() !== parts[2]) return '';
-    return date;
-}
-
-function aarishReminderNormalizeEntryCoreV3(name, raw) {
-    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
-    const cleanName = aarishReminderCleanPartyCoreV3(raw.name || name);
-    const date = aarishReminderIsoDateCoreV3(raw.date);
-    const limitRaw = raw.limit == null || String(raw.limit).trim() === '' ? null : Number(raw.limit);
-    const limit = limitRaw != null && Number.isFinite(limitRaw) && limitRaw > 0 ? Math.round(limitRaw * 100) / 100 : null;
-    if (!cleanName || (!date && limit == null)) return null;
-    return {
-        name: cleanName,
-        date: date || null,
-        limit: limit,
-        note: String(raw.note == null ? '' : raw.note).replace(/[\u0000-\u001F\u007F]/g, ' ').trim().slice(0, 240),
-        createdAt: Number.isFinite(Number(raw.createdAt)) ? Number(raw.createdAt) : Date.now()
-    };
-}
-
-function aarishReminderNormalizeDbCoreV3(raw) {
-    const normalized = {};
-    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return normalized;
-    Object.keys(raw).forEach(function(key) {
-        const entry = aarishReminderNormalizeEntryCoreV3(key, raw[key]);
-        if (!entry) return;
-        const reminderKey = aarishReminderKeyCoreV3(entry.name);
-        if (reminderKey) normalized[reminderKey] = entry;
-    });
-    return normalized;
-}
-
-function aarishReminderGetCoreV3(name) {
-    const key = aarishReminderKeyCoreV3(name);
-    return key && remindersDB && remindersDB[key] ? remindersDB[key] : null;
-}
-
-function aarishReminderPartyBalanceCoreV3(targetName) {
-    const target = aarishReminderCleanPartyCoreV3(targetName).toLowerCase().replace(/\s+/g, '');
-    if (!target) return 0;
-    let balance = 0;
-    try {
-        Object.keys(milkDB || {}).forEach(function(name) {
-            if (aarishReminderCleanPartyCoreV3(name).toLowerCase().replace(/\s+/g, '') !== target) return;
-            const customer = milkDB[name] || {};
-            partyLedgerArrayCoreV1(customer.records).forEach(function(record) {
-                const amount = (Number(record && record.morning) || 0) + (Number(record && record.evening) || 0);
-                const total = amount * (Number(customer.rate) || DEFAULT_RATE || 0);
-                balance += customer.type === 'dene_wala' ? -total : total;
-            });
-        });
-    } catch(e) {}
-    try {
-        const rows = typeof creditEntriesCoreV1 === 'function' ? creditEntriesCoreV1() : partyLedgerArrayCoreV1(udharDB);
-        rows.forEach(function(row) {
-            if (!row || aarishReminderCleanPartyCoreV3(row.name).toLowerCase().replace(/\s+/g, '') !== target) return;
-            const amount = typeof creditSignedAmountCoreV1 === 'function'
-                ? Number(creditSignedAmountCoreV1(row)) || 0
-                : ((/^(credit|given|receive|positive)$/i.test(String(row.type || row.flow || ''))) ? 1 : -1) * (Number(row.amount) || 0);
-            balance += amount;
-        });
-    } catch(e) {}
-    return Math.round(balance * 100) / 100;
-}
-
-function aarishReminderDueEntriesCoreV3(raw, todayISO) {
-    const today = aarishReminderIsoDateCoreV3(todayISO) || getTodayISO();
-    const normalized = aarishReminderNormalizeDbCoreV3(raw);
-    return Object.keys(normalized).map(function(key) {
-        const entry = normalized[key];
-        const balance = entry.limit != null ? Math.abs(aarishReminderPartyBalanceCoreV3(entry.name)) : null;
-        const limitTriggered = entry.limit != null && balance >= entry.limit;
-        const dateTriggered = !!entry.date && entry.date <= today;
-        if (!limitTriggered && !dateTriggered) return null;
-        let reason = dateTriggered ? (entry.date === today ? 'DUE TODAY' : 'OVERDUE') : '';
-        if (limitTriggered) reason = 'LIMIT ₹' + balance.toLocaleString('en-IN') + ' / ₹' + entry.limit.toLocaleString('en-IN');
-        return Object.assign({}, entry, { balance: balance, reason: reason });
-    }).filter(Boolean).sort(function(a, b) {
-        return (a.date || '9999-12-31').localeCompare(b.date || '9999-12-31') || a.name.localeCompare(b.name);
-    });
-}
-
-function aarishReminderEscapeCoreV3(value) {
-    return String(value == null ? '' : value).replace(/[&<>"']/g, function(ch) {
-        return {'&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'}[ch];
-    });
-}
-
-function aarishReminderKnownPartiesCoreV3() {
-    const known = new Set();
-    try { Object.keys(milkDB || {}).forEach(function(name) { const clean = aarishReminderCleanPartyCoreV3(name); if (clean) known.add(clean); }); } catch(e) {}
-    try {
-        const rows = typeof creditEntriesCoreV1 === 'function' ? creditEntriesCoreV1() : (Array.isArray(udharDB) ? udharDB : []);
-        rows.forEach(function(row) { const clean = aarishReminderCleanPartyCoreV3(row && row.name); if (clean) known.add(clean); });
-    } catch(e) {}
-    return known;
-}
-
-function aarishReminderGarbageCollectCoreV3() {
-    if (window.__aarishReminderGcBusyCoreV3) return;
-    const known = aarishReminderKnownPartiesCoreV3();
-    const normalized = aarishReminderNormalizeDbCoreV3(remindersDB);
-    const staleKeys = Object.keys(normalized).filter(function(key) {
-        const entry = remindersDB[key];
-        return entry && !known.has(aarishReminderCleanPartyCoreV3(entry.name));
-    });
-    if (!staleKeys.length) return;
-    window.__aarishReminderGcBusyCoreV3 = true;
-    const rollback = [];
-    const writes = staleKeys.map(function(key) {
-        const previous = remindersDB[key];
-        delete remindersDB[key];
-        let writePromise;
-        try {
-            writePromise = typeof aarishFirebaseLaterV48 === 'function'
-                ? aarishFirebaseLaterV48('remindersDB/' + key, 'remove', null, { fast: true, reason: 'reminder-gc' })
-                : Promise.resolve({ queued: true });
-        } catch(e) {
-            writePromise = Promise.reject(e);
-        }
-        return Promise.resolve(writePromise).then(function(result) {
-            if (result && result.queued === false && !result.direct) rollback.push([key, previous]);
-        }).catch(function() { rollback.push([key, previous]); });
-    });
-    Promise.all(writes).then(function() {
-        rollback.forEach(function(pair) { remindersDB[pair[0]] = pair[1]; });
-        try { if (typeof saveCacheNowCostV81 === 'function') saveCacheNowCostV81(rollback.length ? 'reminder-gc-rollback' : 'reminder-gc'); } catch(e) {}
-    }).finally(function() {
-        window.__aarishReminderGcBusyCoreV3 = false;
-    });
-}
-
-function aarishReminderNotificationStateCoreV3() {
-    const uid = typeof aarishCostUidV1 === 'function' ? aarishCostUidV1() : String(currentUserUID || '');
-    if (!uid) return { uid: '', sent: {} };
-    const key = 'AARISH_REMINDER_NOTIFY_V3::' + uid;
-    try {
-        const parsed = JSON.parse(localStorage.getItem(key) || '{}');
-        return { uid: uid, sent: parsed && parsed.sent && typeof parsed.sent === 'object' ? parsed.sent : {} };
-    } catch(e) { return { uid: uid, sent: {} }; }
-}
-
-function aarishReminderSaveNotificationStateCoreV3(state) {
-    if (!state || !state.uid) return;
-    try {
-        const entries = Object.entries(state.sent || {}).sort(function(a, b) { return Number(b[1]) - Number(a[1]); }).slice(0, 120);
-        localStorage.setItem('AARISH_REMINDER_NOTIFY_V3::' + state.uid, JSON.stringify({ sent: Object.fromEntries(entries) }));
-    } catch(e) {}
-}
-
-function aarishReminderSetBadgeCoreV3(count) {
-    const safeCount = Math.max(0, Number(count) || 0);
-    const badge = document.getElementById('reminder-due-badge');
-    if (badge) {
-        badge.textContent = safeCount > 99 ? '99+' : String(safeCount);
-        badge.classList.toggle('hidden', safeCount === 0);
-    }
-    try {
-        if (safeCount && navigator.setAppBadge) navigator.setAppBadge(safeCount);
-        else if (!safeCount && navigator.clearAppBadge) navigator.clearAppBadge();
-    } catch(e) {}
-}
-
-function aarishReminderRenderDashboardCoreV3(dueEntries) {
-    const container = document.getElementById('dashboard-reminders-container');
-    if (!container) return;
-    if (!dueEntries.length) { container.innerHTML = ''; return; }
-    let html = '<div class="mb-2 text-[12px] font-extrabold uppercase tracking-widest text-gray-500 flex items-center gap-2 px-1"><i class="fa-solid fa-bell text-[#007AFF] drop-shadow-md"></i> Action Required</div>';
-    dueEntries.forEach(function(entry, index) {
-        const label = entry.reason || (entry.date === getTodayISO() ? 'DUE TODAY' : 'OVERDUE');
-        const safeName = aarishReminderEscapeCoreV3(entry.name);
-        const safeNote = aarishReminderEscapeCoreV3(entry.note);
-        const safeReason = aarishReminderEscapeCoreV3(label);
-        html += '<button type="button" data-due-reminder-party="' + encodeURIComponent(entry.name) + '" class="glass-card mb-2.5 p-3.5 flex items-center justify-between cursor-pointer w-full border border-solid bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20 list-enter text-left" style="animation-delay:' + (index * 0.04) + 's; min-height:0!important; box-shadow:none!important;"><span class="flex-1 min-w-0 pr-3"><span class="flex items-center gap-2 mb-1"><i class="fa-solid fa-circle-exclamation text-red-500 text-[13px]"></i><span class="font-extrabold text-[15.5px] truncate w-full">' + safeName + '</span></span>' + (safeNote ? '<span class="block text-[12px] font-bold opacity-80 truncate w-full">' + safeNote + '</span>' : '') + '</span><span class="shrink-0 text-[10px] font-extrabold uppercase tracking-wider px-2 py-1 rounded-md bg-red-500 text-white">' + safeReason + '</span></button>';
-    });
-    container.innerHTML = html;
-    container.querySelectorAll('[data-due-reminder-party]').forEach(function(button) {
-        button.addEventListener('click', function() {
-            try { haptic(); } catch(e) {}
-            openAllBalances();
-            const search = document.getElementById('balance-search');
-            if (search) {
-                const encodedParty = button.getAttribute('data-due-reminder-party') || '';
-                try { search.value = decodeURIComponent(encodedParty); } catch(e) { search.value = encodedParty; }
-                renderDashboardBalances();
-            }
-        });
-    });
-}
-
-function aarishReminderShowNotificationCoreV3(entry) {
-    if (!('Notification' in window) || Notification.permission !== 'granted') return Promise.resolve(false);
-    const title = 'Aarish Dairy Reminder';
-    const options = {
-        body: entry.name + (entry.note ? ': ' + entry.note : ''),
-        tag: 'aarish-reminder-' + aarishReminderKeyCoreV3(entry.name),
-        renotify: false,
-        icon: 'https://cdn-icons-png.flaticon.com/512/2965/2965358.png',
-        badge: 'https://cdn-icons-png.flaticon.com/512/2965/2965358.png',
-        data: { url: './', party: entry.name }
-    };
-    try {
-        if (navigator.serviceWorker && navigator.serviceWorker.ready) {
-            return navigator.serviceWorker.ready.then(function(registration) {
-                return registration.showNotification(title, options).then(function() { return true; });
-            }).catch(function() {
-                try { new Notification(title, options); return true; } catch(e) { return false; }
-            });
-        }
-        new Notification(title, options);
-        return Promise.resolve(true);
-    } catch(e) { return Promise.resolve(false); }
-}
-
-function aarishReminderReconcileCoreV3(reason) {
-    aarishReminderGarbageCollectCoreV3();
-    const dueEntries = aarishReminderDueEntriesCoreV3(remindersDB, getTodayISO());
-    aarishReminderSetBadgeCoreV3(dueEntries.length);
-    aarishReminderRenderDashboardCoreV3(dueEntries);
-    if (!('Notification' in window) || Notification.permission !== 'granted') return;
-    const state = aarishReminderNotificationStateCoreV3();
-    const pending = dueEntries.filter(function(entry) {
-        const signature = aarishReminderKeyCoreV3(entry.name) + '|' + entry.date + '|' + entry.note;
-        return state.sent[signature] !== 1;
-    });
-    pending.slice(0, 8).forEach(function(entry) {
-        const signature = aarishReminderKeyCoreV3(entry.name) + '|' + entry.date + '|' + entry.note;
-        aarishReminderShowNotificationCoreV3(entry).then(function(shown) {
-            if (shown) { state.sent[signature] = 1; aarishReminderSaveNotificationStateCoreV3(state); }
-        });
-    });
-}
-
-function aarishReminderStartTickerCoreV3() {
-    if (typeof window === 'undefined') return;
-    if (window.__aarishReminderTickerCoreV3) return;
-    window.__aarishReminderTickerCoreV3 = setInterval(function() {
-        try { if (typeof currentUserUID !== 'undefined' && currentUserUID) aarishReminderReconcileCoreV3('periodic'); } catch(e) {}
-    }, 60000);
-}
-
-async function enableReminderNotificationsCoreV3() {
-    if (!('Notification' in window)) { showToast('This browser does not support notifications.'); return; }
-    try {
-        const permission = Notification.permission === 'default' ? await Notification.requestPermission() : Notification.permission;
-        if (permission !== 'granted') { showToast('Notification permission was not granted.'); return; }
-        showToast('Reminder notifications enabled.');
-        aarishReminderReconcileCoreV3('permission-granted');
-    } catch(e) { showToast('Notifications are unavailable right now.'); }
-}
-
-function openReminderModalCoreV3(name) {
-    activeReminderParty = aarishReminderCleanPartyCoreV3(name);
-    if (!activeReminderParty) return;
-    const reminder = aarishReminderGetCoreV3(activeReminderParty);
-    const nameEl = document.getElementById('reminder-party-name');
-    const dateEl = document.getElementById('reminder-date');
-    const limitEl = document.getElementById('reminder-limit');
-    const noteEl = document.getElementById('reminder-note');
-    const deleteBtn = document.getElementById('reminder-delete-btn');
-    if (nameEl) nameEl.textContent = 'For: ' + activeReminderParty;
-    if (dateEl) dateEl.value = reminder && reminder.date ? reminder.date : '';
-    if (limitEl) limitEl.value = reminder && reminder.limit != null ? reminder.limit : '';
-    if (noteEl) noteEl.value = reminder ? reminder.note : '';
-    if (deleteBtn) deleteBtn.style.display = reminder ? 'flex' : 'none';
-    openModal('party-reminder-modal');
-}
-
-async function savePartyReminderCoreV3() {
-    if (typeof aarishBackendActionGuardCoreV2 === 'function' && !aarishBackendActionGuardCoreV2('saveReminder', 900)) return;
-    const name = aarishReminderCleanPartyCoreV3(activeReminderParty);
-    const dateEl = document.getElementById('reminder-date');
-    const limitEl = document.getElementById('reminder-limit');
-    const noteEl = document.getElementById('reminder-note');
-    const date = aarishReminderIsoDateCoreV3(dateEl && dateEl.value);
-    const limitText = String((limitEl && limitEl.value) || '').trim();
-    const parsedLimit = limitText === '' ? null : Number(limitText);
-    const limit = parsedLimit != null && Number.isFinite(parsedLimit) && parsedLimit > 0 ? Math.round(parsedLimit * 100) / 100 : null;
-    const note = String((noteEl && noteEl.value) || '').trim().slice(0, 240);
-    if (!name) { showToast('No party selected.'); return; }
-    if (!date && limit == null) { showToast('Set an alert date or a positive limit.'); return; }
-    if (limitText !== '' && limit == null) { showToast('Enter a valid positive limit.'); return; }
-    const key = aarishReminderKeyCoreV3(name);
-    const previous = remindersDB[key];
-    remindersDB[key] = { name: name, date: date || null, limit: limit, note: note, createdAt: previous && previous.createdAt ? previous.createdAt : Date.now() };
-    try {
-        const result = typeof aarishFirebaseLaterV48 === 'function' ? await aarishFirebaseLaterV48('remindersDB/' + key, 'set', remindersDB[key], { fast: true, reason: 'reminder-save' }) : { queued: true };
-        if (result && result.queued === false && !result.direct) throw new Error('sync rejected');
-        if (typeof saveCacheNowCostV81 === 'function') await saveCacheNowCostV81('reminder-save');
-        closeModal('party-reminder-modal');
-        updateDashboard();
-        showToast('Reminder saved.');
-    } catch(e) {
-        if (previous) remindersDB[key] = previous; else delete remindersDB[key];
-        showToast('Reminder could not be saved.');
-    }
-}
-
-async function deletePartyReminderCoreV3() {
-    if (typeof aarishBackendActionGuardCoreV2 === 'function' && !aarishBackendActionGuardCoreV2('deleteReminder', 900)) return;
-    const name = aarishReminderCleanPartyCoreV3(activeReminderParty);
-    const key = aarishReminderKeyCoreV3(name);
-    const previous = remindersDB[key];
-    if (!key || !previous) { closeModal('party-reminder-modal'); return; }
-    delete remindersDB[key];
-    try {
-        const result = typeof aarishFirebaseLaterV48 === 'function' ? await aarishFirebaseLaterV48('remindersDB/' + key, 'remove', null, { fast: true, reason: 'reminder-delete' }) : { queued: true };
-        if (result && result.queued === false && !result.direct) throw new Error('sync rejected');
-        if (typeof saveCacheNowCostV81 === 'function') await saveCacheNowCostV81('reminder-delete');
-        closeModal('party-reminder-modal');
-        updateDashboard();
-        showToast('Reminder cleared.');
-    } catch(e) {
-        remindersDB[key] = previous;
-        showToast('Reminder could not be cleared.');
-    }
-}
-/* AARISH_REMINDER_CORE_V3_END */
 
 </script>
 
